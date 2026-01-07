@@ -1,4 +1,4 @@
- import React from "react";
+import React from "react";
 import { FaQuoteLeft } from "react-icons/fa";
 const testimonials = [
   {
