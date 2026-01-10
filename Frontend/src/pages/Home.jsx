@@ -5,14 +5,13 @@ import Packages from '../components/Packages'
 import AboutSection from "../components/AboutSection";
 import ServicesSection from "../components/ServicesSection";
 import AppointmentSection from "../components/AppointmentSection";
-import Footer from '../components/Footer'
-import Navbar from '../components/NavBar'
+
 import Hero from '../components/Hero'
 
 const Home = () => {
   return (
     <div>
-      <Navbar/>
+     
       <Hero/>
 
       <ClientReviews />
@@ -21,7 +20,7 @@ const Home = () => {
       <AboutSection />
       <ServicesSection />
       <AppointmentSection />
-      <Footer/>
+     
     </div>
   )
 }
