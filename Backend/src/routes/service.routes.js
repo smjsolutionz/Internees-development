@@ -1,20 +1,32 @@
 import express from "express";
 import upload from "../middleware/upload.middleware.js";
-import { createService, getAllServices } from "../controllers/service.controller.js";
+import {
+  createService,
+  getAllServices,
+  updateService,
+  deleteService
+} from "../controllers/service.controller.js";
 
 const router = express.Router();
 
-/* Create Service */
+/* CREATE */
 router.post(
   "/services",
   upload.array("images", 5),
   createService
 );
 
-/* ✅ Get All Services */
-router.get(
-  "/services",
-  getAllServices
+/* GET ALL */
+router.get("/services", getAllServices);
+
+/* UPDATE */
+router.put(
+  "/services/:id",
+  upload.array("images", 5),
+  updateService
 );
+
+/* DELETE */
+router.delete("/services/:id", deleteService);
 
 export default router;

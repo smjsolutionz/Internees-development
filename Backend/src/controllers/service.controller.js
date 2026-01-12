@@ -58,3 +58,78 @@ export const getAllServices = async (req, res) => {
     });
   }
 };
+
+export const updateService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category, description, duration, pricing } = req.body;
+
+    const service = await Service.findById(id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Service not found",
+      });
+    }
+
+    // Update fields only if provided
+    service.name = name || service.name;
+    service.category = category || service.category;
+    service.description = description || service.description;
+    service.duration = duration || service.duration;
+
+    if (pricing) {
+      service.pricing = JSON.parse(pricing);
+    }
+
+    if (req.files && req.files.length > 0) {
+      service.images = req.files.map(file => file.path);
+    }
+
+    const updatedService = await service.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Service updated successfully",
+      data: updatedService,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update service",
+      error: error.message,
+    });
+  }
+};
+
+/* DELETE SERVICE */
+export const deleteService = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const service = await Service.findById(id);
+
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: "Service not found",
+      });
+    }
+
+    await service.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Service deleted successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete service",
+      error: error.message,
+    });
+  }
+};

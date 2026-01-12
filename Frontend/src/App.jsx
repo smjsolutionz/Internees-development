@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/admin/Dashboard";
 import ServicesAdmin from "./pages/admin/AllServicesAdmin";
 import CreateService from "./pages/admin/CreateService";
+import UpdateService from "./pages/admin/UpdateService";
+
 
 export default function App() {
   return (
@@ -15,6 +17,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/services-admin" element={<ServicesAdmin />} />
       <Route path="/create-service" element={<CreateService />} />
+      <Route path="/update-service/:id" element={<UpdateService />} />
     </Routes>
   );
 }
