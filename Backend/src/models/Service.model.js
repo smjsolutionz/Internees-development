@@ -20,7 +20,7 @@ const serviceSchema = new mongoose.Schema(
     },
     pricing: [
       {
-        type: Number, // only store the price
+        type: Number, 
         required: true,
       },
     ],

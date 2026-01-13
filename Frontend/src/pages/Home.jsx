@@ -5,14 +5,15 @@ import Packages from '../components/Packages'
 import AboutSection from "../components/AboutSection";
 import ServicesSection from "../components/ServicesSection";
 import AppointmentSection from "../components/AppointmentSection";
-import Footer from '../components/Footer'
-import Navbar from '../components/NavBar'
+
 import Hero from '../components/Hero'
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 const Home = () => {
   return (
     <div>
-      <Navbar/>
+     <Navbar/>
       <Hero/>
 
       <ClientReviews />
@@ -22,6 +23,7 @@ const Home = () => {
       <ServicesSection />
       <AppointmentSection />
       <Footer/>
+     
     </div>
   )
 }
