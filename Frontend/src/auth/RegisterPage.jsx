@@ -155,7 +155,7 @@ const Register = () => {
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
-          <div
+          {/* <div
             className="inline-block p-1 mb-4 rounded-full"
             style={{
               background: "linear-gradient(135deg, #BB8C4B 0%, #BB8C4B 100%)",
@@ -167,7 +167,7 @@ const Register = () => {
             >
               <div className="text-4xl">💎</div>
             </div>
-          </div>
+          </div> */}
           <h1
             className="mb-2 text-3xl font-bold md:text-4xl"
             style={{
