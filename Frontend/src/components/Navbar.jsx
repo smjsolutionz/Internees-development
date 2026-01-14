@@ -15,7 +15,7 @@ const Navbar = () => {
   }, [isOpen]);
 
   return (
-    <nav className="w-full border-b border-gray-200 bg-[#222227] relative z-50">
+    <nav className="w-full border-b border-gray-200 bg-[#222227] z-50 fixed top-0 left-0">
       {/* MAIN CONTAINER */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-16">
         <div className="py-3 sm:py-4 flex items-center justify-between">
