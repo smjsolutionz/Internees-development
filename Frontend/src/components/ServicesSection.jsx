@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BookingDrawer from "./BookingDrawer";
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaEye } from "react-icons/fa";
 import axios from "axios";
 
 const ServicesSection = () => {
@@ -13,7 +13,6 @@ const ServicesSection = () => {
   const navigate = useNavigate();
   const onClose = () => setIsOpen(false);
 
-  // Fetch services from backend
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -35,8 +34,8 @@ const ServicesSection = () => {
   if (loading) return <p className="text-center mt-10">Loading services...</p>;
 
   return (
-    <section className="bg-white py-24 mt-10 ">
-      <div className="max-w-7xl mx-auto container px-4 sm:px-6 lg:px-12" >
+    <section className="bg-white py-24 mt-10">
+      <div className="max-w-7xl mx-auto container px-4 sm:px-6 lg:px-12">
         {/* Heading */}
         <div className="text-center mb-20">
           <p className="text-[#BB8C4B] tracking-widest uppercase mb-3 text-sm sm:text-base">
@@ -49,26 +48,41 @@ const ServicesSection = () => {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
-          {services.map((service) => (
+          {services.slice(0, 6).map((service) => (
             <div
               key={service._id}
-              className="py-12 px-6 text-center border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer"
-              onClick={() => navigate(`/servicedetail/${service._id}`)}
+              className="relative group py-12 px-6 text-center border border-gray-200 rounded-lg shadow-sm hover:shadow-lg transition-all duration-300"
             >
-              {/* Image */}
-              <div className="mx-auto mb-4">
+              {/* Image container */}
+              <div className="relative mx-auto mb-4 w-64 h-48 sm:w-72 sm:h-52 rounded-lg overflow-hidden">
                 {service.images && service.images.length > 0 ? (
                   <img
                     src={`http://localhost:5000/${service.images[0].replace(/\\/g, "/")}`}
                     alt={service.name}
-                    className="w-52 h-35 object-cover mx-auto rounded-lg"
+                    className="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105 group-hover:brightness-90"
                   />
                 ) : (
-                  <div className="w-32 h-32 flex items-center justify-center bg-gray-100 text-6xl text-[#BB8C4B] rounded-lg mx-auto">
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-6xl text-[#BB8C4B] rounded-lg">
                     💈
                   </div>
                 )}
+
+                {/* Eye icon only clickable area */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+                  <div
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/servicedetail/${service._id}`);
+                    }}
+                    className="pointer-events-auto bg-[#BB8C4B] rounded-full p-3 shadow-lg cursor-pointer hover:scale-110 transition-transform duration-200"
+                  >
+                    <FaEye className="text-white text-4xl sm:text-5xl" />
+                  </div>
+                </div>
               </div>
+
+              {/* Service Name */}
+              <h3 className="text-lg font-semibold mb-2">{service.name}</h3>
 
               {/* Price */}
               {service.pricing && service.pricing.length > 0 && (
