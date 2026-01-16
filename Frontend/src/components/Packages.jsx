@@ -4,7 +4,7 @@ const PackageCard = ({ title, days, price, servicesLeft, servicesRight }) => {
   return (
     <div
       className="
-        min-w-[320px] sm:min-w-[380px] lg:min-w-[420px]
+        min-w-[320px] sm:min-w-95 lg:min-w-105
         bg-white rounded-2xl shadow-lg p-6
         flex flex-col snap-center
         hover:shadow-2xl transition-all duration-300
@@ -29,7 +29,7 @@ const PackageCard = ({ title, days, price, servicesLeft, servicesRight }) => {
         className="
           grid grid-cols-2 gap-4
           text-sm text-gray-600
-          max-h-[260px] overflow-y-auto pr-2
+          max-h-65 overflow-y-auto pr-2
           scrollbar-thin scrollbar-thumb-[#c0954d] scrollbar-track-transparent
         "
       >
