@@ -24,7 +24,7 @@ const PackageCard = ({ title, days, price, servicesLeft, servicesRight }) => {
         </span>
       </div>
 
-      {/* Services (VERTICAL SCROLL) */}
+      {/* Services */}
       <div
         className="
           grid grid-cols-2 gap-4
@@ -72,18 +72,17 @@ const Packages = () => {
   };
 
   return (
-    <section className="bg-[#faf7f2] mt-10 py-16">
+    <section className="bg-[#faf7f2] mt-10 py-16 overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4">
 
-        {/* Section Heading */}
         <h2 className="text-3xl md:text-4xl font-serif text-center mb-12">
           Our Premium Packages
         </h2>
 
-        {/* SCROLL CONTAINER WITH BUTTONS */}
-        <div className="relative">
+        {/* IMPORTANT FIX HERE */}
+        <div className="relative overflow-x-hidden">
 
-          {/* LEFT SCROLL BUTTON */}
+          {/* LEFT BUTTON */}
           <button
             onClick={scrollLeft}
             className="
@@ -96,7 +95,7 @@ const Packages = () => {
             ‹
           </button>
 
-          {/* RIGHT SCROLL BUTTON */}
+          {/* RIGHT BUTTON */}
           <button
             onClick={scrollRight}
             className="
@@ -109,17 +108,16 @@ const Packages = () => {
             ›
           </button>
 
-          {/* HORIZONTAL SCROLL */}
+          {/* SCROLL CONTAINER */}
           <div
             ref={scrollRef}
             className="
               flex gap-8 overflow-x-auto pb-6
-              snap-x snap-mandatory
-              scrollbar-thin scrollbar-thumb-[#c0954d] scrollbar-track-transparent
-              px-6
+     snap-x snap-mandatory
+     overscroll-x-contain
+     scrollbar-hide
             "
           >
-            {/* GOLD */}
             <PackageCard
               title="Gold Package"
               days="2 Days"
@@ -143,7 +141,6 @@ const Packages = () => {
               ]}
             />
 
-            {/* PLATINUM */}
             <PackageCard
               title="Platinum Package"
               days="3 Days"
@@ -165,7 +162,6 @@ const Packages = () => {
               ]}
             />
 
-            {/* DIAMOND */}
             <PackageCard
               title="Diamond Package"
               days="4 Days"
