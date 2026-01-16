@@ -7,11 +7,12 @@ import Dashboard from "./pages/admin/Dashboard";
 import ServicesAdmin from "./pages/admin/AllServicesAdmin";
 import CreateService from "./pages/admin/CreateService";
 import UpdateService from "./pages/admin/UpdateService";
-
-
-
 import ServicePage from "./pages/ServicePage";
 import ServicesDetailPage from "./pages/ServicesDetailPage";
+import Addgalleryimage from "./pages/admin/Addgalleryimage";
+import AllGalleryimagesAdmin from "./pages/admin/AllGalleryimagesAdmin"
+import UpdateGalleryAdmin from "./pages/admin/UpdateGalleryAdmin";
+
 
 export default function App() {
   return (
@@ -22,12 +23,14 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/services-admin" element={<ServicesAdmin />} />
       <Route path="/create-service" element={<CreateService />} />
-        <Route path="/services" element={<ServicePage />} />
-          <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
       <Route path="/update-service/:id" element={<UpdateService />} />
-    </Routes>
-  )}
-      
- 
+      <Route path="/services" element={<ServicePage />} />
+      <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
 
-     
+      {/* Gallery Add Image */}
+      <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
+      <Route path="/gallery-admin" element={<AllGalleryimagesAdmin />} />
+      <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
+    </Routes>
+  );
+}

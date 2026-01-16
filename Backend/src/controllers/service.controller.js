@@ -1,6 +1,8 @@
 const Service = require("../models/Service.model");
+const fs = require("fs");
+const path = require("path");
 
-// CREATE SERVICES
+// CREATE SERVICE
 const createService = async (req, res) => {
   try {
     const { name, category, description, duration, pricing } = req.body;
@@ -13,6 +15,8 @@ const createService = async (req, res) => {
     }
 
     const parsedPricing = pricing ? JSON.parse(pricing) : [];
+
+    // Store all uploaded images paths
     const images = req.files?.map(file => file.path) || [];
 
     const service = await Service.create({
@@ -72,6 +76,7 @@ const updateService = async (req, res) => {
       });
     }
 
+    // Update fields
     service.name = name || service.name;
     service.category = category || service.category;
     service.description = description || service.description;
@@ -81,7 +86,15 @@ const updateService = async (req, res) => {
       service.pricing = JSON.parse(pricing);
     }
 
+    // Handle uploaded images
     if (req.files && req.files.length > 0) {
+      // Delete old images from disk
+      service.images.forEach(oldImage => {
+        const oldPath = path.resolve(oldImage);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      });
+
+      // Save new images
       service.images = req.files.map(file => file.path);
     }
 
@@ -114,6 +127,12 @@ const deleteService = async (req, res) => {
         message: "Service not found",
       });
     }
+
+    // Delete all images from disk
+    service.images.forEach(img => {
+      const imgPath = path.resolve(img);
+      if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    });
 
     await service.deleteOne();
 
