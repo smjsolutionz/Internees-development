@@ -24,6 +24,7 @@ app.use("/api/services", serviceRoutes);
    ====================== */
 app.use("/api/customer/services", customerServicesRoutes);
 
+
 // Test root endpoint
 app.get("/", (req, res) => {
   res.send("Backend & Database are running successfully 🚀");

@@ -10,6 +10,8 @@ const connectDB = require("./config/db");
 const serviceRoutes = require("./routes/service.routes");
 const customerServicesRoutes = require("./routes/customerservices");
 const authRoutes = require("./routes/authRoutes"); // path to your auth routes file
+const galleryRoutes = require("./routes/adminGalleryRoutes");
+const CustomerGalleryRoutes=require("./routes/customerGalleryRoutes")
 
 const app = express();
 
@@ -55,6 +57,9 @@ app.use("/api/services", serviceRoutes);               // ✅ ADMIN
 app.use("/api/customer/services", customerServicesRoutes); // ✅ CUSTOMER
 
 app.use("/api/auth", authRoutes);
+app.use("/api/gallery", galleryRoutes);
+
+app.use("/api/gallery/Customer", CustomerGalleryRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
