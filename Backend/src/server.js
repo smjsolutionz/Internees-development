@@ -7,10 +7,12 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 
 // 🔹 IMPORT ROUTES
-const serviceRoutes = require("./routes/service.routes"); // Admin Services
-const customerServicesRoutes = require("./routes/customerservices"); // Customer Services
-const authRoutes = require("./routes/authRoutes"); // Auth
-const packageRoutes = require("./routes/packageRoutes"); // ✅ PACKAGES (ADMIN)
+const serviceRoutes = require("./routes/service.routes");
+const customerServicesRoutes = require("./routes/customerservices");
+const authRoutes = require("./routes/authRoutes"); // path to your auth routes file
+const galleryRoutes = require("./routes/adminGalleryRoutes");
+const CustomerGalleryRoutes=require("./routes/customerGalleryRoutes")
+const packageRoutes = require("./routes/packageRoutes");
 
 const app = express();
 
@@ -65,6 +67,9 @@ app.use("/api/customer/services", customerServicesRoutes);
    🔹 AUTH ROUTES
    ========================= */
 app.use("/api/auth", authRoutes);
+app.use("/api/gallery", galleryRoutes);
+
+app.use("/api/gallery/Customer", CustomerGalleryRoutes);
 
 // 🔹 Global Error Handler
 app.use((err, req, res, next) => {
