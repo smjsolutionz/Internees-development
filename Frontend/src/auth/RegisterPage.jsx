@@ -127,7 +127,7 @@ const Register = () => {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setTimeout(() => {
-        window.location.href = "/dashboard";
+        window.location.href = "/";
       }, 2000);
     } catch (error) {
       setErrors({ form: error.message });

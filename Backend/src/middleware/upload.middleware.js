@@ -2,28 +2,25 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Ensure folder exists
-const uploadPath = "uploads/services";
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
-
-// Storage config
+// DYNAMIC STORAGE
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadPath);
+    const folder = req.folder || "uploads/default";
+
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
+
+    cb(null, folder);
   },
+
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, unique + path.extname(file.originalname));
   },
 });
 
-// Multer instance
-const upload = multer({
+module.exports = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
-
-module.exports = upload; // ✅ CommonJS export
