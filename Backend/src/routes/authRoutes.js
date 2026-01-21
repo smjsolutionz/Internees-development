@@ -10,20 +10,34 @@ const { body } = require("express-validator");
 const {
   register,
   login,
+  logout,
+  refreshToken,
   getCurrentUser,
   forgotPassword,
   resetPassword,
+  changePassword,
+  verifyEmail,
+  resendOTP,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/auth");
 const { loginLimiter } = require("../middleware/rateLimiter");
 
 // Validation rules
 const registerValidation = [
-  body("email").isEmail().normalizeEmail(),
+  body("email")
+    .isEmail({ minDomainSegments: 2 })
+    .withMessage("Please enter a valid email address")
+    .normalizeEmail(),
+
   body("password")
     .isLength({ min: 8 })
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/),
-  body("name").trim().notEmpty(),
+    .withMessage("Password must be at least 8 characters")
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/)
+    .withMessage(
+      "Password must contain uppercase, lowercase, number and special character",
+    ),
+
+  body("name").trim().notEmpty().withMessage("Name is required"),
 ];
 
 const loginValidation = [
@@ -33,6 +47,8 @@ const loginValidation = [
 
 // Routes
 router.post("/register", registerValidation, register);
+router.post("/verify-email", verifyEmail);
+router.post("/resend-otp", resendOTP);
 router.post("/login", loginLimiter, loginValidation, login);
 router.get("/me", protect, getCurrentUser);
 router.post("/forgot-password", forgotPassword);
@@ -44,7 +60,7 @@ router.get(
   passport.authenticate("google", {
     scope: ["profile", "email"],
     session: false,
-  })
+  }),
 );
 
 router.get(
@@ -63,18 +79,18 @@ router.get(
 
       res.redirect(
         `${process.env.CLIENT_URL}/login?` +
-          `accessToken=${accessToken}&refreshToken=${refreshToken}`
+          `accessToken=${accessToken}&refreshToken=${refreshToken}`,
       );
     } catch (error) {
       res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
     }
-  }
+  },
 );
 
 // Facebook OAuth
 router.get(
   "/facebook",
-  passport.authenticate("facebook", { scope: ["email"], session: false })
+  passport.authenticate("facebook", { scope: ["email"], session: false }),
 );
 
 router.get(
@@ -93,12 +109,12 @@ router.get(
 
       res.redirect(
         `${process.env.CLIENT_URL}/login?` +
-          `accessToken=${accessToken}&refreshToken=${refreshToken}`
+          `accessToken=${accessToken}&refreshToken=${refreshToken}`,
       );
     } catch (error) {
       res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
     }
-  }
+  },
 );
 
 module.exports = router;

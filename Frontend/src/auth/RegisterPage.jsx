@@ -101,7 +101,7 @@ const Register = () => {
             phone: formData.phone || undefined,
             password: formData.password,
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -121,14 +121,16 @@ const Register = () => {
 
       setSuccess(true);
 
-      // Store tokens
+      // OPTIONAL: store tokens only if backend sends them after verification
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setTimeout(() => {
-        window.location.href = "/";
-      }, 2000);
+        window.location.href = `/verify-email?email=${encodeURIComponent(
+          formData.email,
+        )}`;
+      }, 1500);
     } catch (error) {
       setErrors({ form: error.message });
     } finally {
@@ -530,8 +532,8 @@ const Register = () => {
                 {loading
                   ? "Creating Account..."
                   : success
-                  ? "Redirecting..."
-                  : "Create Account"}
+                    ? "Redirecting..."
+                    : "Create Account"}
               </button>
             </div>
 
