@@ -73,9 +73,9 @@ const updatePackage = async (req, res) => {
     });
   }
 };
- const getCustomerPackages = async (req, res) => {
+const getCustomerPackages = async (req, res) => {
   try {
-    const packages = await Package.find({ active: true });
+    const packages = await Package.find({ isActive: true, isDeleted: false }).populate("services");
 
     res.status(200).json(packages);
   } catch (error) {
@@ -85,6 +85,8 @@ const updatePackage = async (req, res) => {
     });
   }
 };
+
+
 /* ================= GET ALL PACKAGES (ADMIN) ================= */
 const getAllPackagesAdmin = async (req, res) => {
   try {
@@ -115,6 +117,36 @@ const getAllPackagesAdmin = async (req, res) => {
     });
   }
 };
+
+/* ================= GET SINGLE PACKAGE ================= */
+const getPackageById = async (req, res) => {
+  try {
+    const pkg = await Package.findOne({
+      _id: req.params.id,
+      isActive: true,
+      isDeleted: false,
+    }).populate("services");
+
+    if (!pkg) {
+      return res.status(404).json({
+        success: false,
+        message: "Package not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: pkg,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch package",
+      error: error.message,
+    });
+  }
+};
+
 
 /* ================= TOGGLE ACTIVE / INACTIVE ================= */
 const togglePackageStatus = async (req, res) => {
@@ -170,6 +202,8 @@ module.exports = {
   updatePackage,
   getAllPackagesAdmin,
   getCustomerPackages,
+  getPackageById, 
   togglePackageStatus,
   deletePackage,
 };
+

@@ -15,7 +15,9 @@ const Packages = () => {
         const res = await axios.get(
           "http://localhost:5000/api/packages/customer"
         );
-        setPackages(res.data);
+        // ✅ Filter only active packages
+        const activePackages = res.data.filter((pkg) => pkg.isActive);
+        setPackages(activePackages);
       } catch (error) {
         console.error("Failed to fetch packages:", error);
       } finally {
