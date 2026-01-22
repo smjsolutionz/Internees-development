@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
+import VerifyEmail from "./pages/VerifyEmail";
 import Home from "./pages/Home";
 import Dashboard from "./pages/admin/Dashboard";
 
@@ -24,13 +25,12 @@ import ResetPassword from "./pages/ResetPassword";
 import ServicePage from "./pages/ServicePage";
 import ServicesDetailPage from "./pages/ServicesDetailPage";
 import Addgalleryimage from "./pages/admin/Addgalleryimage";
-import AllGalleryimageAdmin from "./pages/admin/AllGalleryimagesAdmin"
-import UpdateGalleryAdmin  from "./pages/admin/UpdateGalleryAdmin"
+import AllGalleryimageAdmin from "./pages/admin/AllGalleryimagesAdmin";
+import UpdateGalleryAdmin from "./pages/admin/UpdateGalleryAdmin";
 
 import PackageDetailPage from "./pages/PackageDetailPage";
 
 import CustomerGallerypage from "./pages/CustomerGallerypage";
-
 
 export default function App() {
   return (
@@ -40,36 +40,33 @@ export default function App() {
       <Route path="/packages/:id" element={<PackageDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-
+      <Route path="/verify-email" element={<VerifyEmail />} />
       {/* Admin Dashboard */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/dashboard" element={<Dashboard />} />
-
       {/* Services Admin */}
       <Route path="/services-admin" element={<ServicesAdmin />} />
       <Route path="/create-service" element={<CreateService />} />
       <Route path="/update-service/:id" element={<UpdateService />} />
-      <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} /> {/* ✅ Added */}
-
+      <Route
+        path="/service-details/:id"
+        element={<ServiceDetailsAdmin />}
+      />{" "}
+      {/* ✅ Added */}
       {/* Packages Admin */}
       <Route path="/packages-admin" element={<AllPackagesAdmin />} />
       <Route path="/create-package" element={<CreatePackage />} />
       <Route path="/update-package/:id" element={<UpdatePackage />} />
       <Route path="/package-details/:id" element={<PackageDetails />} />
-
-          <Route path="/services" element={<ServicePage />} />
+      <Route path="/services" element={<ServicePage />} />
       <Route path="/services" element={<ServicePage />} />
       <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
       <Route path="/update-service/:id" element={<UpdateService />} />
-        <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-         <Route path="/gallery-admin" element={<AllGalleryimageAdmin/>} />
-         <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-         <Route path="/cutomergallery" element={<CustomerGallerypage/>} />
-         
-      
-
-     
+      <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
+      <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
+      <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
+      <Route path="/cutomergallery" element={<CustomerGallerypage />} />
     </Routes>
   );
 }
