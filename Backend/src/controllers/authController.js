@@ -33,7 +33,7 @@ exports.register = async (req, res, next) => {
       }
     }
 
-    // Create user
+    // Create user (not verified yet)
     const user = await User.create({
       email,
       username,
@@ -41,7 +41,121 @@ exports.register = async (req, res, next) => {
       name,
       phone,
       role: "customer",
+      isVerified: false, // ✅ Not verified by default
     });
+
+    // Generate OTP
+    const otp = user.generateVerificationOTP();
+    await user.save({ validateBeforeSave: false });
+
+    // Send verification email
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%); padding: 30px; text-align: center; }
+          .header h1 { color: #222227; margin: 0; font-size: 28px; }
+          .content { padding: 30px; }
+          .content p { color: #333; line-height: 1.6; }
+          .otp-box { background-color: #f5f5f5; border: 2px dashed #BB8C4B; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+          .otp-code { font-size: 32px; font-weight: bold; color: #BB8C4B; letter-spacing: 8px; }
+          .footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; }
+          .warning { background-color: #fff3cd; border-left: 4px solid #BB8C4B; padding: 12px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💎 Diamond Trim Beauty Studio</h1>
+          </div>
+          <div class="content">
+            <h2>Welcome ${name}!</h2>
+            <p>Thank you for registering with Diamond Trim Beauty Studio. To complete your registration, please verify your email address using the OTP code below:</p>
+            
+            <div class="otp-box">
+              <p style="margin: 0; color: #666; font-size: 14px;">Your Verification Code</p>
+              <div class="otp-code">${otp}</div>
+            </div>
+            
+            <p>Enter this code on the verification page to activate your account.</p>
+            
+            <div class="warning">
+              <strong>⚠️ Important:</strong> This code will expire in 10 minutes. If you didn't create an account, please ignore this email.
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Diamond Trim Beauty Studio. All rights reserved.</p>
+            <p>Club Road, Near Desert Palm Hotel, Rahim Yar Khan</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Email Verification - Diamond Trim Beauty Studio",
+        html: emailHtml,
+      });
+
+      res.status(201).json({
+        success: true,
+        message:
+          "Registration successful. Please check your email for verification code.",
+        userId: user._id, // Send userId for verification page
+        email: user.email,
+      });
+    } catch (emailError) {
+      // If email fails, delete the user
+      await User.findByIdAndDelete(user._id);
+
+      console.error("Email sending failed:", emailError);
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+        error: emailError.message,
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify email with OTP
+// @route   POST /api/auth/verify-email
+// @access  Public
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    // Validate inputs
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Email and OTP are required",
+      });
+    }
+
+    // Find user
+    const user = await User.findOne({
+      email,
+      verificationOTP: otp,
+      verificationOTPExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid or expired OTP. Please request a new one.",
+      });
+    }
+
+    // Mark as verified
+    user.isVerified = true;
+    user.verificationOTP = undefined;
+    user.verificationOTPExpire = undefined;
+    await user.save({ validateBeforeSave: false });
 
     // Generate tokens
     const accessToken = generateAccessToken(user._id);
@@ -51,9 +165,9 @@ exports.register = async (req, res, next) => {
     user.refreshTokens.push({ token: refreshToken });
     await user.save({ validateBeforeSave: false });
 
-    res.status(201).json({
+    res.json({
       success: true,
-      message: "Registration successful",
+      message: "Email verified successfully",
       accessToken,
       refreshToken,
       user: {
@@ -64,6 +178,97 @@ exports.register = async (req, res, next) => {
         role: user.role,
         isVerified: user.isVerified,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Resend verification OTP
+// @route   POST /api/auth/resend-otp
+// @access  Public
+exports.resendOTP = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "No account found with this email",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        message: "Email is already verified. Please login.",
+      });
+    }
+
+    // Generate new OTP
+    const otp = user.generateVerificationOTP();
+    await user.save({ validateBeforeSave: false });
+
+    // Send email
+    const emailHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          .header { background: linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%); padding: 30px; text-align: center; }
+          .header h1 { color: #222227; margin: 0; font-size: 28px; }
+          .content { padding: 30px; }
+          .content p { color: #333; line-height: 1.6; }
+          .otp-box { background-color: #f5f5f5; border: 2px dashed #BB8C4B; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+          .otp-code { font-size: 32px; font-weight: bold; color: #BB8C4B; letter-spacing: 8px; }
+          .footer { background-color: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #999; }
+          .warning { background-color: #fff3cd; border-left: 4px solid #BB8C4B; padding: 12px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>💎 Diamond Trim Beauty Studio</h1>
+          </div>
+          <div class="content">
+            <h2>New Verification Code</h2>
+            <p>Hi ${user.name},</p>
+            <p>You requested a new verification code. Here it is:</p>
+            
+            <div class="otp-box">
+              <p style="margin: 0; color: #666; font-size: 14px;">Your Verification Code</p>
+              <div class="otp-code">${otp}</div>
+            </div>
+            
+            <div class="warning">
+              <strong>⚠️ Important:</strong> This code will expire in 10 minutes.
+            </div>
+          </div>
+          <div class="footer">
+            <p>© 2025 Diamond Trim Beauty Studio. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    await sendEmail({
+      to: user.email,
+      subject: "New Verification Code - Diamond Trim Beauty Studio",
+      html: emailHtml,
+    });
+
+    res.json({
+      success: true,
+      message: "Verification code sent to your email",
     });
   } catch (error) {
     next(error);
@@ -91,6 +296,12 @@ exports.login = async (req, res, next) => {
     // Check if account is active
     if (!user.isActive) {
       return res.status(403).json({ message: "Account is inactive" });
+    }
+    // ❌ BLOCK unverified users
+    if (!user.isVerified) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in",
+      });
     }
 
     // Verify password

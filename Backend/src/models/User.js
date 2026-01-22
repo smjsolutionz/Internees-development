@@ -58,22 +58,37 @@ const userSchema = new mongoose.Schema(
     // ✅ ADD THESE FIELDS FOR PASSWORD RESET
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    // ✅ Email Verification OTP
+    verificationOTP: String,
+    verificationOTPExpire: Date,
   },
   {
     timestamps: true,
   },
 );
-
 // Hash password before saving
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
 
-  this.password = await bcrypt.hash(this.password, 10);
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
 });
 
 // Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Generate verification OTP
+userSchema.methods.generateVerificationOTP = function () {
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  this.verificationOTP = otp;
+  this.verificationOTPExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+  return otp;
 };
 
 module.exports = mongoose.model("User", userSchema);
