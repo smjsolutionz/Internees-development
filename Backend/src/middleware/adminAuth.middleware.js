@@ -8,9 +8,11 @@ const adminRequireAuth = async (req, res, next) => {
 
     if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-    const user = await AdminUser.findById(decoded.user_id);
+    // Use decoded.id, not decoded.user_id
+    const user = await AdminUser.findById(decoded.id);
 
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
@@ -18,9 +20,11 @@ const adminRequireAuth = async (req, res, next) => {
       return res.status(403).json({ message: "Account inactive" });
     }
 
+    // Attach user info to request
     req.user = { id: user._id.toString(), role: user.role };
     return next();
   } catch (err) {
+    console.error("Auth middleware error:", err);
     return res.status(401).json({ message: "Unauthorized" });
   }
 };

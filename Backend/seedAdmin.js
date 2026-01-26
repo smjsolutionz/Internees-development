@@ -19,6 +19,7 @@ async function createAdmin() {
 
   // Create admin
   await AdminUser.create({
+      username: "superadmin",
     name: "Super Admin",
      username: "superadmin",
     email: "admin@example.com",
