@@ -31,6 +31,9 @@ import UpdateGalleryAdmin from "./pages/admin/UpdateGalleryAdmin";
 import PackageDetailPage from "./pages/PackageDetailPage";
 
 import CustomerGallerypage from "./pages/CustomerGallerypage";
+import BookAppointment from "./pages/customer/BookAppointment";
+import MyAppointments from "./pages/customer/MyAppointments";
+import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 
 export default function App() {
   return (
@@ -49,10 +52,11 @@ export default function App() {
       <Route path="/services-admin" element={<ServicesAdmin />} />
       <Route path="/create-service" element={<CreateService />} />
       <Route path="/update-service/:id" element={<UpdateService />} />
-      <Route
-        path="/service-details/:id"
-        element={<ServiceDetailsAdmin />}
-      />{" "}
+      <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
+      <Route path="/book-appointment" element={<BookAppointment />} />
+      <Route path="/my-appointments" element={<MyAppointments />} />
+      <Route path="/appointment-details" element={<AllAppointmentsAdmin />} />
+
       {/* ✅ Added */}
       {/* Packages Admin */}
       <Route path="/packages-admin" element={<AllPackagesAdmin />} />
@@ -60,21 +64,12 @@ export default function App() {
       <Route path="/update-package/:id" element={<UpdatePackage />} />
       <Route path="/package-details/:id" element={<PackageDetails />} />
       <Route path="/services" element={<ServicePage />} />
-      <Route path="/services" element={<ServicePage />} />
       <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
       <Route path="/update-service/:id" element={<UpdateService />} />
-      
-      
-     
-      
-        <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-         <Route path="/gallery-admin" element={<AllGalleryimageAdmin/>} />
-         <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-         <Route path="/cutomergallery" element={<CustomerGallerypage/>} />
-         
-      
-
-     
+      <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
+      <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
+      <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
+      <Route path="/cutomergallery" element={<CustomerGallerypage />} />
     </Routes>
   );
 }

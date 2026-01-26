@@ -11,8 +11,9 @@ const serviceRoutes = require("./routes/service.routes");
 const customerServicesRoutes = require("./routes/customerservices");
 const authRoutes = require("./routes/authRoutes"); // path to your auth routes file
 const galleryRoutes = require("./routes/adminGalleryRoutes");
-const CustomerGalleryRoutes=require("./routes/customerGalleryRoutes")
+const CustomerGalleryRoutes = require("./routes/customerGalleryRoutes");
 const packageRoutes = require("./routes/packageRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
 
 const app = express();
 
@@ -30,7 +31,7 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 
 // 🔹 Static uploads (images)
@@ -41,7 +42,7 @@ app.use(
     res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     next();
   },
-  express.static("uploads")
+  express.static("uploads"),
 );
 
 // 🔹 Health check
@@ -55,13 +56,15 @@ app.get("/api/health", (req, res) => {
 /* =========================
    🔹 ADMIN ROUTES
    ========================= */
-app.use("/api/services", serviceRoutes);       // Services (Admin)
-app.use("/api/packages", packageRoutes);       // ✅ Packages (Admin)
+app.use("/api/services", serviceRoutes); // Services (Admin)
+app.use("/api/packages", packageRoutes); // ✅ Packages (Admin)
 
 /* =========================
    🔹 CUSTOMER ROUTES
    ========================= */
 app.use("/api/customer/services", customerServicesRoutes);
+
+app.use("/api/appointments", appointmentRoutes);
 
 /* =========================
    🔹 AUTH ROUTES
