@@ -17,6 +17,7 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
+    // Prevent creating "Super Admin"
     if (name === "Super Admin") {
       return res.status(403).json({
         success: false,
@@ -61,9 +62,20 @@ const adminCreateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("adminCreateUser error:", error);
+
+    // Check for duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(409).json({
+        success: false,
+        message: `${field} already exists`,
+      });
+    }
+
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 /* =========================
    GET USERS WITH FILTERS
