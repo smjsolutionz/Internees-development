@@ -12,7 +12,7 @@ export default function CreateUser() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("USER");
+  const [role, setRole] = useState("CUSTOMER");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
