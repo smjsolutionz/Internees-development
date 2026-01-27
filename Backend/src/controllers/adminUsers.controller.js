@@ -1,8 +1,10 @@
 const bcrypt = require("bcryptjs");
 const AdminUser = require("../models/adminUser.model");
+const User = require("../models/User"); // ✅ Added User model
 
 /* =========================
    CREATE ADMIN USER
+   ✅ Prevent duplicate emails across AdminUser & User
 ========================= */
 const adminCreateUser = async (req, res) => {
   try {
@@ -22,14 +24,18 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    const emailExists = await AdminUser.findOne({ email });
-    if (emailExists) {
+    // Check duplicate email in AdminUser and User
+    const emailExistsInAdmin = await AdminUser.findOne({ email });
+    const emailExistsInUser = await User.findOne({ email });
+
+    if (emailExistsInAdmin || emailExistsInUser) {
       return res.status(409).json({
         success: false,
         message: "Email already exists",
       });
     }
 
+    // Check duplicate username in AdminUser only
     const usernameExists = await AdminUser.findOne({ username });
     if (usernameExists) {
       return res.status(409).json({
@@ -45,7 +51,7 @@ const adminCreateUser = async (req, res) => {
       username,
       email,
       password_hash,
-      role: role || "USER",
+      role: role || "ADMIN",
     });
 
     res.status(201).json({
@@ -54,60 +60,79 @@ const adminCreateUser = async (req, res) => {
       admin,
     });
   } catch (error) {
+    console.error("adminCreateUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 /* =========================
    GET USERS WITH FILTERS
-   ❌ SUPER ADMIN EXCLUDED
+   ✅ Include both AdminUser & User
+   ❌ Super Admin excluded
 ========================= */
 const adminListUsers = async (req, res) => {
   try {
     const { search, role } = req.query;
 
-    const filter = {
-      name: { $ne: "Super Admin" }, // 🔥 HARD BLOCK
-    };
+    const adminFilter = { name: { $ne: "Super Admin" } };
+    const userFilter = {};
 
-    // 🔍 Search filter
+    // Search filter
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { username: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
+      const regex = { $regex: search, $options: "i" };
+      adminFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { email: regex },
+      ];
+      userFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { email: regex },
       ];
     }
 
-    // 🎭 Role filter
+    // Role filter (optional)
     if (role) {
-      filter.role = role;
+      adminFilter.role = role;
+      userFilter.role = role.toLowerCase(); // match user.role enum
     }
 
-    const users = await AdminUser.find(filter).select("-password_hash");
+    // Fetch from both collections
+    const adminUsers = await AdminUser.find(adminFilter).select("-password_hash");
+    const customers = await User.find(userFilter).select("-password");
+
+    // Combine results
+    const allUsers = [...adminUsers, ...customers];
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      users,
+      count: allUsers.length,
+      users: allUsers,
     });
   } catch (error) {
+    console.error("adminListUsers error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 /* =========================
    GET SINGLE USER
-   ❌ SUPER ADMIN BLOCKED
+   ❌ Super Admin blocked
 ========================= */
 const adminGetUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await AdminUser.findOne({
+    let user = await AdminUser.findOne({
       _id: id,
       name: { $ne: "Super Admin" },
     }).select("-password_hash");
+
+    if (!user) {
+      // Try fetching from User collection
+      user = await User.findById(id).select("-password");
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -121,24 +146,27 @@ const adminGetUser = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.error(error);
+    console.error("adminGetUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-
 /* =========================
    UPDATE USER
-   ❌ SUPER ADMIN BLOCKED
+   ❌ Super Admin blocked
 ========================= */
 const adminUpdateUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await AdminUser.findOne({
+    let user = await AdminUser.findOne({
       _id: id,
       name: { $ne: "Super Admin" },
     });
+
+    if (!user) {
+      user = await User.findById(id);
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -156,37 +184,47 @@ const adminUpdateUser = async (req, res) => {
       user,
     });
   } catch (error) {
+    console.error("adminUpdateUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
 /* =========================
    DELETE USER
-   ❌ SUPER ADMIN BLOCKED
+   ❌ Super Admin blocked
 ========================= */
 const adminDeleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const user = await AdminUser.findOne({
+    let user = await AdminUser.findOne({
       _id: id,
       name: { $ne: "Super Admin" },
     });
 
     if (!user) {
+      user = await User.findById(id);
+    }
+
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Admin user not found or protected",
+        message: "User not found or protected",
       });
     }
 
-    await AdminUser.findByIdAndDelete(id);
+    if (user instanceof AdminUser) {
+      await AdminUser.findByIdAndDelete(id);
+    } else {
+      await User.findByIdAndDelete(id);
+    }
 
     res.status(200).json({
       success: true,
-      message: "Admin user deleted successfully",
+      message: "User deleted successfully",
     });
   } catch (error) {
+    console.error("adminDeleteUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
