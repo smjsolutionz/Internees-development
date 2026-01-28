@@ -5,7 +5,7 @@ const appointmentSchema = new mongoose.Schema(
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Customer is required"],
+      required: false, // ← Allow guest bookings
     },
     service: {
       type: mongoose.Schema.Types.ObjectId,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Search, Filter, Eye, Check, X } from "lucide-react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
 const AllAppointmentsAdmin = () => {
   const [appointments, setAppointments] = useState([]);
@@ -16,203 +17,307 @@ const AllAppointmentsAdmin = () => {
     fetchStats();
   }, [filters]);
 
-  const fetchAppointments = async () => {
-    const token = localStorage.getItem("accessToken");
-    const queryParams = new URLSearchParams(filters).toString();
+  const getAuthConfig = () => {
+    const token = localStorage.getItem("token");
 
+    // ⚠️ FOR TESTING: Allow without token
+    if (!token) {
+      console.warn("⚠️ No token - running in test mode");
+      return {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+    }
+
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    };
+  };
+
+  const fetchAppointments = async () => {
+    setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments/admin/all?${queryParams}`,
+      const config = getAuthConfig();
+
+      const params = {
+        status: filters.status || undefined,
+        date: filters.date || undefined,
+        search: filters.search || undefined,
+      };
+
+      console.log("📤 Fetching appointments with:", { params });
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/all`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          ...config,
+          params,
         },
       );
-      const data = await response.json();
-      if (data.success) {
-        setAppointments(data.appointments);
+
+      console.log("✅ Appointments response:", response.data);
+
+      if (response.data.success) {
+        setAppointments(response.data.appointments || []);
+        if (response.data.stats) {
+          setStats(response.data.stats);
+        }
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("❌ Error fetching appointments:", error);
+
+      if (error.response?.status === 401) {
+        toast.error("Authentication required. Please login.");
+      } else {
+        toast.error(
+          error.response?.data?.message || "Failed to load appointments",
+        );
+      }
+
+      // Set empty array to show "no appointments" instead of staying in loading
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchStats = async () => {
-    const token = localStorage.getItem("accessToken");
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments/admin/stats`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
+      const config = getAuthConfig();
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/stats`,
+        config,
       );
-      const data = await response.json();
-      if (data.success) {
-        setStats(data.stats);
+
+      if (response.data.success) {
+        setStats(response.data.stats || {});
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error("❌ Error fetching stats:", error);
+      // Don't show error toast for stats, just use empty stats
+      setStats({});
     }
   };
 
-  const updateStatus = async (id, status) => {
-    const token = localStorage.getItem("accessToken");
+  const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments/admin/${id}/status`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ status }),
-        },
+      const config = getAuthConfig();
+
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/${appointmentId}/status`,
+        { status: newStatus },
+        config,
       );
 
-      if (response.ok) {
+      if (response.data.success) {
+        toast.success(`Appointment ${newStatus}`);
         fetchAppointments();
-        alert("Status updated successfully");
       }
-    } catch (err) {
-      alert("Failed to update status");
+    } catch (error) {
+      console.error("❌ Status update error:", error);
+      toast.error("Failed to update status");
     }
   };
 
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: "#BB8C4B",
-      confirmed: "#22c55e",
-      completed: "#3b82f6",
-      cancelled: "#ef4444",
-      "no-show": "#f59e0b",
-    };
-    return colors[status] || "#999999";
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6" style={{ color: "#BB8C4B" }}>
-          All Appointments
-        </h1>
+  const formatTime = (time) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  };
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          {Object.entries(stats).map(([key, value]) => (
-            <div key={key} className="bg-white p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-600 capitalize">{key}</p>
-              <p className="text-2xl font-bold" style={{ color: "#BB8C4B" }}>
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
-              className="border rounded px-4 py-2"
-            />
-            <input
-              type="date"
-              value={filters.date}
-              onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-              className="border rounded px-4 py-2"
-            />
-            <select
-              value={filters.status}
-              onChange={(e) =>
-                setFilters({ ...filters, status: e.target.value })
-              }
-              className="border rounded px-4 py-2"
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Appointments Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="w-full">
-            <thead style={{ backgroundColor: "#BB8C4B" }}>
-              <tr>
-                <th className="px-6 py-3 text-left text-white">Customer</th>
-                <th className="px-6 py-3 text-left text-white">Service</th>
-                <th className="px-6 py-3 text-left text-white">Date & Time</th>
-                <th className="px-6 py-3 text-left text-white">Status</th>
-                <th className="px-6 py-3 text-left text-white">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {appointments.map((apt) => (
-                <tr key={apt._id} className="border-b">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium">{apt.customerName}</p>
-                      <p className="text-sm text-gray-600">
-                        {apt.customerEmail}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{apt.service?.name}</td>
-                  <td className="px-6 py-4">
-                    <p>{new Date(apt.appointmentDate).toLocaleDateString()}</p>
-                    <p className="text-sm text-gray-600">
-                      {apt.appointmentTime}
-                    </p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className="px-3 py-1 rounded-full text-xs font-bold"
-                      style={{
-                        backgroundColor: `${getStatusColor(apt.status)}20`,
-                        color: getStatusColor(apt.status),
-                      }}
-                    >
-                      {apt.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex gap-2">
-                      {apt.status === "pending" && (
-                        <button
-                          onClick={() => updateStatus(apt._id, "confirmed")}
-                          className="p-2 bg-green-500 text-white rounded hover:bg-green-600"
-                          title="Confirm"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() =>
-                          (window.location.href = `/appointment-details/${apt._id}`)
-                        }
-                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#BB8C4B] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading appointments...</p>
         </div>
       </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-[#BB8C4B] mb-8">
+        All Appointments
+      </h1>
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input
+          type="text"
+          placeholder="Search by name or email..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-[#BB8C4B]"
+        />
+
+        <input
+          type="date"
+          value={filters.date}
+          onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-[#BB8C4B]"
+        />
+
+        <select
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          className="border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-[#BB8C4B]"
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      {/* Stats Cards */}
+      {Object.keys(stats).length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          {["total", "pending", "confirmed", "completed", "cancelled"].map(
+            (status) => (
+              <div
+                key={status}
+                className="bg-white p-4 rounded-lg shadow border border-gray-200"
+              >
+                <p className="text-sm text-gray-600 capitalize">{status}</p>
+                <p className="text-2xl font-bold text-[#BB8C4B]">
+                  {stats[status] || 0}
+                </p>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+
+      {/* Appointments Table */}
+      {appointments.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-12 text-center">
+          <div className="text-6xl mb-4">📅</div>
+          <p className="text-gray-500 text-lg">No appointments found</p>
+          <p className="text-gray-400 text-sm mt-2">
+            Appointments will appear here once customers book services
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-[#BB8C4B] text-white">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Customer
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Service
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Date & Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {appointments.map((appointment) => (
+                  <tr key={appointment._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {appointment.customerName}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.customerEmail}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {appointment.customerPhone}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {appointment.service?.name || "N/A"}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Rs. {appointment.price}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {formatDate(appointment.appointmentDate)}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {formatTime(appointment.appointmentTime)}
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <select
+                        value={appointment.status}
+                        onChange={(e) =>
+                          handleStatusUpdate(appointment._id, e.target.value)
+                        }
+                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
+                          appointment.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : appointment.status === "confirmed"
+                              ? "bg-green-100 text-green-800"
+                              : appointment.status === "completed"
+                                ? "bg-blue-100 text-blue-800"
+                                : "bg-red-100 text-red-800"
+                        }`}
+                        disabled={
+                          appointment.status === "cancelled" ||
+                          appointment.status === "completed"
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => {
+                          console.log("Appointment details:", appointment);
+                          toast.success("Check console for details");
+                        }}
+                        className="text-[#BB8C4B] hover:text-[#A97C42] font-medium"
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
@@ -11,7 +12,7 @@ import ServicesAdmin from "./pages/admin/AllServicesAdmin";
 import CreateService from "./pages/admin/CreateService";
 import UpdateService from "./pages/admin/UpdateService";
 import ServiceDetailsAdmin from "./pages/admin/ServiceDetail"; // ✅ Import Service Details
-
+import MyAppointments from "./components/MyAppointments";
 // Packages Admin
 import AllPackagesAdmin from "./pages/admin/AllPackages";
 import CreatePackage from "./pages/admin/CreatePackage";
@@ -31,45 +32,77 @@ import UpdateGalleryAdmin from "./pages/admin/UpdateGalleryAdmin";
 import PackageDetailPage from "./pages/PackageDetailPage";
 
 import CustomerGallerypage from "./pages/CustomerGallerypage";
-import BookAppointment from "./pages/customer/BookAppointment";
-import MyAppointments from "./pages/customer/MyAppointments";
+
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
+
+// ✅ NEW Enhanced Components (Added alongside existing ones)
+import EnhancedMyAppointments from "./components/MyAppointments";
+import EnhancedAdminAppointments from "./components/admin/AdminAppointments";
 
 export default function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/packages/:id" element={<PackageDetailPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/verify-email" element={<VerifyEmail />} />
-      {/* Admin Dashboard */}
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      {/* Services Admin */}
-      <Route path="/services-admin" element={<ServicesAdmin />} />
-      <Route path="/create-service" element={<CreateService />} />
-      <Route path="/update-service/:id" element={<UpdateService />} />
-      <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
-      <Route path="/book-appointment" element={<BookAppointment />} />
-      <Route path="/my-appointments" element={<MyAppointments />} />
-      <Route path="/appointment-details" element={<AllAppointmentsAdmin />} />
+    <>
+      {/* ← ADD TOASTER HERE */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            iconTheme: {
+              primary: "#BB8C4B",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
 
-      {/* ✅ Added */}
-      {/* Packages Admin */}
-      <Route path="/packages-admin" element={<AllPackagesAdmin />} />
-      <Route path="/create-package" element={<CreatePackage />} />
-      <Route path="/update-package/:id" element={<UpdatePackage />} />
-      <Route path="/package-details/:id" element={<PackageDetails />} />
-      <Route path="/services" element={<ServicePage />} />
-      <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
-      <Route path="/update-service/:id" element={<UpdateService />} />
-      <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-      <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
-      <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-      <Route path="/cutomergallery" element={<CustomerGallerypage />} />
-    </Routes>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/packages/:id" element={<PackageDetailPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        {/* Admin Dashboard */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        {/* Services Admin */}
+        <Route path="/services-admin" element={<ServicesAdmin />} />
+        <Route path="/create-service" element={<CreateService />} />
+        <Route path="/update-service/:id" element={<UpdateService />} />
+        <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
+        <Route path="/my-appointments" element={<MyAppointments />} />
+        {/* <Route path="/book-appointment" element={<BookAppointment />} />
+
+        {/* ✅ NEW Enhanced Appointments Routes */}
+        <Route path="/appointment-details" element={<AllAppointmentsAdmin />} />
+        <Route path="/appointments" element={<AllAppointmentsAdmin />} />{" "}
+        {/* ← ADD THIS */}
+        {/* ✅ NEW Enhanced Admin Appointments */}
+        <Route
+          path="/admin/appointments"
+          element={<EnhancedAdminAppointments />}
+        />
+        <Route path="/appointments" element={<AllAppointmentsAdmin />} />
+        {/* ✅ Added */}
+        {/* Packages Admin */}
+        <Route path="/packages-admin" element={<AllPackagesAdmin />} />
+        <Route path="/create-package" element={<CreatePackage />} />
+        <Route path="/update-package/:id" element={<UpdatePackage />} />
+        <Route path="/package-details/:id" element={<PackageDetails />} />
+        <Route path="/services" element={<ServicePage />} />
+        <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
+        <Route path="/update-service/:id" element={<UpdateService />} />
+        <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
+        <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
+        <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
+        <Route path="/cutomergallery" element={<CustomerGallerypage />} />
+      </Routes>
+    </>
   );
 }

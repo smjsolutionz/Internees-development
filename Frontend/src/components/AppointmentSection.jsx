@@ -113,7 +113,10 @@ export default function AppointmentSection() {
             serviceId: formData.serviceId,
             appointmentDate: formData.date,
             appointmentTime: formData.time,
-            notes: `Name: ${formData.name}, Email: ${formData.email}, Phone: ${formData.phone}`,
+            customerName: formData.name, // ← Add this
+            customerEmail: formData.email, // ← Add this
+            customerPhone: formData.phone, // ← Add this
+            notes: "", // ← Optional notes
           }),
         },
       );

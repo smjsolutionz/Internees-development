@@ -31,16 +31,22 @@ exports.getAvailableSlots = async (req, res, next) => {
     const { date } = req.params;
     const { serviceId } = req.query;
 
+    // Validate service exists
     const service = await Service.findById(serviceId);
     if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Service not found",
+      });
     }
 
+    // Get all appointments for the date
     const appointments = await Appointment.find({
       appointmentDate: new Date(date),
       status: { $nin: ["cancelled"] },
     });
 
+    // Generate all possible slots (9 AM to 9 PM, 30-minute intervals)
     const workingHours = { start: 9, end: 21 };
     const allSlots = [];
 
@@ -54,6 +60,7 @@ exports.getAvailableSlots = async (req, res, next) => {
       }
     }
 
+    // Filter out booked slots
     const bookedSlots = appointments.map((apt) => apt.appointmentTime);
     const availableSlots = allSlots.filter(
       (slot) => !bookedSlots.includes(slot),
@@ -71,7 +78,7 @@ exports.getAvailableSlots = async (req, res, next) => {
 };
 
 /* =========================================
-   CREATE APPOINTMENT (GUEST BOOKING)
+   CREATE APPOINTMENT (AUTH + GUEST)
 ========================================= */
 exports.createAppointment = async (req, res, next) => {
   try {
@@ -85,89 +92,271 @@ exports.createAppointment = async (req, res, next) => {
       notes,
     } = req.body;
 
-    // 🔴 REQUIRED FIELD VALIDATION (FIXES 400)
-    if (
-      !serviceId ||
-      !appointmentDate ||
-      !appointmentTime ||
-      !customerName ||
-      !customerEmail ||
-      !customerPhone
-    ) {
+    console.log("📥 Received booking request:", {
+      body: req.body,
+      serviceId,
+      date: appointmentDate,
+      time: appointmentTime,
+      phone: customerPhone,
+    });
+
+    const isAuthenticated = req.user && req.user._id;
+    console.log("🔐 Authentication:", {
+      isAuthenticated,
+      userId: req.user?._id,
+    });
+
+    // Validation
+    const errors = {};
+
+    if (!serviceId) {
+      console.log("❌ Missing serviceId");
+      errors.serviceId = "Service is required";
+    }
+    if (!appointmentDate) {
+      console.log("❌ Missing appointmentDate");
+      errors.appointmentDate = "Date is required";
+    }
+    if (!appointmentTime) {
+      console.log("❌ Missing appointmentTime");
+      errors.appointmentTime = "Time is required";
+    }
+
+    if (!isAuthenticated) {
+      if (!customerName?.trim()) {
+        console.log("❌ Missing customerName");
+        errors.customerName = "Name is required";
+      }
+      if (!customerEmail?.trim()) {
+        console.log("❌ Missing customerEmail");
+        errors.customerEmail = "Email is required";
+      }
+      if (!customerPhone?.trim()) {
+        console.log("❌ Missing customerPhone");
+        errors.customerPhone = "Phone is required";
+      }
+
+      // Email validation
+      if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+        console.log("❌ Invalid email format:", customerEmail);
+        errors.customerEmail = "Invalid email format";
+      }
+
+      // Phone validation - DETAILED LOGGING
+      const phoneToTest = customerPhone
+        ? customerPhone.replace(/[-\s]/g, "")
+        : "";
+      console.log("📱 Phone validation:", {
+        original: customerPhone,
+        cleaned: phoneToTest,
+        regex: /^(\+92|0)?3[0-9]{9}$/,
+        passes: /^(\+92|0)?3[0-9]{9}$/.test(phoneToTest),
+      });
+
+      if (customerPhone && !/^(\+92|0)?3[0-9]{9}$/.test(phoneToTest)) {
+        console.log("❌ Invalid phone format");
+        errors.customerPhone = "Invalid phone number";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      console.log("❌ Validation errors found:", errors);
       return res.status(400).json({
-        message: "All fields are required",
+        success: false,
+        message: "Validation failed",
+        errors,
       });
     }
 
+    console.log("✅ Validation passed, finding service...");
+
+    // Verify service
     const service = await Service.findById(serviceId);
+
+    console.log("🔍 Service lookup:", {
+      found: !!service,
+      name: service?.name,
+      isActive: service?.isActive,
+      availableForBooking: service?.availableForBooking,
+    });
+
     if (!service) {
-      return res.status(404).json({ message: "Service not found" });
+      console.log("❌ Service not found");
+      return res.status(404).json({
+        success: false,
+        message: "Service not found",
+      });
     }
 
-    if (!service.availableForBooking) {
-      return res
-        .status(400)
-        .json({ message: "Service is not available for booking" });
+    if (service.availableForBooking === false) {
+      console.log("❌ Service not available for booking");
+      return res.status(400).json({
+        success: false,
+        message: "Service is not available for booking",
+      });
     }
 
+    console.log("✅ Service is available");
+
+    // Date validation
     const selectedDate = new Date(appointmentDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log("📅 Date validation:", {
+      selectedDate: selectedDate.toISOString(),
+      today: today.toISOString(),
+      isPast: selectedDate < today,
+    });
+
     if (selectedDate < today) {
-      return res
-        .status(400)
-        .json({ message: "Cannot book appointments in the past" });
+      console.log("❌ Date is in the past");
+      return res.status(400).json({
+        success: false,
+        message: "Cannot book appointments in the past",
+      });
     }
 
+    console.log("✅ Date validation passed, checking slot availability...");
+
+    // Check slot availability
     const existingAppointment = await Appointment.findOne({
       appointmentDate: selectedDate,
       appointmentTime,
       status: { $nin: ["cancelled"] },
     });
 
+    console.log("🔍 Slot check:", {
+      existingAppointment: !!existingAppointment,
+      date: appointmentDate,
+      time: appointmentTime,
+    });
+
     if (existingAppointment) {
+      console.log("❌ Slot already booked");
       return res.status(400).json({
+        success: false,
         message:
           "This time slot is already booked. Please choose another time.",
       });
     }
 
-    const appointment = await Appointment.create({
+    console.log("✅ Slot is available, preparing appointment data...");
+
+    // Prepare appointment data
+    const appointmentData = {
       service: serviceId,
       appointmentDate: selectedDate,
       appointmentTime,
-      duration: service.duration,
-      notes,
-      customerName,
-      customerEmail,
-      customerPhone,
-      price: service.price,
+      duration: service.duration || 60,
+      notes: notes?.trim() || "",
+      price: service.price || 0,
       status: "pending",
-    });
+    };
 
+    // Add user data
+    if (isAuthenticated) {
+      appointmentData.customer = req.user._id;
+      appointmentData.customerName = req.user.name;
+      appointmentData.customerEmail = req.user.email;
+      appointmentData.customerPhone = req.user.phone || "";
+    } else {
+      appointmentData.customerName = customerName.trim();
+      appointmentData.customerEmail = customerEmail.trim().toLowerCase();
+      appointmentData.customerPhone = customerPhone.trim();
+    }
+
+    console.log("💾 Creating appointment with data:", appointmentData);
+
+    // Create appointment
+    const appointment = await Appointment.create(appointmentData);
     await appointment.populate("service", "name description price duration");
 
+    console.log("✅ Appointment created:", appointment._id);
+
+    // Send confirmation email
     try {
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
+            .header { background: linear-gradient(135deg, #BB8C4B 0%, #D79A4A 100%); padding: 30px; text-align: center; }
+            .header h1 { color: #ffffff; margin: 0; font-size: 28px; }
+            .content { padding: 30px; }
+            .detail-box { background: #f5f5f5; padding: 15px; margin: 15px 0; border-left: 4px solid #BB8C4B; }
+            .detail-box p { margin: 8px 0; }
+            .footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>💎 Diamond Trim Beauty Studio</h1>
+            </div>
+            <div class="content">
+              <h2>Appointment Confirmation</h2>
+              <p>Hi ${appointmentData.customerName},</p>
+              <p>Your appointment has been successfully booked and is pending confirmation.</p>
+              <div class="detail-box">
+                <p><strong>Service:</strong> ${service.name}</p>
+                <p><strong>Date:</strong> ${new Date(appointmentDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+                <p><strong>Time:</strong> ${appointmentTime}</p>
+                <p><strong>Duration:</strong> ${service.duration} minutes</p>
+                <p><strong>Price:</strong> Rs. ${service.price}</p>
+              </div>
+              ${notes ? `<p><strong>Your Notes:</strong> ${notes}</p>` : ""}
+              <p>We will confirm your appointment shortly.</p>
+            </div>
+            <div class="footer">
+              <p>Diamond Trim Beauty Studio</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
       await sendEmail({
-        to: customerEmail,
+        to: appointmentData.customerEmail,
         subject: "Appointment Confirmation - Diamond Trim Beauty Studio",
-        html: `<p>Hi ${customerName},<br>Your appointment is pending confirmation.</p>`,
+        html: emailHtml,
       });
-    } catch (err) {
-      console.error("Email failed:", err);
+
+      console.log("✅ Email sent to:", appointmentData.customerEmail);
+    } catch (emailError) {
+      console.error("⚠️ Email failed (non-critical):", emailError.message);
+      // Don't fail the request if email fails
     }
+
+    console.log("✅ Booking completed successfully");
 
     res.status(201).json({
       success: true,
-      message: "Appointment booked successfully",
+      message:
+        "Appointment booked successfully! Check your email for confirmation.",
       appointment,
     });
   } catch (error) {
+    console.error("❌ Appointment creation error:", error);
+
+    if (error.name === "ValidationError") {
+      const errors = {};
+      Object.keys(error.errors).forEach((key) => {
+        errors[key] = error.errors[key].message;
+      });
+      console.log("❌ Mongoose validation errors:", errors);
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors,
+      });
+    }
+
     next(error);
   }
 };
-
 /* =========================================
    GET MY APPOINTMENTS (AUTH USERS)
 ========================================= */
@@ -191,31 +380,8 @@ exports.getMyAppointments = async (req, res, next) => {
       success: true,
       appointments,
       totalPages: Math.ceil(count / limit),
-      currentPage: page,
+      currentPage: Number(page),
       total: count,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/* =========================================
-   GET SINGLE APPOINTMENT
-========================================= */
-exports.getAppointment = async (req, res, next) => {
-  try {
-    const appointment = await Appointment.findById(req.params.id)
-      .populate("service", "name description price duration category")
-      .populate("customer", "name email phone")
-      .populate("staff", "name email phone");
-
-    if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
-    }
-
-    res.json({
-      success: true,
-      appointment,
     });
   } catch (error) {
     next(error);
@@ -228,16 +394,76 @@ exports.getAppointment = async (req, res, next) => {
 exports.cancelAppointment = async (req, res, next) => {
   try {
     const { cancellationReason } = req.body;
-    const appointment = await Appointment.findById(req.params.id);
+    const appointment = await Appointment.findById(req.params.id).populate(
+      "service",
+    );
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Check if appointment is in the past
+    const apptDate = new Date(appointment.appointmentDate);
+    const now = new Date();
+
+    if (apptDate < now) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot cancel past appointments",
+      });
+    }
+
+    // Check if already cancelled
+    if (appointment.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment is already cancelled",
+      });
     }
 
     appointment.status = "cancelled";
-    appointment.cancellationReason = cancellationReason;
+    appointment.cancellationReason =
+      cancellationReason || "Cancelled by customer";
     appointment.cancelledAt = Date.now();
     await appointment.save();
+
+    // Send cancellation email
+    try {
+      const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background: white;">
+            <div style="background: linear-gradient(135deg, #BB8C4B 0%, #D79A4A 100%); padding: 30px; text-align: center;">
+              <h1 style="color: white; margin: 0;">💎 Diamond Trim</h1>
+            </div>
+            <div style="padding: 30px;">
+              <h2>Appointment Cancelled</h2>
+              <p>Hi ${appointment.customerName},</p>
+              <p>Your appointment has been cancelled.</p>
+              <div style="background: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #ef4444;">
+                <p><strong>Service:</strong> ${appointment.service.name}</p>
+                <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> ${appointment.appointmentTime}</p>
+              </div>
+              <p>If you'd like to rebook, please visit our website.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await sendEmail({
+        to: appointment.customerEmail,
+        subject: "Appointment Cancelled - Diamond Trim",
+        html: emailHtml,
+      });
+    } catch (emailError) {
+      console.error("Email error:", emailError);
+    }
 
     res.json({
       success: true,
@@ -249,31 +475,40 @@ exports.cancelAppointment = async (req, res, next) => {
   }
 };
 
-// @desc    Get all appointments (Admin)
-// @route   GET /api/appointments/admin/all
-// @access  Private (Admin, Manager)
+// Export remaining functions...
+exports.getAppointment = async (req, res, next) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id)
+      .populate("service", "name description price duration category")
+      .populate("customer", "name email phone")
+      .populate("staff", "name email phone");
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      appointment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getAllAppointments = async (req, res, next) => {
   try {
     const { status, date, service, page = 1, limit = 20, search } = req.query;
 
     const query = {};
 
-    // Filter by status
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
+    if (date) query.appointmentDate = new Date(date);
+    if (service) query.service = service;
 
-    // Filter by date
-    if (date) {
-      query.appointmentDate = new Date(date);
-    }
-
-    // Filter by service
-    if (service) {
-      query.service = service;
-    }
-
-    // Search by customer name or email
     if (search) {
       query.$or = [
         { customerName: { $regex: search, $options: "i" } },
@@ -291,7 +526,6 @@ exports.getAllAppointments = async (req, res, next) => {
 
     const count = await Appointment.countDocuments(query);
 
-    // Get statistics
     const stats = await Appointment.aggregate([
       {
         $group: {
@@ -306,7 +540,7 @@ exports.getAllAppointments = async (req, res, next) => {
       appointments,
       stats,
       totalPages: Math.ceil(count / limit),
-      currentPage: page,
+      currentPage: Number(page),
       total: count,
     });
   } catch (error) {
@@ -314,9 +548,6 @@ exports.getAllAppointments = async (req, res, next) => {
   }
 };
 
-// @desc    Update appointment status (Admin)
-// @route   PUT /api/appointments/admin/:id/status
-// @access  Private (Admin, Staff)
 exports.updateAppointmentStatus = async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -325,47 +556,46 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       .populate("customer");
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
     }
 
     const oldStatus = appointment.status;
     appointment.status = status;
 
     if (status === "confirmed") {
-      appointment.confirmedBy = req.user._id;
+      appointment.confirmedBy = req.user?._id || null;
       appointment.confirmedAt = Date.now();
     }
 
     await appointment.save();
 
     // Send email notification
+    const statusColors = {
+      confirmed: "#22c55e",
+      completed: "#3b82f6",
+      cancelled: "#ef4444",
+    };
+
     const emailHtml = `
       <!DOCTYPE html>
       <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
-          .header { background: linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%); padding: 30px; text-align: center; }
-          .content { padding: 30px; }
-          .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1 style="color: #222227; margin: 0;">💎 Diamond Trim</h1>
+      <body style="font-family: Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #BB8C4B 0%, #D79A4A 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">💎 Diamond Trim</h1>
           </div>
-          <div class="content">
+          <div style="padding: 30px;">
             <h2>Appointment Status Updated</h2>
             <p>Hi ${appointment.customerName},</p>
-            <p>Your appointment status has been updated:</p>
-            <p><strong>Previous Status:</strong> <span class="status-badge" style="background-color: #f0f0f0;">${oldStatus}</span></p>
-            <p><strong>New Status:</strong> <span class="status-badge" style="background-color: #22c55e; color: white;">${status}</span></p>
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
-            <p><strong>Service:</strong> ${appointment.service.name}</p>
-            <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> ${appointment.appointmentTime}</p>
+            <p>Your appointment status has been updated to: <strong style="color: ${statusColors[status] || "#000"};">${status.toUpperCase()}</strong></p>
+            <div style="background: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #BB8C4B;">
+              <p><strong>Service:</strong> ${appointment.service.name}</p>
+              <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+              <p><strong>Time:</strong> ${appointment.appointmentTime}</p>
+            </div>
           </div>
         </div>
       </body>
@@ -392,22 +622,24 @@ exports.updateAppointmentStatus = async (req, res, next) => {
   }
 };
 
-// @desc    Assign staff to appointment (Admin)
-// @route   PUT /api/appointments/admin/:id/assign-staff
-// @access  Private (Admin, Manager)
 exports.assignStaff = async (req, res, next) => {
   try {
     const { staffId } = req.body;
 
-    // Verify staff exists and has correct role
     const staff = await User.findById(staffId);
     if (!staff || !["staff", "manager", "admin"].includes(staff.role)) {
-      return res.status(400).json({ message: "Invalid staff member" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid staff member",
+      });
     }
 
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
     }
 
     appointment.staff = staffId;
@@ -423,9 +655,6 @@ exports.assignStaff = async (req, res, next) => {
   }
 };
 
-// @desc    Reschedule appointment
-// @route   PUT /api/appointments/:id/reschedule
-// @access  Private
 exports.rescheduleAppointment = async (req, res, next) => {
   try {
     const { appointmentDate, appointmentTime } = req.body;
@@ -435,7 +664,10 @@ exports.rescheduleAppointment = async (req, res, next) => {
       .populate("customer");
 
     if (!appointment) {
-      return res.status(404).json({ message: "Appointment not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
     }
 
     // Check authorization
@@ -443,7 +675,10 @@ exports.rescheduleAppointment = async (req, res, next) => {
       appointment.customer._id.toString() !== req.user._id.toString() &&
       !["admin", "staff", "manager"].includes(req.user.role)
     ) {
-      return res.status(403).json({ message: "Not authorized" });
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized",
+      });
     }
 
     // Check if new slot is available
@@ -455,9 +690,10 @@ exports.rescheduleAppointment = async (req, res, next) => {
     });
 
     if (existingAppointment) {
-      return res
-        .status(400)
-        .json({ message: "This time slot is already booked" });
+      return res.status(400).json({
+        success: false,
+        message: "This time slot is already booked",
+      });
     }
 
     const oldDate = new Date(appointment.appointmentDate).toLocaleDateString();
@@ -471,20 +707,20 @@ exports.rescheduleAppointment = async (req, res, next) => {
     const emailHtml = `
       <!DOCTYPE html>
       <html>
-      <body>
-        <div style="max-width: 600px; margin: 0 auto; font-family: Arial;">
-          <div style="background: linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%); padding: 30px; text-align: center;">
-            <h1 style="color: #222227; margin: 0;">💎 Diamond Trim</h1>
+      <body style="font-family: Arial;">
+        <div style="max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #BB8C4B 0%, #D79A4A 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0;">💎 Diamond Trim</h1>
           </div>
           <div style="padding: 30px;">
             <h2>Appointment Rescheduled</h2>
             <p>Hi ${appointment.customerName},</p>
             <p>Your appointment has been rescheduled:</p>
-            <div style="background: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #ef4444;">
+            <div style="background: #fee; padding: 15px; margin: 20px 0; border-left: 4px solid #ef4444;">
               <strong>Previous:</strong><br>
               ${oldDate} at ${oldTime}
             </div>
-            <div style="background: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #22c55e;">
+            <div style="background: #efe; padding: 15px; margin: 20px 0; border-left: 4px solid #22c55e;">
               <strong>New:</strong><br>
               ${new Date(appointmentDate).toLocaleDateString()} at ${appointmentTime}
             </div>
@@ -515,9 +751,6 @@ exports.rescheduleAppointment = async (req, res, next) => {
   }
 };
 
-// @desc    Get appointment statistics (Admin)
-// @route   GET /api/appointments/admin/stats
-// @access  Private (Admin)
 exports.getAppointmentStats = async (req, res, next) => {
   try {
     const today = new Date();

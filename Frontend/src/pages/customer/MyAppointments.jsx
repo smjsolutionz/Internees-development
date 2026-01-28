@@ -5,7 +5,8 @@ import {
   Scissors,
   X,
   AlertCircle,
-  CheckCircle,
+  Filter,
+  ArrowLeft,
 } from "lucide-react";
 
 const MyAppointments = () => {
@@ -101,68 +102,44 @@ const MyAppointments = () => {
     return colors[status] || "#999999";
   };
 
-  const getStatusBadge = (status) => {
-    return (
-      <span
-        className="px-3 py-1 rounded-full text-xs font-bold uppercase"
-        style={{
-          backgroundColor: `${getStatusColor(status)}20`,
-          color: getStatusColor(status),
-        }}
-      >
-        {status}
-      </span>
-    );
-  };
-
   return (
-    <div
-      className="min-h-screen p-4"
-      style={{
-        background: "linear-gradient(135deg, #222227 0%, #303133 100%)",
-      }}
-    >
-      <div className="max-w-6xl mx-auto pt-8">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-[#060606] text-white">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-12">
           <div>
-            <h1
-              className="text-3xl font-bold mb-2"
-              style={{
-                background: "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
+            <button
+              onClick={() => (window.location.href = "/")}
+              className="flex items-center gap-2 text-gray-400 hover:text-[#BB8C4B] mb-4 transition-colors"
             >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Home</span>
+            </button>
+            <h1 className="text-4xl md:text-5xl font-serif text-[#BB8C4B]">
               My Appointments
             </h1>
-            <p className="text-sm" style={{ color: "#999999" }}>
-              Manage your bookings
-            </p>
+            <p className="text-gray-400 mt-2">Manage your bookings</p>
           </div>
           <button
             onClick={() => (window.location.href = "/book-appointment")}
-            className="px-6 py-3 rounded-lg font-bold"
-            style={{
-              background: "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)",
-              color: "#222227",
-            }}
+            className="px-6 py-3 bg-[#BB8C4B] hover:bg-[#A97C42] text-black font-medium rounded-lg transition-colors"
           >
-            + New Appointment
+            + Book New Appointment
           </button>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
+        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
           {["all", "pending", "confirmed", "completed", "cancelled"].map(
             (status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className="px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all"
-                style={{
-                  backgroundColor: filter === status ? "#BB8C4B" : "#303133",
-                  color: filter === status ? "#222227" : "#FFFFFF",
-                }}
+                className={`px-6 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+                  filter === status
+                    ? "bg-[#BB8C4B] text-black"
+                    : "bg-[#1f2024] text-gray-400 hover:text-white border-2 border-transparent hover:border-[#BB8C4B]"
+                }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
@@ -172,41 +149,24 @@ const MyAppointments = () => {
 
         {/* Appointments List */}
         {loading ? (
-          <div className="text-center py-12">
-            <div
-              className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto"
-              style={{ borderColor: "#BB8C4B", borderTopColor: "transparent" }}
-            ></div>
-            <p className="mt-4" style={{ color: "#999999" }}>
-              Loading appointments...
-            </p>
+          <div className="text-center py-20">
+            <div className="w-16 h-16 border-4 border-[#BB8C4B] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading appointments...</p>
           </div>
         ) : appointments.length === 0 ? (
-          <div
-            className="text-center py-12 rounded-lg"
-            style={{ backgroundColor: "#303133" }}
-          >
-            <Calendar
-              className="w-16 h-16 mx-auto mb-4"
-              style={{ color: "#777777" }}
-            />
-            <p className="text-lg mb-2" style={{ color: "#FFFFFF" }}>
-              No appointments found
-            </p>
-            <p className="text-sm mb-4" style={{ color: "#999999" }}>
+          <div className="text-center py-20 bg-[#1f2024] rounded-lg">
+            <Calendar className="w-20 h-20 mx-auto mb-4 text-gray-700" />
+            <p className="text-xl mb-2">No appointments found</p>
+            <p className="text-gray-400 mb-6">
               {filter === "all"
                 ? "You haven't booked any appointments yet"
                 : `No ${filter} appointments`}
             </p>
             <button
               onClick={() => (window.location.href = "/book-appointment")}
-              className="px-6 py-2 rounded-lg font-bold"
-              style={{
-                background: "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)",
-                color: "#222227",
-              }}
+              className="px-8 py-3 bg-[#BB8C4B] hover:bg-[#A97C42] text-black font-medium rounded-lg transition-colors"
             >
-              Book Now
+              Book Your First Appointment
             </button>
           </div>
         ) : (
@@ -214,91 +174,83 @@ const MyAppointments = () => {
             {appointments.map((appointment) => (
               <div
                 key={appointment._id}
-                className="p-6 rounded-lg"
-                style={{
-                  backgroundColor: "#303133",
-                  borderLeft: `4px solid ${getStatusColor(appointment.status)}`,
-                }}
+                className="bg-[#1f2024] rounded-lg p-6 border-l-4"
+                style={{ borderColor: getStatusColor(appointment.status) }}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-start gap-3">
-                    <Scissors
-                      className="w-6 h-6 mt-1"
-                      style={{ color: "#BB8C4B" }}
-                    />
-                    <div>
-                      <h3
-                        className="font-semibold text-lg"
-                        style={{ color: "#FFFFFF" }}
-                      >
-                        {appointment.service.name}
-                      </h3>
-                      <p className="text-sm" style={{ color: "#999999" }}>
-                        {appointment.service.description}
-                      </p>
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-start gap-4 mb-4">
+                      <Scissors className="w-8 h-8 text-[#BB8C4B] flex-shrink-0 mt-1" />
+                      <div>
+                        <h3 className="text-xl font-semibold mb-1">
+                          {appointment.service.name}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          {appointment.service.description}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  {getStatusBadge(appointment.status)}
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar
-                      className="w-4 h-4"
-                      style={{ color: "#BB8C4B" }}
-                    />
-                    <span className="text-sm" style={{ color: "#DDDDDD" }}>
-                      {new Date(appointment.appointmentDate).toLocaleDateString(
-                        "en-US",
-                        {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        },
-                      )}
-                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#BB8C4B]" />
+                        <span className="text-gray-300">
+                          {new Date(
+                            appointment.appointmentDate,
+                          ).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#BB8C4B]" />
+                        <span className="text-gray-300">
+                          {appointment.appointmentTime} ({appointment.duration}{" "}
+                          min)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#BB8C4B] font-semibold">
+                          PKR {appointment.price}
+                        </span>
+                      </div>
+                    </div>
+
+                    {appointment.notes && (
+                      <div className="mt-4 p-3 bg-[#060606] rounded">
+                        <p className="text-xs text-gray-500 mb-1">Notes:</p>
+                        <p className="text-sm text-gray-300">
+                          {appointment.notes}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" style={{ color: "#BB8C4B" }} />
-                    <span className="text-sm" style={{ color: "#DDDDDD" }}>
-                      {appointment.appointmentTime} ({appointment.duration} min)
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex flex-col items-end gap-3">
                     <span
-                      className="text-sm font-semibold"
-                      style={{ color: "#BB8C4B" }}
+                      className="px-4 py-2 rounded-full text-xs font-bold uppercase"
+                      style={{
+                        backgroundColor: `${getStatusColor(appointment.status)}20`,
+                        color: getStatusColor(appointment.status),
+                      }}
                     >
-                      PKR {appointment.price}
+                      {appointment.status}
                     </span>
+
+                    {appointment.status === "pending" && (
+                      <button
+                        onClick={() => setCancelModal(appointment._id)}
+                        className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-lg font-medium flex items-center gap-2 transition-colors border border-red-500/30"
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                {appointment.notes && (
-                  <div
-                    className="p-3 rounded mb-4"
-                    style={{ backgroundColor: "#222227" }}
-                  >
-                    <p className="text-xs mb-1" style={{ color: "#999999" }}>
-                      Notes:
-                    </p>
-                    <p className="text-sm" style={{ color: "#DDDDDD" }}>
-                      {appointment.notes}
-                    </p>
-                  </div>
-                )}
-
-                {appointment.status === "pending" && (
-                  <button
-                    onClick={() => setCancelModal(appointment._id)}
-                    className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all"
-                    style={{ backgroundColor: "#ef4444", color: "#FFFFFF" }}
-                  >
-                    <X className="w-4 h-4" />
-                    Cancel Appointment
-                  </button>
-                )}
               </div>
             ))}
           </div>
@@ -306,21 +258,12 @@ const MyAppointments = () => {
 
         {/* Cancel Modal */}
         {cancelModal && (
-          <div
-            className="fixed inset-0 flex items-center justify-center p-4 z-50"
-            style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
-          >
-            <div
-              className="rounded-lg p-6 max-w-md w-full"
-              style={{ backgroundColor: "#303133" }}
-            >
-              <h3
-                className="text-xl font-bold mb-4"
-                style={{ color: "#FFFFFF" }}
-              >
+          <div className="fixed inset-0 flex items-center justify-center p-4 z-50 bg-black/80">
+            <div className="bg-[#1f2024] rounded-lg p-8 max-w-md w-full border border-[#BB8C4B]/30">
+              <h3 className="text-2xl font-serif text-[#BB8C4B] mb-4">
                 Cancel Appointment
               </h3>
-              <p className="text-sm mb-4" style={{ color: "#999999" }}>
+              <p className="text-sm text-gray-400 mb-4">
                 Please provide a reason for cancellation:
               </p>
               <textarea
@@ -328,13 +271,7 @@ const MyAppointments = () => {
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={4}
                 placeholder="Reason for cancellation..."
-                className="w-full rounded-lg p-3 mb-4 focus:outline-none"
-                style={{
-                  backgroundColor: "#222227",
-                  borderWidth: "1px",
-                  borderColor: "#777777",
-                  color: "#FFFFFF",
-                }}
+                className="w-full bg-[#060606] border-2 border-gray-700 focus:border-[#BB8C4B] rounded-lg p-3 mb-4 text-white outline-none transition-colors resize-none"
               />
               <div className="flex gap-3">
                 <button
@@ -342,8 +279,7 @@ const MyAppointments = () => {
                     setCancelModal(null);
                     setCancelReason("");
                   }}
-                  className="flex-1 py-2 rounded-lg font-medium"
-                  style={{ backgroundColor: "#777777", color: "#FFFFFF" }}
+                  className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors"
                   disabled={cancelling}
                 >
                   Keep Appointment
@@ -351,13 +287,7 @@ const MyAppointments = () => {
                 <button
                   onClick={handleCancelAppointment}
                   disabled={cancelling}
-                  className="flex-1 py-2 rounded-lg font-medium"
-                  style={{
-                    backgroundColor: "#ef4444",
-                    color: "#FFFFFF",
-                    cursor: cancelling ? "not-allowed" : "pointer",
-                    opacity: cancelling ? 0.6 : 1,
-                  }}
+                  className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
                 >
                   {cancelling ? "Cancelling..." : "Confirm Cancel"}
                 </button>
