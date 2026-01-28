@@ -1,10 +1,9 @@
 const bcrypt = require("bcryptjs");
 const AdminUser = require("../models/adminUser.model");
-const User = require("../models/User"); // ✅ Added User model
+const User = require("../models/User");
 
 /* =========================
    CREATE ADMIN USER
-   ✅ Prevent duplicate emails across AdminUser & User
 ========================= */
 const adminCreateUser = async (req, res) => {
   try {
@@ -17,7 +16,6 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    // Prevent creating "Super Admin"
     if (name === "Super Admin") {
       return res.status(403).json({
         success: false,
@@ -25,7 +23,6 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    // Check duplicate email in AdminUser and User
     const emailExistsInAdmin = await AdminUser.findOne({ email });
     const emailExistsInUser = await User.findOne({ email });
 
@@ -36,7 +33,6 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    // Check duplicate username in AdminUser only
     const usernameExists = await AdminUser.findOne({ username });
     if (usernameExists) {
       return res.status(409).json({
@@ -62,25 +58,12 @@ const adminCreateUser = async (req, res) => {
     });
   } catch (error) {
     console.error("adminCreateUser error:", error);
-
-    // Check for duplicate key errors
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
-      return res.status(409).json({
-        success: false,
-        message: `${field} already exists`,
-      });
-    }
-
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
-
 /* =========================
-   GET USERS WITH FILTERS
-   ✅ Include both AdminUser & User
-   ❌ Super Admin excluded
+   LIST USERS (Admin + Customers)
 ========================= */
 const adminListUsers = async (req, res) => {
   try {
@@ -89,38 +72,38 @@ const adminListUsers = async (req, res) => {
     const adminFilter = { name: { $ne: "Super Admin" } };
     const userFilter = {};
 
-    // Search filter
     if (search) {
       const regex = { $regex: search, $options: "i" };
-      adminFilter.$or = [
-        { name: regex },
-        { username: regex },
-        { email: regex },
-      ];
-      userFilter.$or = [
-        { name: regex },
-        { username: regex },
-        { email: regex },
-      ];
+      adminFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
+      userFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
     }
 
-    // Role filter (optional)
     if (role) {
       adminFilter.role = role;
-      userFilter.role = role.toLowerCase(); // match user.role enum
+      userFilter.role = role.toLowerCase();
     }
 
-    // Fetch from both collections
     const adminUsers = await AdminUser.find(adminFilter).select("-password_hash");
     const customers = await User.find(userFilter).select("-password");
 
-    // Combine results
-    const allUsers = [...adminUsers, ...customers];
+    // ✅ Normalize status for frontend
+    const users = [
+      ...adminUsers.map(u => ({
+        ...u.toObject(),
+        status: u.status,
+        userType: "ADMIN",
+      })),
+      ...customers.map(u => ({
+        ...u.toObject(),
+        status: u.isActive ? "ACTIVE" : "INACTIVE",
+        userType: "CUSTOMER",
+      })),
+    ];
 
     res.status(200).json({
       success: true,
-      count: allUsers.length,
-      users: allUsers,
+      count: users.length,
+      users,
     });
   } catch (error) {
     console.error("adminListUsers error:", error);
@@ -130,7 +113,6 @@ const adminListUsers = async (req, res) => {
 
 /* =========================
    GET SINGLE USER
-   ❌ Super Admin blocked
 ========================= */
 const adminGetUser = async (req, res) => {
   try {
@@ -141,9 +123,11 @@ const adminGetUser = async (req, res) => {
       name: { $ne: "Super Admin" },
     }).select("-password_hash");
 
+    let userType = "ADMIN";
+
     if (!user) {
-      // Try fetching from User collection
       user = await User.findById(id).select("-password");
+      userType = "CUSTOMER";
     }
 
     if (!user) {
@@ -155,7 +139,13 @@ const adminGetUser = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      user,
+      user: {
+        ...user.toObject(),
+        status: userType === "CUSTOMER"
+          ? user.isActive ? "ACTIVE" : "INACTIVE"
+          : user.status,
+        userType,
+      },
     });
   } catch (error) {
     console.error("adminGetUser error:", error);
@@ -164,20 +154,23 @@ const adminGetUser = async (req, res) => {
 };
 
 /* =========================
-   UPDATE USER
-   ❌ Super Admin blocked
+   UPDATE USER (🔥 FIXED)
 ========================= */
 const adminUpdateUser = async (req, res) => {
   try {
     const { id } = req.params;
+    const { status, ...rest } = req.body;
 
     let user = await AdminUser.findOne({
       _id: id,
       name: { $ne: "Super Admin" },
     });
 
+    let userType = "ADMIN";
+
     if (!user) {
       user = await User.findById(id);
+      userType = "CUSTOMER";
     }
 
     if (!user) {
@@ -187,7 +180,18 @@ const adminUpdateUser = async (req, res) => {
       });
     }
 
-    Object.assign(user, req.body);
+    // Common fields update
+    Object.assign(user, rest);
+
+    // ✅ Correct status handling
+    if (status) {
+      if (userType === "CUSTOMER") {
+        user.isActive = status === "ACTIVE";
+      } else {
+        user.status = status;
+      }
+    }
+
     await user.save();
 
     res.status(200).json({
@@ -203,7 +207,6 @@ const adminUpdateUser = async (req, res) => {
 
 /* =========================
    DELETE USER
-   ❌ Super Admin blocked
 ========================= */
 const adminDeleteUser = async (req, res) => {
   try {
@@ -225,7 +228,7 @@ const adminDeleteUser = async (req, res) => {
       });
     }
 
-    if (user instanceof AdminUser) {
+    if (user.constructor.modelName === "AdminUser") {
       await AdminUser.findByIdAndDelete(id);
     } else {
       await User.findByIdAndDelete(id);
@@ -244,7 +247,7 @@ const adminDeleteUser = async (req, res) => {
 module.exports = {
   adminCreateUser,
   adminListUsers,
+  adminGetUser,
   adminUpdateUser,
   adminDeleteUser,
-  adminGetUser,
 };
