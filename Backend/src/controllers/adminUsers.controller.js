@@ -9,6 +9,7 @@ const adminCreateUser = async (req, res) => {
   try {
     const { name, username, email, password, role } = req.body;
 
+    // ✅ Check required fields
     if (!name || !username || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -16,6 +17,17 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
+    // ✅ Password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, and 1 special character",
+      });
+    }
+
+    // ✅ Prevent duplicate "Super Admin"
     if (name === "Super Admin") {
       return res.status(403).json({
         success: false,
@@ -23,6 +35,7 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
+    // ✅ Check if email already exists
     const emailExistsInAdmin = await AdminUser.findOne({ email });
     const emailExistsInUser = await User.findOne({ email });
 
@@ -33,6 +46,7 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
+    // ✅ Check if username already exists
     const usernameExists = await AdminUser.findOne({ username });
     if (usernameExists) {
       return res.status(409).json({
@@ -41,8 +55,10 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
+    // ✅ Hash the password
     const password_hash = await bcrypt.hash(password, 12);
 
+    // ✅ Create the new admin user
     const admin = await AdminUser.create({
       name,
       username,
@@ -51,10 +67,14 @@ const adminCreateUser = async (req, res) => {
       role: role || "ADMIN",
     });
 
+    // ✅ Send response without password_hash
+    const adminResponse = admin.toObject();
+    delete adminResponse.password_hash;
+
     res.status(201).json({
       success: true,
       message: "Admin user created successfully",
-      admin,
+      admin: adminResponse,
     });
   } catch (error) {
     console.error("adminCreateUser error:", error);
@@ -86,7 +106,6 @@ const adminListUsers = async (req, res) => {
     const adminUsers = await AdminUser.find(adminFilter).select("-password_hash");
     const customers = await User.find(userFilter).select("-password");
 
-    // ✅ Normalize status for frontend
     const users = [
       ...adminUsers.map(u => ({
         ...u.toObject(),
@@ -141,9 +160,12 @@ const adminGetUser = async (req, res) => {
       success: true,
       user: {
         ...user.toObject(),
-        status: userType === "CUSTOMER"
-          ? user.isActive ? "ACTIVE" : "INACTIVE"
-          : user.status,
+        status:
+          userType === "CUSTOMER"
+            ? user.isActive
+              ? "ACTIVE"
+              : "INACTIVE"
+            : user.status,
         userType,
       },
     });
@@ -154,7 +176,7 @@ const adminGetUser = async (req, res) => {
 };
 
 /* =========================
-   UPDATE USER (🔥 FIXED)
+   UPDATE USER
 ========================= */
 const adminUpdateUser = async (req, res) => {
   try {
@@ -180,10 +202,8 @@ const adminUpdateUser = async (req, res) => {
       });
     }
 
-    // Common fields update
     Object.assign(user, rest);
 
-    // ✅ Correct status handling
     if (status) {
       if (userType === "CUSTOMER") {
         user.isActive = status === "ACTIVE";
