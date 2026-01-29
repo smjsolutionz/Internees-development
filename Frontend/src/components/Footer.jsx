@@ -3,6 +3,30 @@ import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTwitter } from "react-icons/f
 import logo from "../assets/images/logo.png";
 
 const Footer = () => {
+  // Social media links array
+  const socialLinks = [
+    {
+      Icon: FaTwitter,
+      url: "https://twitter.com/diamondtrimpk",
+      label: "Twitter"
+    },
+    {
+      Icon: FaFacebookF,
+      url: "https://www.facebook.com/profile.php?id=61576290514525&rdid=YCrsfchVCdNK5sSu&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F1AQmQTKD7G%2F#",
+      label: "Facebook"
+    },
+    {
+      Icon: FaLinkedinIn,
+      url: "https://www.linkedin.com/company/diamondtrimpk",
+      label: "LinkedIn"
+    },
+    {
+      Icon: FaInstagram,
+      url: "https://www.instagram.com/diamondtrim_beauty_studio?igsh=MWVsdDZzNGc3dHoxOQ%3D%3D",
+      label: "Instagram"
+    }
+  ];
+
   return (
     <footer className="bg-[#222227] text-[#DDDDDD] pt-10 pb-6 mt-auto ">
       <div className="max-w-7xl container mx-auto px-6 md:px-16 grid md:grid-cols-3 gap-10">
@@ -17,11 +41,18 @@ const Footer = () => {
             Tempor sea ipsum diam sed clita dolore eos dolores magna erat dolore sed stet justo et dolor.
           </p>
           <div className="flex items-center gap-3 mt-2">
-            {[FaTwitter, FaFacebookF, FaLinkedinIn, FaInstagram].map((Icon, idx) => (
-              <div key={idx} className="w-10 h-10 rounded-md border-2 border-[#BB8C4B] flex items-center justify-center relative cursor-pointer hover:bg-[#BB8C4B] transition">
+            {socialLinks.map(({ Icon, url, label }, idx) => (
+              <a
+                key={idx}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="w-10 h-10 rounded-md border-2 border-[#BB8C4B] flex items-center justify-center relative cursor-pointer hover:bg-[#BB8C4B] transition"
+              >
                 <div className="absolute inset-0.5 rounded-md border-2 border-[#BB8C4B] pointer-events-none"></div>
                 <Icon className="relative z-10" />
-              </div>
+              </a>
             ))}
           </div>
         </div>
