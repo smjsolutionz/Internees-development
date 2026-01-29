@@ -18,13 +18,13 @@ const serviceSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-   pricing: { type: String, required: true },
+    pricing: { type: String, required: true },
     images: {
       type: [String],
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Service", serviceSchema);

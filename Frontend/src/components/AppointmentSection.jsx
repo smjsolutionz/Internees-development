@@ -1,17 +1,169 @@
-import React, { useState } from "react";
-
-// Import images from src/assets/images
+import React, { useState, useEffect } from "react";
 import appointmentImg from "../assets/images/appointment.jpg";
 import satelliteMap from "../assets/images/satellite-map.png";
 
 export default function AppointmentSection() {
-  const [selectedDate, setSelectedDate] = useState(""); // Track date selection
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    serviceId: "",
+    date: "",
+    time: "",
+  });
+  const [services, setServices] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+
+  // Fetch services on mount
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  // Fetch available time slots when date is selected
+  useEffect(() => {
+    if (formData.date && formData.serviceId) {
+      fetchAvailableSlots();
+    }
+  }, [formData.date, formData.serviceId]);
+
+  const fetchServices = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments/services`,
+      );
+      const data = await response.json();
+      if (data.success) {
+        setServices(data.services);
+      }
+    } catch (err) {
+      console.error("Failed to load services:", err);
+    }
+  };
+
+  const fetchAvailableSlots = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments/available-slots/${formData.date}?serviceId=${formData.serviceId}`,
+      );
+      const data = await response.json();
+      if (data.success) {
+        setAvailableSlots(data.availableSlots);
+      }
+    } catch (err) {
+      console.error("Failed to load time slots:", err);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError("");
+
+    // Reset time when date changes
+    if (name === "date") {
+      setFormData((prev) => ({ ...prev, time: "" }));
+      setAvailableSlots([]);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+
+    // Validation
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.serviceId ||
+      !formData.date ||
+      !formData.time
+    ) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    // Check if user is logged in
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      // For guests, you might want to redirect to login or handle differently
+      setError("Please login to book an appointment");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/appointments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            serviceId: formData.serviceId,
+            appointmentDate: formData.date,
+            appointmentTime: formData.time,
+            customerName: formData.name, // ← Add this
+            customerEmail: formData.email, // ← Add this
+            customerPhone: formData.phone, // ← Add this
+            notes: "", // ← Optional notes
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to book appointment");
+      }
+
+      setSuccess(true);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        serviceId: "",
+        date: "",
+        time: "",
+      });
+
+      // Redirect to appointments page after 2 seconds
+      setTimeout(() => {
+        window.location.href = "/my-appointments";
+      }, 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getMinDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    return maxDate.toISOString().split("T")[0];
+  };
 
   return (
     <section className="relative mt-10 mb-15">
       <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[600px]">
-
-        {/* LEFT IMAGE — hidden on small screens */}
+        {/* LEFT IMAGE */}
         <div
           className="hidden lg:block bg-fixed bg-cover bg-center"
           style={{
@@ -19,7 +171,7 @@ export default function AppointmentSection() {
           }}
         />
 
-        {/* RIGHT CONTENT — full width on small screens, 2/3 on lg */}
+        {/* RIGHT CONTENT */}
         <div
           className="relative lg:col-span-2 flex items-center justify-center bg-[#060606] text-white px-4 sm:px-6 lg:px-10 py-16 lg:py-24"
           style={{
@@ -29,7 +181,6 @@ export default function AppointmentSection() {
             backgroundSize: "cover",
           }}
         >
-   
           {/* OVERLAY */}
           <div className="absolute inset-0 bg-[#1f2024]/90" />
 
@@ -41,160 +192,121 @@ export default function AppointmentSection() {
 
             <p className="text-gray-400 mb-12 leading-relaxed max-w-lg text-center lg:text-left">
               Our beauty salon provides you with the highest levels of
-              professional services for you to love and celebrate yourself
-              even more...!
+              professional services for you to love and celebrate yourself even
+              more...!
             </p>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded text-red-500 text-sm">
+                {error}
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 p-4 bg-green-500/10 border border-green-500 rounded text-green-500 text-sm">
+                ✓ Appointment booked successfully! Redirecting...
+              </div>
+            )}
+
             {/* FORM */}
-            <form className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-6"
+            >
               <input
                 type="text"
+                name="name"
                 placeholder="Name"
+                value={formData.name}
+                onChange={handleChange}
                 className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full"
+                required
               />
 
               <input
                 type="email"
+                name="email"
                 placeholder="Your Email"
+                value={formData.email}
+                onChange={handleChange}
                 className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full"
+                required
               />
 
               <input
-                type="text"
+                type="tel"
+                name="phone"
                 placeholder="Your Phone No"
+                value={formData.phone}
+                onChange={handleChange}
                 className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full"
+                required
               />
 
-              <select className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full">
-                <option>Select Service</option>
-                <option>Simple Haircut Men</option>
-                <option>Fade Haircut</option>
-                <option>Signature Cut</option>
-                   <option>Beared Shave</option>
-                <option>Beared Trim</option>
-                <option>Fade Beard</option>
-                <option>Shave</option>
-                   <option>Protien Hair Restore</option>
-                <option>Long Hair Restore</option>
-                <option>Repair & Rescue</option>
-                <option>Long Hair Repairing Rescue</option>
-                   <option>Anti Dandruff</option>
-                <option>Long Hair Anti Dandruff</option>
-                <option>Hair Color Application</option>
-                <option>With Wash</option>
-                   <option>Beared Color Application</option>
-                <option>Scalp Massage (10min) </option>
-                <option>Scalp Massage (15min)</option>
-                <option>Head and Shoulder Massage (15 min)</option>
-                   <option>Head and Shoulder Massage 15 min with Vsibrator</option>
-                <option>Foot Massage</option>
-                <option>Hand Polish</option>
-                <option>Feet Polish</option>
-                          <option>Menicure Simple</option>
-                <option>Menicure with Polish</option>
-                <option>Pedicure Simple</option>
-                <option>Pedicure with Polish</option>
-                   <option>Signature Menicure</option>
-                <option>Signature Pedicure</option>
-                <option>Full Arm Polish and Scrubbing</option>
-                <option>Simple Cleansing </option>
-                   <option>Peeling Cleansing</option>
-                <option>Whitening Cleansing</option>
-                <option>Mini Facial</option>
-                <option>Johnson Expressive Cleansing</option>
-                   <option>The Bodyshop Expressive Cleansing</option>
-                <option>Dermalogica Expressive Cleansing</option>
-                <option>Under Eye Mask</option>
-                <option>Under Eye Treatment</option>
-                   <option>Face Polish</option>
-                <option>Hydro Jelly Mask</option>
-                <option>Black Mask</option>
-                <option>Hand Polish (Add on Service)</option>
-                   <option>Feet Polish (Add on Service)</option>
-                <option>Neck Polish (Add on Service)</option>
-                <option>Neck Cleansing</option>
-                <option>Lightning Streaking PER Strip</option>
-                  <option>Lightning Sreaking Long</option>
-                <option>Sreaking with Cap</option>
-                   <option>Silver Gray Hair Streaking</option>
-                <option>Silver Gray Hair Streaking Long</option>
-                <option>Beared Cutdown</option>
-                <option>Mustache Service</option>
-                   <option>Express Skin Palmer</option>
-                <option>Express Skin Johson</option>
-                <option>Express Skin Cute Pilas</option>
-                <option>eveline Even Skin Tone</option>
-                   <option>Janssen Facial</option>
-                <option>The Bodyshop Expressive Facial</option>
-                <option>Dermalogica Facial</option>
-                <option>Cheeks Threading</option>
-                  <option>Body shop</option>
-                <option>Men Diamond Trim Hair Dye</option>
-                   <option>Keune Hair Dye</option>
-                <option>Loreal Hair Dye</option>
-                <option>Just For Men Dye</option>
-                <option>Deep Cleansing Janssen</option>
+              <select
+                name="serviceId"
+                value={formData.serviceId}
+                onChange={handleChange}
+                className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full"
+                required
+              >
+                <option value="">Select Service</option>
+                {services.map((service) => (
+                  <option key={service._id} value={service._id}>
+                    {service.name} - PKR {service.price}
+                  </option>
+                ))}
               </select>
 
               {/* Date input */}
               <input
                 type="date"
+                name="date"
                 className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                value={formData.date}
+                onChange={handleChange}
+                min={getMinDate()}
+                max={getMaxDate()}
+                required
               />
 
-              {/* Time select — disabled until date is chosen */}
+              {/* Time select */}
               <select
+                name="time"
+                value={formData.time}
+                onChange={handleChange}
                 className={`h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full ${
-                  !selectedDate ? "opacity-50 cursor-not-allowed" : ""
+                  !formData.date || availableSlots.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
-                disabled={!selectedDate}
+                disabled={!formData.date || availableSlots.length === 0}
+                required
               >
-                <option>Select Time</option>
-                <option>9:00 AM</option>
-                <option>9:15 AM</option>
-                <option>09:30 AM</option>
-                 <option>9:45 AM</option>
-                <option>10:00 AM</option>
-                <option>10:15 AM</option>
-                 <option>10:30 AM</option>
-                <option>10:45 AM</option>
-                <option>11:00 AM</option>
-                 <option>11:15 AM</option>
-                <option>11:30 AM</option>
-                <option>11:45 AM</option>
-                 <option>12:00 PM</option>
-                <option>12:15 PM</option>
-                <option>12:30 PM</option>
-                 <option>12:45 PM</option>
-                <option>1:00 PM</option>
-                <option>1:15 PM</option>
-                  <option>1:30 PM</option>
-                <option>1:45 PM</option>
-                <option>2:00 PM</option>
-                 <option>2:15 PM</option>
-                <option>2:30 PM</option>
-                <option>2:45 PM</option>
-                  <option>3:00 PM</option>
-                <option>3:15 PM</option>
-                <option>3:30 PM</option>
-                 <option>3:45 PM</option>
-                <option>4:00 PM</option>
-                <option>4:15 PM</option>
-                   <option>4:30 PM</option>
-                <option>4:45 PM</option>
-                  <option>5:00 PM</option>
-                <option>5:15 PM</option>
-                <option>5:30 PM</option>
-              
+                <option value="">
+                  {!formData.date
+                    ? "Select Time"
+                    : availableSlots.length === 0
+                      ? "Loading slots..."
+                      : "Select Time"}
+                </option>
+                {availableSlots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
               </select>
             </form>
 
             {/* MAKE APPOINTMENT BUTTON */}
             <div className="mt-8 flex justify-center lg:justify-start">
               <button
-                className="
+                type="submit"
+                onClick={handleSubmit}
+                disabled={loading}
+                className={`
                   group
                   relative
                   px-10 sm:px-12
@@ -211,9 +323,10 @@ export default function AppointmentSection() {
                   hover:bg-[#A97C42]
                   hover:text-white
                   w-full sm:w-auto
-                "
+                  ${loading ? "opacity-50 cursor-not-allowed" : ""}
+                `}
               >
-                Make Appointment
+                {loading ? "Booking..." : "Make Appointment"}
                 {/* Decorative corners */}
                 <span className="absolute -top-2 -left-2 w-7 h-3 border-t-2 border-l-2 border-[#D79A4A] transition-all duration-300 group-hover:h-7 group-hover:w-20" />
                 <span className="absolute -top-2 -right-2 w-7 h-3 border-t-2 border-r-2 border-[#D79A4A] transition-all duration-300 group-hover:h-7 group-hover:w-20" />
