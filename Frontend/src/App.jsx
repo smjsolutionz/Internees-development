@@ -11,7 +11,7 @@ import ServicesAdmin from "./pages/admin/AllServicesAdmin";
 import CreateService from "./pages/admin/CreateService";
 import UpdateService from "./pages/admin/UpdateService";
 import ServiceDetailsAdmin from "./pages/admin/ServiceDetail"; // ✅ Import Service Details
-
+import MyAppointments from "./components/MyAppointments";
 // Packages Admin
 import AllPackagesAdmin from "./pages/admin/AllPackages";
 import CreatePackage from "./pages/admin/CreatePackage";
@@ -33,6 +33,7 @@ import PackageDetailPage from "./pages/PackageDetailPage";
 import CustomerGallerypage from "./pages/CustomerGallerypage";
 import CreateUser from "./pages/admin/CreateUser";
 import UpdateUser from "./pages/admin/UpdateUser";
+import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 
 // ✅ NEW: Import About and Contact pages
 import About from "./pages/About";
@@ -44,17 +45,16 @@ export default function App() {
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} /> {/* ✅ NEW: About page */}
-      <Route path="/contact" element={<Contact />} /> {/* ✅ NEW: Contact page */}
+      <Route path="/contact" element={<Contact />} />{" "}
+      {/* ✅ NEW: Contact page */}
       <Route path="/packages/:id" element={<PackageDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      
       {/* Admin Dashboard */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      
       {/* Services Admin */}
       <Route path="/services-admin" element={<ServicesAdmin />} />
       <Route path="/create-service" element={<CreateService />} />
@@ -62,24 +62,23 @@ export default function App() {
       <Route
         path="/service-details/:id"
         element={<ServiceDetailsAdmin />}
-      /> {/* ✅ Added */}
-      
+      />{" "}
+      {/* ✅ Added */}
+      <Route path="/my-appointments" element={<MyAppointments />} />
+      <Route path="/appointments" element={<AllAppointmentsAdmin />} />
       {/* Packages Admin */}
       <Route path="/packages-admin" element={<AllPackagesAdmin />} />
       <Route path="/create-package" element={<CreatePackage />} />
       <Route path="/update-package/:id" element={<UpdatePackage />} />
       <Route path="/package-details/:id" element={<PackageDetails />} />
-      
       {/* User-facing Services */}
       <Route path="/services" element={<ServicePage />} />
       <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
-      
       {/* Gallery Routes */}
       <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-      <Route path="/gallery-admin" element={<AllGalleryimageAdmin/>} />
+      <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
       <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-      <Route path="/cutomergallery" element={<CustomerGallerypage/>} />
-      
+      <Route path="/cutomergallery" element={<CustomerGallerypage />} />
       {/* User Management */}
       <Route path="/create-user" element={<CreateUser />} />
       <Route path="/edit-user/:id" element={<UpdateUser />} />

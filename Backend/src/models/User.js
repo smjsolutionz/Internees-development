@@ -34,8 +34,8 @@ const userSchema = new mongoose.Schema(
     phone: String,
     role: {
       type: String,
-      enum: ["ADMIN", "MANAGER", "INVENTORY_MANAGER", "RECEPTIONIST", "STAFF", "CUSTOMER"],
-      default: "CUSTOMER",
+      enum: ["customer", "staff", "manager", "admin", "hr"],
+      default: "customer",
     },
     isActive: {
       type: Boolean,
