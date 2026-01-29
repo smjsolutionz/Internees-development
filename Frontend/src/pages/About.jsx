@@ -78,7 +78,7 @@ const About = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
           <div className="text-center space-y-6">
             <div className="inline-block animate-fade-in">
-              <span className="px-4 py-2 bg-[#BB8C4B]/20 border border-[#BB8C4B]/30 rounded-full text-[#D79A4A] text-sm font-medium tracking-wider backdrop-blur-sm">
+              <span className="px-4 py-2 bg-[#BB8C4B]/20 border border-[#BB8C4B]/30 rounded-full text-[#BB8C4B] text-sm font-medium tracking-wider backdrop-blur-sm">
                 ABOUT US
               </span>
             </div>
@@ -263,8 +263,8 @@ const About = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] text-white py-16">
+{/* CTA Section */}
+      <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] text-white py-16 mb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
             Ready to Experience the Difference?

@@ -81,7 +81,7 @@ const Contact = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
           <div className="text-center space-y-6">
             <div className="inline-block animate-fade-in">
-              <span className="px-4 py-2 bg-[#BB8C4B]/20 border border-[#BB8C4B]/30 rounded-full text-[#D79A4A] text-sm font-medium tracking-wider backdrop-blur-sm">
+              <span className="px-4 py-2 bg-[#BB8C4B]/20 border border-[#BB8C4B]/30 rounded-full text-[#BB8C4B] Btext-sm font-medium tracking-wider backdrop-blur-sm">
                 CONTACT US
               </span>
             </div>
@@ -257,7 +257,7 @@ const Contact = () => {
               </div>
               <div className="p-6 bg-gradient-to-br from-[#222227] to-[#BB8C4B] text-white">
                 <div className="flex items-start gap-4">
-                  <MapPin className="w-6 h-6 text-[#D79A4A] flex-shrink-0 mt-1" />
+                  <MapPin className="w-6 h-6 text-[#BB8C4B] flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-serif font-bold text-lg mb-1">Visit Our Salon</h3>
                     <p className="text-gray-200">
@@ -306,8 +306,8 @@ const Contact = () => {
         </div>
       </div>
 
-      {/* CTA Section - Updated colors */}
-      <div className="bg-gradient-to-r from-[#222227] to-[#BB8C4B] text-white py-16">
+   {/* CTA Section - Updated colors */}
+      <div className="bg-gradient-to-r from-[#222227] to-[#BB8C4B] text-white py-16 mb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">
             Ready for Your Best Look?

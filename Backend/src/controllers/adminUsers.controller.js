@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const AdminUser = require("../models/adminUser.model");
 const User = require("../models/User");
+const AdminAuditLog = require("../models/adminAuditLog.model");
 
 /* =========================
    CREATE ADMIN USER
@@ -65,7 +66,21 @@ const adminCreateUser = async (req, res) => {
       email,
       password_hash,
       role: role || "ADMIN",
+       created_by_admin_id: req.user ? req.user.id : null,
     });
+    await AdminAuditLog.create({
+  action: "ADMIN_CREATED_USER",
+  actor_admin_id: req.user.id,          // the admin who created the user
+  target_user_id: admin._id,            // the new user ID
+  metadata: {
+    name: admin.name,
+    username: admin.username,
+    email: admin.email,
+    role: admin.role
+  },
+  ip_address: req.ip,
+  user_agent: req.headers["user-agent"]
+});
 
     // ✅ Send response without password_hash
     const adminResponse = admin.toObject();
