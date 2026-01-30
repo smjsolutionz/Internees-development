@@ -16,6 +16,9 @@ const packageRoutes = require("./routes/packageRoutes");
 const adminUsersRoutes = require("./routes/adminUsers.routes");
 const adminAuthRoutes = require("./routes/adminAuth.routes");
 
+const adminTeamRoutes = require("./routes/adminTeamRoutes");
+const customerTeamRoutes = require("./routes/customerTeamRoutes");
+
 
 const app = express();
 
@@ -67,6 +70,7 @@ app.use("/api/admin", adminUsersRoutes);       // Admin users CRUD
    ========================= */
 app.use("/api/customer/services", customerServicesRoutes);
 
+
 /* =========================
    🔹 AUTH ROUTES
    ========================= */
@@ -74,6 +78,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gallery", galleryRoutes);
 
 app.use("/api/gallery/Customer", CustomerGalleryRoutes);
+
+app.use("/admin", adminTeamRoutes);
+app.use("/customer", customerTeamRoutes);
 
 // 🔹 Global Error Handler
 app.use((err, req, res, next) => {
