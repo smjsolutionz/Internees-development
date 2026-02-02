@@ -15,6 +15,7 @@ const CustomerGalleryRoutes=require("./routes/customerGalleryRoutes")
 const packageRoutes = require("./routes/packageRoutes");
 const adminUsersRoutes = require("./routes/adminUsers.routes");
 const adminAuthRoutes = require("./routes/adminAuth.routes");
+const customerProfileRoutes = require("./routes/customerProfile");
 
 
 const app = express();
@@ -74,6 +75,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gallery", galleryRoutes);
 
 app.use("/api/gallery/Customer", CustomerGalleryRoutes);
+app.use("/api/customer", customerProfileRoutes);
 
 // 🔹 Global Error Handler
 app.use((err, req, res, next) => {

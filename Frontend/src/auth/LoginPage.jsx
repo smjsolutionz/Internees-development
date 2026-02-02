@@ -127,7 +127,7 @@ const handleSubmit = async (e) => {
     }
 
     // User login success
-    localStorage.setItem("accessToken", data.token);
+    localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("user", JSON.stringify(data.user));
     setSuccessMessage("Login successful! Redirecting...");
     setTimeout(() => {
