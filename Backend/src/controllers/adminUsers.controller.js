@@ -97,26 +97,27 @@ const adminCreateUser = async (req, res) => {
   }
 };
 
-/* =========================
-   LIST USERS (Admin + Customers)
-========================= */
 const adminListUsers = async (req, res) => {
   try {
     const { search, role, isVerified } = req.query;
 
-    const adminFilter = { name: { $ne: "Super Admin" } };
+    console.log("📥 Admin List Users - Query params:", {
+      search,
+      role,
+      isVerified,
+    });
 
-    // ✅ Only show verified customers by default
+    const adminFilter = { name: { $ne: "Super Admin" } };
     const userFilter = { isVerified: true };
 
-    // ✅ Optional: Allow viewing unverified users
+    // ✅ Handle isVerified filter
     if (isVerified === "false") {
       userFilter.isVerified = false;
     } else if (isVerified === "all") {
       delete userFilter.isVerified;
     }
 
-    // Search filter
+    // ✅ Handle search filter
     if (search) {
       const regex = { $regex: search, $options: "i" };
       adminFilter.$or = [
@@ -127,11 +128,15 @@ const adminListUsers = async (req, res) => {
       userFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
     }
 
-    // Role filter
-    if (role) {
+    // ✅ FIX: Handle role filter with proper collection targeting
+    let queryAdminUsers = true;
+    let queryCustomers = true;
+
+    if (role && role !== "ALL") {
       if (role === "CUSTOMER") {
-        // Only filter User collection
-        userFilter.role = role;
+        // Only query User collection, don't add role filter (all users in User collection are customers)
+        queryAdminUsers = false;
+        // Don't add userFilter.role = role because User model has CUSTOMER as default
       } else if (
         [
           "ADMIN",
@@ -141,15 +146,33 @@ const adminListUsers = async (req, res) => {
           "STAFF",
         ].includes(role)
       ) {
-        // Only filter AdminUser collection
+        // Only query AdminUser collection
+        queryCustomers = false;
         adminFilter.role = role;
       }
     }
 
-    const adminUsers =
-      await AdminUser.find(adminFilter).select("-password_hash");
-    const customers = await User.find(userFilter).select(
-      "-password -refreshTokens -verificationOTP -verificationOTPExpire -resetPasswordToken -resetPasswordExpire",
+    console.log(
+      "🔍 Query AdminUsers:",
+      queryAdminUsers,
+      "Filter:",
+      adminFilter,
+    );
+    console.log("🔍 Query Customers:", queryCustomers, "Filter:", userFilter);
+
+    // ✅ Conditionally query based on role
+    const adminUsers = queryAdminUsers
+      ? await AdminUser.find(adminFilter).select("-password_hash")
+      : [];
+
+    const customers = queryCustomers
+      ? await User.find(userFilter).select(
+          "-password -refreshTokens -verificationOTP -verificationOTPExpire -resetPasswordToken -resetPasswordExpire",
+        )
+      : [];
+
+    console.log(
+      `✅ Found ${adminUsers.length} admin users, ${customers.length} customers`,
     );
 
     const users = [
@@ -157,13 +180,13 @@ const adminListUsers = async (req, res) => {
         ...u.toObject(),
         status: u.status,
         userType: "ADMIN",
-        isVerified: true, // Admin users are always verified
+        isVerified: true,
       })),
       ...customers.map((u) => ({
         ...u.toObject(),
         status: u.isActive ? "ACTIVE" : "INACTIVE",
         userType: "CUSTOMER",
-        isVerified: u.isVerified, // ✅ Include verification status
+        isVerified: u.isVerified,
       })),
     ];
 
@@ -173,7 +196,7 @@ const adminListUsers = async (req, res) => {
       users,
     });
   } catch (error) {
-    console.error("adminListUsers error:", error);
+    console.error("❌ adminListUsers error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

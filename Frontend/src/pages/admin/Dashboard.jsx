@@ -11,28 +11,38 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
+  const [showUnverified, setShowUnverified] = useState(false);
 
   const fetchUsers = async (filters = {}) => {
     try {
       const token = localStorage.getItem("accessToken");
 
+      // ✅ Build params correctly
+      const params = { ...filters };
+
+      // Add isVerified filter if toggle is on
+      if (showUnverified) {
+        params.isVerified = "all";
+      }
+
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: filters, // 👈 role & search go here
+        headers: { Authorization: `Bearer ${token}` },
+        params, // Send all filters
       });
 
-      if (data.success) setUsers(data.users);
+      if (data.success) {
+        setUsers(data.users);
+      }
     } catch (err) {
       console.error("Fetch Users Error:", err.response?.data || err.message);
       setError("Failed to fetch users");
     }
   };
 
+  // Refetch when toggle changes
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [showUnverified]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -65,6 +75,19 @@ export default function Dashboard() {
 
           {/* Error */}
           {error && <p className="text-red-600 mb-4">{error}</p>}
+
+          {/* ✅ Toggle for Unverified Users */}
+          <div className="mb-4 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showUnverified}
+                onChange={(e) => setShowUnverified(e.target.checked)}
+                className="rounded w-4 h-4"
+              />
+              <span>Show Unverified Users</span>
+            </label>
+          </div>
 
           {/* Users Table */}
           <UsersTableAdmin users={users} refreshUsers={fetchUsers} />
