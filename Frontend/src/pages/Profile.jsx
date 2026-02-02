@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+
 import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
@@ -7,12 +8,12 @@ const Profile = () => {
   const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("accessToken"); // token stored at login
+  const token = localStorage.getItem("accessToken"); 
 
-  // Get profile on page load
+  
   useEffect(() => {
     if (!token) {
-      navigate("/login"); // redirect if not logged in
+      navigate("/login"); 
       return;
     }
 
@@ -49,8 +50,17 @@ const Profile = () => {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 border rounded shadow">
+    
+    <div className="min-h-screen bg-[#222227] flex items-start justify-center py-20 ">
+    <div className="max-w-md mx-auto mt-20 p-6 border  shadow z-10 bg-white rounded-md">
       <h2 className="text-2xl mb-4">My Profile</h2>
+      <div className="flex flex-col items-center mb-6">
+  <img
+    src={profile.profileImage || "https://i.pravatar.cc/150?img=3"}
+    alt="Profile"
+    className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
+  />
+</div>
       
       <div className="mb-3">
         <label>Name:</label>
@@ -59,9 +69,20 @@ const Profile = () => {
           name="name"
           value={profile.name || ""}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded-md"
         />
       </div>
+      <div className="mb-3">
+  <label>Username:</label>
+  <input
+    type="text"
+    name="username"
+    value={profile.username || ""}
+    onChange={handleChange}
+    className="border p-2 w-full rounded-md"
+  />
+</div>
+
 
       <div className="mb-3">
         <label>Email (cannot edit):</label>
@@ -69,9 +90,32 @@ const Profile = () => {
           type="text"
           value={profile.email || ""}
           disabled
-          className="border p-2 w-full bg-gray-100"
+          className="border p-2 w-full bg-gray-100 rounded-md"
         />
       </div>
+
+      <div className="mb-3">
+  <label>Current Password:</label>
+  <input
+    type="password"
+    name="currentPassword"
+    value={profile.currentPassword || ""}
+    onChange={handleChange}
+    className="border p-2 w-full rounded-md"
+  />
+</div>
+
+<div className="mb-3">
+  <label>New Password:</label>
+  <input
+    type="password"
+    name="newPassword"
+    value={profile.newPassword || ""}
+    onChange={handleChange}
+    className="border p-2 w-full rounded-md"
+  />
+</div>
+
 
       <div className="mb-3">
         <label>Phone:</label>
@@ -80,25 +124,28 @@ const Profile = () => {
           name="phone"
           value={profile.phone || ""}
           onChange={handleChange}
-          className="border p-2 w-full"
+          className="border p-2 w-full rounded-md"
         />
       </div>
 
       <div className="flex gap-4">
         <button
           onClick={handleUpdate}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
         >
           Save
         </button>
         <button
           onClick={handleLogout}
-          className="bg-red-600 text-white px-4 py-2 rounded"
+          className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
         >
           Logout
         </button>
       </div>
     </div>
+    </div>
+    
+    
   );
 };
 
