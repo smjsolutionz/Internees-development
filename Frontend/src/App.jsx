@@ -38,6 +38,9 @@ import ProfilePage from "./pages/admin/Profile";
 // ✅ NEW: Import About and Contact pages
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import AllTeam from "./pages/admin/AllTeam";
+import AddTeam from "./pages/admin/Addteam"
+import EditTeam from "./pages/admin/EditTeam"
 
 const isAuth = () => !!localStorage.getItem("accessToken");
 
@@ -89,12 +92,18 @@ export default function App() {
       {/* User Management */}
       <Route path="/create-user" element={<CreateUser />} />
       <Route path="/edit-user/:id" element={<UpdateUser />} />
-        <Route
+    
+<Route path="/admin/team" element={<AllTeam/>} />
+<Route path="/admin/team/add" element={<AddTeam/>} />
+<Route path="/admin/team/edit/:id" element={<EditTeam />} />
+
+  <Route
         path="/profile"
         element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
       />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
+
     </Routes>
   );
 }
