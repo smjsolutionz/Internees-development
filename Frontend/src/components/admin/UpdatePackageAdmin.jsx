@@ -7,7 +7,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function UpdatePackageAdmin() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [services, setServices] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -17,19 +16,28 @@ export default function UpdatePackageAdmin() {
     image: null,
     existingImage: "",
   });
-
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   /* ================= FETCH DATA ================= */
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return navigate("/login", { replace: true });
+
     const fetchData = async () => {
       try {
+        setLoading(true);
+
         const [pkgRes, serviceRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/packages`),
-          axios.get(`${API_BASE_URL}/api/services`),
+          axios.get(`${API_BASE_URL}/api/packages/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_BASE_URL}/api/services`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
-        const pkg = pkgRes.data.data.find((p) => p._id === id);
+        const pkg = pkgRes.data.data;
 
         setForm({
           name: pkg.name,
@@ -42,28 +50,44 @@ export default function UpdatePackageAdmin() {
 
         setServices(serviceRes.data.data);
       } catch (err) {
-        console.error(err);
+        console.error("Failed to fetch data:", err);
+        alert("Failed to load package data. Please try again.");
+        navigate("/packages-admin");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [id]);
+  }, [id, navigate]);
 
   /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("services", JSON.stringify(form.services));
-    formData.append("totalDuration", form.totalDuration);
-    formData.append("price", form.price);
-    if (form.image) formData.append("image", form.image);
+    const token = localStorage.getItem("accessToken");
+    if (!token) return navigate("/login", { replace: true });
 
-    await axios.put(`${API_BASE_URL}/api/packages/${id}`, formData);
-    navigate("/packages-admin");
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("services", JSON.stringify(form.services));
+      formData.append("totalDuration", form.totalDuration);
+      formData.append("price", form.price);
+      if (form.image) formData.append("image", form.image);
+
+      await axios.put(`${API_BASE_URL}/api/packages/${id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      navigate("/packages-admin");
+    } catch (err) {
+      console.error("Failed to update package:", err);
+      alert("Failed to update package. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading)
@@ -207,9 +231,10 @@ export default function UpdatePackageAdmin() {
             <div className="flex flex-col sm:flex-row sm:justify-start gap-4 pt-4">
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
+                disabled={submitting}
+                className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition disabled:opacity-50"
               >
-                Update Package
+                {submitting ? "Updating..." : "Update Package"}
               </button>
               <button
                 type="button"
