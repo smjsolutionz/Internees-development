@@ -12,29 +12,23 @@ export default function Dashboard() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
 
-const fetchUsers = async (filters = {}) => {
-  try {
-    const token = localStorage.getItem("accessToken");
+  const fetchUsers = async (filters = {}) => {
+    try {
+      const token = localStorage.getItem("accessToken");
 
-    const { data } = await axios.get(
-      `${API_BASE_URL}/api/admin/users`,
-      {
+      const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
         params: filters, // 👈 role & search go here
-      }
-    );
+      });
 
-    if (data.success) setUsers(data.users);
-  } catch (err) {
-    console.error("Fetch Users Error:", err.response?.data || err.message);
-    setError("Failed to fetch users");
-  }
-};
-
-
-
+      if (data.success) setUsers(data.users);
+    } catch (err) {
+      console.error("Fetch Users Error:", err.response?.data || err.message);
+      setError("Failed to fetch users");
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -57,8 +51,16 @@ const fetchUsers = async (filters = {}) => {
               value={users.length.toLocaleString()}
               color="bg-purple-500"
             />
-            <StatCard title="Total Orders" value="200,521" color="bg-blue-500" />
-            <StatCard title="Available Products" value="215,542" color="bg-pink-500" />
+            <StatCard
+              title="Total Orders"
+              value="200,521"
+              color="bg-blue-500"
+            />
+            <StatCard
+              title="Available Products"
+              value="215,542"
+              color="bg-pink-500"
+            />
           </div>
 
           {/* Error */}

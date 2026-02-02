@@ -66,21 +66,21 @@ const adminCreateUser = async (req, res) => {
       email,
       password_hash,
       role: role || "ADMIN",
-       created_by_admin_id: req.user ? req.user.id : null,
+      created_by_admin_id: req.user ? req.user.id : null,
     });
     await AdminAuditLog.create({
-  action: "ADMIN_CREATED_USER",
-  actor_admin_id: req.user.id,          // the admin who created the user
-  target_user_id: admin._id,            // the new user ID
-  metadata: {
-    name: admin.name,
-    username: admin.username,
-    email: admin.email,
-    role: admin.role
-  },
-  ip_address: req.ip,
-  user_agent: req.headers["user-agent"]
-});
+      action: "ADMIN_CREATED_USER",
+      actor_admin_id: req.user.id, // the admin who created the user
+      target_user_id: admin._id, // the new user ID
+      metadata: {
+        name: admin.name,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+      },
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
+    });
 
     // ✅ Send response without password_hash
     const adminResponse = admin.toObject();
@@ -102,35 +102,68 @@ const adminCreateUser = async (req, res) => {
 ========================= */
 const adminListUsers = async (req, res) => {
   try {
-    const { search, role } = req.query;
+    const { search, role, isVerified } = req.query;
 
     const adminFilter = { name: { $ne: "Super Admin" } };
-    const userFilter = {};
 
+    // ✅ Only show verified customers by default
+    const userFilter = { isVerified: true };
+
+    // ✅ Optional: Allow viewing unverified users
+    if (isVerified === "false") {
+      userFilter.isVerified = false;
+    } else if (isVerified === "all") {
+      delete userFilter.isVerified;
+    }
+
+    // Search filter
     if (search) {
       const regex = { $regex: search, $options: "i" };
-      adminFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
+      adminFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { email: regex },
+      ];
       userFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
     }
 
+    // Role filter
     if (role) {
-      adminFilter.role = role;
-      userFilter.role = role.toLowerCase();
+      if (role === "CUSTOMER") {
+        // Only filter User collection
+        userFilter.role = role;
+      } else if (
+        [
+          "ADMIN",
+          "MANAGER",
+          "INVENTORY_MANAGER",
+          "RECEPTIONIST",
+          "STAFF",
+        ].includes(role)
+      ) {
+        // Only filter AdminUser collection
+        adminFilter.role = role;
+      }
     }
 
-    const adminUsers = await AdminUser.find(adminFilter).select("-password_hash");
-    const customers = await User.find(userFilter).select("-password");
+    const adminUsers =
+      await AdminUser.find(adminFilter).select("-password_hash");
+    const customers = await User.find(userFilter).select(
+      "-password -refreshTokens -verificationOTP -verificationOTPExpire -resetPasswordToken -resetPasswordExpire",
+    );
 
     const users = [
-      ...adminUsers.map(u => ({
+      ...adminUsers.map((u) => ({
         ...u.toObject(),
         status: u.status,
         userType: "ADMIN",
+        isVerified: true, // Admin users are always verified
       })),
-      ...customers.map(u => ({
+      ...customers.map((u) => ({
         ...u.toObject(),
         status: u.isActive ? "ACTIVE" : "INACTIVE",
         userType: "CUSTOMER",
+        isVerified: u.isVerified, // ✅ Include verification status
       })),
     ];
 
@@ -144,7 +177,6 @@ const adminListUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 /* =========================
    GET SINGLE USER
 ========================= */
