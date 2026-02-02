@@ -5,36 +5,42 @@ const teamMemberSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     role: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      enum: ["MANAGER", "INVENTORY_MANAGER", "RECEPTIONIST", "STAFF"], // optional validation
     },
 
-    // Free text – admin jo chahay likh sakta hai
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      unique: true, // ensures no duplicate emails
+      match: [/.+\@.+\..+/, "Please enter a valid email"], // basic email validation
+    },
+
     specialty: {
       type: String,
       trim: true,
-      default: ""
+      default: "",
     },
 
     profileImage: {
-      type: String
+      type: String,
     },
 
-    bio: {
-      type: String,
-      trim: true
-    },
+   
+
 
     status: {
       type: String,
       enum: ["Active", "Inactive"],
-      default: "Active"
-    }
+      default: "Active",
+    },
   },
   { timestamps: true }
 );

@@ -7,6 +7,7 @@ import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
   const [openGallery, setOpenGallery] = useState(false);
+  const [openTeam, setOpenTeam] = useState(false);
 
   const menu = [
     { name: "Dashboard", path: "/dashboard" },
@@ -56,6 +57,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
 
         {/* Menu */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          {/* Main links */}
           {menu.map((item) => (
             <Link
               key={item.name}
@@ -104,6 +106,43 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
                   }`}
                 >
                   Add New Image
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Team Dropdown */}
+          <div>
+            <button
+              onClick={() => setOpenTeam(!openTeam)}
+              className="w-full flex justify-between items-center px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
+            >
+              <span>Team</span>
+              {openTeam ? <FaChevronUp /> : <FaChevronDown />}
+            </button>
+
+            {openTeam && (
+              <div className="ml-4 mt-2 space-y-1">
+                <Link
+                  to="/admin/team"
+                  className={`block px-4 py-2 text-sm rounded-md ${
+                    location.pathname === "/admin/team"
+                      ? "bg-[#BB8C4B]"
+                      : "hover:bg-white/10"
+                  }`}
+                >
+                  All Members
+                </Link>
+
+                <Link
+                  to="/admin/team/add"
+                  className={`block px-4 py-2 text-sm rounded-md ${
+                    location.pathname === "/admin/team/add"
+                      ? "bg-[#BB8C4B]"
+                      : "hover:bg-white/10"
+                  }`}
+                >
+                  Add Member
                 </Link>
               </div>
             )}

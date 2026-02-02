@@ -37,6 +37,9 @@ import UpdateUser from "./pages/admin/UpdateUser";
 // ✅ NEW: Import About and Contact pages
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import AllTeam from "./pages/admin/AllTeam";
+import AddTeam from "./pages/admin/Addteam"
+import EditTeam from "./pages/admin/EditTeam"
 
 export default function App() {
   return (
@@ -83,6 +86,11 @@ export default function App() {
       {/* User Management */}
       <Route path="/create-user" element={<CreateUser />} />
       <Route path="/edit-user/:id" element={<UpdateUser />} />
+    
+<Route path="/admin/team" element={<AllTeam/>} />
+<Route path="/admin/team/add" element={<AddTeam/>} />
+<Route path="/admin/team/edit/:id" element={<EditTeam />} />
+
     </Routes>
   );
 }
