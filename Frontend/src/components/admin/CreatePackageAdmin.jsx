@@ -19,16 +19,43 @@ export default function CreatePackageAdmin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  /* ===============================
+     ADMIN AUTH GUARD
+  =============================== */
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/services`).then((res) => {
-      setServices(res.data.data);
-    });
-  }, []);
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
+    axios
+      .get(`${API_BASE_URL}/api/services`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setServices(res.data.data);
+      })
+      .catch(() => {
+        // token invalid / expired
+        localStorage.clear();
+        navigate("/login", { replace: true });
+      });
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
 
     try {
       const formData = new FormData();
@@ -38,8 +65,14 @@ export default function CreatePackageAdmin() {
       formData.append("price", form.price);
       if (form.image) formData.append("image", form.image);
 
-      await axios.post(`${API_BASE_URL}/api/packages`, formData);
-      navigate("/packages-admin");
+      await axios.post(`${API_BASE_URL}/api/packages`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      navigate("/packages-admin", { replace: true });
     } catch (err) {
       console.error(err);
       setError("Failed to create package");
@@ -52,14 +85,12 @@ export default function CreatePackageAdmin() {
     <div className="flex flex-col min-h-screen bg-gray-100 px-4 sm:px-6 lg:px-12 py-6">
       <main className="flex-1 w-full">
         <section className="max-w-3xl mx-auto w-full">
-          {/* PAGE TITLE */}
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 text-center text-gray-800">
             Create New Package
           </h2>
 
           {error && <p className="text-red-600 mb-4 text-center">{error}</p>}
 
-          {/* FORM */}
           <form
             onSubmit={handleSubmit}
             className="space-y-4 sm:space-y-6 md:space-y-8 bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow w-full"
@@ -72,13 +103,15 @@ export default function CreatePackageAdmin() {
               <input
                 type="text"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, name: e.target.value })
+                }
                 className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
               />
             </div>
 
-            {/* Services Multi Select */}
+            {/* Services */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
                 Select Services
@@ -105,12 +138,11 @@ export default function CreatePackageAdmin() {
                       className="accent-green-600"
                     />
                     <span>
-  {service.name}
-  <span className="text-gray-500 text-xs ml-1">
-    ({service.duration})
-  </span>
-</span>
-
+                      {service.name}
+                      <span className="text-gray-500 text-xs ml-1">
+                        ({service.duration})
+                      </span>
+                    </span>
                   </label>
                 ))}
               </div>
@@ -123,7 +155,6 @@ export default function CreatePackageAdmin() {
               </label>
               <input
                 type="text"
-                placeholder="e.g., 3 hours"
                 value={form.totalDuration}
                 onChange={(e) =>
                   setForm({ ...form, totalDuration: e.target.value })
@@ -140,9 +171,10 @@ export default function CreatePackageAdmin() {
               </label>
               <input
                 type="text"
-                placeholder="e.g., Rs5000"
                 value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, price: e.target.value })
+                }
                 className="w-full sm:w-48 border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 required
               />
@@ -162,7 +194,7 @@ export default function CreatePackageAdmin() {
               />
             </div>
 
-            {/* Submit Button */}
+            {/* Buttons */}
             <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
               <button
                 type="submit"
@@ -174,7 +206,9 @@ export default function CreatePackageAdmin() {
 
               <button
                 type="button"
-                onClick={() => navigate("/packages-admin")}
+                onClick={() =>
+                  navigate("/packages-admin", { replace: true })
+                }
                 className="w-full sm:w-auto bg-gray-300 text-gray-700 px-6 py-3 rounded hover:bg-gray-400 transition"
               >
                 Cancel

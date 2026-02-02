@@ -15,11 +15,27 @@ export default function AllServicesAdmin() {
 
   const fetchServices = async () => {
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/services`);
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/login"); // redirect if no token
+        return;
+      }
+
+      const { data } = await axios.get(`${API_BASE_URL}/api/services`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (data.success) setServices(data.data);
       else setError("Failed to fetch services");
     } catch (err) {
       setError("Error fetching services");
+      // redirect to login if unauthorized
+      if (err.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      }
     }
   };
 
@@ -34,15 +50,10 @@ export default function AllServicesAdmin() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-
         <Topbar setSidebarOpen={setSidebarOpen} />
 
         <main className="flex-1 p-4 sm:p-6">
-
-          {error && (
-            <p className="text-red-600 text-center mb-4">{error}</p>
-          )}
-
+          {error && <p className="text-red-600 text-center mb-4">{error}</p>}
           <ServicesTableAdmin services={services} />
         </main>
       </div>

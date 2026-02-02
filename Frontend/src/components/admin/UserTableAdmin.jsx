@@ -17,14 +17,15 @@ const ROLES = [
 
 export default function UsersTableAdmin({ users, refreshUsers }) {
   const navigate = useNavigate();
-
   const [activeRole, setActiveRole] = useState("ALL");
   const [search, setSearch] = useState("");
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
   const [deleteUserName, setDeleteUserName] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
+  // ================= FILTERS =================
   const applyFilters = (roleValue, searchValue) => {
     const filters = {};
     if (roleValue && roleValue !== "ALL") filters.role = roleValue;
@@ -43,6 +44,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
     applyFilters(activeRole, value);
   };
 
+  // ================= DELETE USER =================
   const openDeleteModal = (id, name) => {
     setDeleteUserId(id);
     setDeleteUserName(name);
@@ -53,11 +55,15 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
     setDeleteUserId(null);
     setDeleteUserName("");
     setShowDeleteModal(false);
+    setDeleting(false);
   };
 
   const handleDelete = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return navigate("/login", { replace: true });
+
     try {
-      const token = localStorage.getItem("accessToken");
+      setDeleting(true);
       await axios.delete(`${API_BASE_URL}/api/admin/users/${deleteUserId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -66,6 +72,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
     } catch (err) {
       console.error(err);
       alert("Failed to delete user.");
+      setDeleting(false);
     }
   };
 
@@ -177,15 +184,16 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
             <div className="flex justify-end gap-3">
               <button
                 onClick={closeDeleteModal}
-                className="px-4 py-2 rounded bg-gray-200"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded bg-red-600 text-white"
+                disabled={deleting}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               >
-                Delete
+                {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
