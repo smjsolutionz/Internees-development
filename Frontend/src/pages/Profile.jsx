@@ -84,33 +84,12 @@ const Profile = () => {
 </div>
 
 
-      <div className="mb-3">
-        <label>Email (cannot edit):</label>
-        <input
-          type="text"
-          value={profile.email || ""}
-          disabled
-          className="border p-2 w-full bg-gray-100 rounded-md"
-        />
-      </div>
-
-      <div className="mb-3">
-  <label>Current Password:</label>
+     <div className="mb-3">
+  <label>Email:</label>
   <input
-    type="password"
-    name="currentPassword"
-    value={profile.currentPassword || ""}
-    onChange={handleChange}
-    className="border p-2 w-full rounded-md"
-  />
-</div>
-
-<div className="mb-3">
-  <label>New Password:</label>
-  <input
-    type="password"
-    name="newPassword"
-    value={profile.newPassword || ""}
+    type="email"
+    name="email"
+    value={profile.email || ""}
     onChange={handleChange}
     className="border p-2 w-full rounded-md"
   />
