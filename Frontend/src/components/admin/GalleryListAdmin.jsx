@@ -12,11 +12,31 @@ export default function GalleryList() {
 
   const navigate = useNavigate();
 
-  // Fetch all images
+  // 🔐 ADMIN AUTH PROTECTION
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+    fetchImages();
+  }, [navigate]);
+
+  // Fetch all images (ADMIN)
   const fetchImages = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/gallery");
+      const token = localStorage.getItem("accessToken");
+
+      const res = await axios.get(
+        "http://localhost:5000/api/gallery",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       if (res.data && Array.isArray(res.data)) {
         setImages(res.data);
         setError("");
@@ -32,20 +52,28 @@ export default function GalleryList() {
     }
   };
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
-  // Delete
+  // Delete confirm
   const confirmDelete = (image) => {
     setSelectedImage(image);
     setShowDeleteModal(true);
   };
 
+  // Delete image (ADMIN)
   const deleteImage = async () => {
     if (!selectedImage) return;
+
     try {
-      await axios.delete(`http://localhost:5000/api/gallery/${selectedImage._id}`);
+      const token = localStorage.getItem("accessToken");
+
+      await axios.delete(
+        `http://localhost:5000/api/gallery/${selectedImage._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       fetchImages();
       setShowDeleteModal(false);
       setSelectedImage(null);
@@ -59,17 +87,16 @@ export default function GalleryList() {
   if (error) return <p className="p-6 text-red-600">{error}</p>;
 
   return (
+    /* ⬇️ UI COMPLETELY UNCHANGED ⬇️ */
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 text-center">All Gallery Images</h2>
 
-      {/* Responsive grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {images.map((img) => (
           <div
             key={img._id}
             className="bg-white shadow-lg rounded-lg overflow-hidden transform hover:scale-105 transition duration-300"
           >
-            {/* Image container */}
             <div className="w-full h-60 overflow-hidden rounded-t-lg flex items-center justify-center bg-gray-100">
               {img.image_url ? (
                 <img
@@ -84,7 +111,6 @@ export default function GalleryList() {
               )}
             </div>
 
-            {/* Card content */}
             <div className="p-4">
               <h3 className="text-lg font-semibold">{img.title || "No Title"}</h3>
               <p className="text-sm text-gray-500">{img.category || "No Category"}</p>

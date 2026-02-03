@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
@@ -34,10 +34,16 @@ import PackageDetailPage from "./pages/PackageDetailPage";
 import CustomerGallerypage from "./pages/CustomerGallerypage";
 import CreateUser from "./pages/admin/CreateUser";
 import UpdateUser from "./pages/admin/UpdateUser";
+import ProfilePage from "./pages/admin/Profile";
 
 // ✅ NEW: Import About and Contact pages
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import AllTeam from "./pages/admin/AllTeam";
+import AddTeam from "./pages/admin/Addteam"
+import EditTeam from "./pages/admin/EditTeam"
+
+const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
   return (
@@ -56,7 +62,10 @@ export default function App() {
       {/* Admin Dashboard */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+  path="/dashboard"
+  element={isAuth() ? <Dashboard /> : <Navigate to="/login" replace />}
+/>
       
       {/* Services Admin */}
       <Route path="/services-admin" element={<ServicesAdmin />} />
@@ -86,7 +95,18 @@ export default function App() {
       {/* User Management */}
       <Route path="/create-user" element={<CreateUser />} />
       <Route path="/edit-user/:id" element={<UpdateUser />} />
-      
+    
+<Route path="/admin/team" element={<AllTeam/>} />
+<Route path="/admin/team/add" element={<AddTeam/>} />
+<Route path="/admin/team/edit/:id" element={<EditTeam />} />
+
+  <Route
+        path="/profile"
+        element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
+      />
+
+      <Route path="*" element={<Navigate to="/login" replace />} />
+
     </Routes>
   );
 }

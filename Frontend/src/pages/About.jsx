@@ -2,30 +2,10 @@ import React from "react";
 import { Scissors, Users, Award, Clock, Sparkles, Heart } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import SalonTeam from "../components/SalonTeam"
 
 const About = () => {
-  const teamMembers = [
-    {
-      name: "Mussyab Khan",
-      role: "Master Stylist",
-      image: "team1.webp",
-    },
-    {
-      name: "Basit",
-      role: "Senior Barber",
-      image: "team2.webp",
-    },
-    {
-      name: "Jawwad",
-      role: "Hair Specialist",
-      image: "team3.webp",
-    },
-    {
-      name: "Waris Kotwal",
-      role: "Grooming Expert",
-      image: "team4.webp",
-    },
-  ];
+ 
 
   const highlights = [
     {
@@ -219,48 +199,7 @@ const About = () => {
         </div>
 
         {/* Team Section */}
-        <div>
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <div className="h-1 w-12 bg-[#BB8C4B]"></div>
-              <span className="text-[#BB8C4B] font-semibold tracking-wider uppercase text-sm">
-                Best Salon
-              </span>
-              <div className="h-1 w-12 bg-[#BB8C4B]"></div>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#222227]">
-              Meet Our <span className="text-[#BB8C4B]">Team</span>
-            </h2>
-          </div>
-
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {teamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3"
-              >
-                <div className="aspect-[3/4] overflow-hidden bg-gray-200">
-                  <img
-                    src={`https://diamondtrimpk.com/website-front-end/img/${member.image}`}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#222227] via-[#222227]/95 to-transparent p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                  <h3 className="text-xl font-bold text-white mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-[#BB8C4B] text-sm tracking-wider uppercase">
-                    {member.role}
-                  </p>
-                </div>
-
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#BB8C4B]/0 to-[#BB8C4B]/0 group-hover:from-[#BB8C4B]/20 group-hover:to-[#222227]/40 transition-all duration-500 pointer-events-none"></div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <SalonTeam/>
       </div>
 
 {/* CTA Section */}

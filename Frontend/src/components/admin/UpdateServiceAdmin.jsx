@@ -13,80 +13,109 @@ export default function UpdateServiceAdmin() {
     category: "",
     description: "",
     duration: "",
-    pricing: "", // changed to string like Create
+    pricing: "",
     images: [],
   });
-
   const [newImages, setNewImages] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch service by ID
-  useEffect(() => {
-    const fetchService = async () => {
-      try {
-        const { data } = await axios.get(`${API_BASE_URL}/api/services`);
-        const found = data.data.find((s) => s._id === id);
+  /* ================= FETCH SERVICE ================= */
+ useEffect(() => {
+  const fetchService = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("accessToken");
+      if (!token) return navigate("/login", { replace: true });
 
-        if (!found) return alert("Service not found");
+      const res = await axios.get(`${API_BASE_URL}/api/services`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        setService({
-          name: found.name,
-          category: found.category,
-          description: found.description,
-          duration: found.duration,
-          pricing: found.pricing || "", // string now
-          images: found.images || [],
-        });
-      } catch (err) {
-        alert("Failed to load service");
+      const data = res.data.data.find((s) => s._id === id);
+      if (!data) {
+        alert("Service not found");
+        navigate("/services-admin");
+        return;
       }
-    };
 
-    fetchService();
-  }, [id]);
+      setService({
+        name: data.name,
+        category: data.category,
+        description: data.description,
+        duration: data.duration,
+        pricing: data.pricing || "",
+        images: data.images || [],
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to load service data.");
+      navigate("/services-admin");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  fetchService();
+}, [id, navigate]);
+
+  /* ================= INPUT HANDLERS ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setService({ ...service, [name]: value });
   };
 
   const handlePricingChange = (value) => {
-    setService({ ...service, pricing: value }); // string like Create
+    setService({ ...service, pricing: value });
   };
 
   const handleImageChange = (e) => {
     setNewImages(Array.from(e.target.files));
   };
 
+  /* ================= SUBMIT UPDATE ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return navigate("/login", { replace: true });
 
     try {
+      setSubmitting(true);
+      setError("");
+
       const formData = new FormData();
       formData.append("name", service.name);
       formData.append("category", service.category);
       formData.append("description", service.description);
       formData.append("duration", service.duration);
-
-      // Send pricing as string, not array
       formData.append("pricing", service.pricing);
 
       newImages.forEach((img) => formData.append("images", img));
 
       await axios.put(`${API_BASE_URL}/api/services/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       navigate("/services-admin");
     } catch (err) {
+      console.error(err);
       setError(err.response?.data?.message || "Update failed");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
+    );
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -159,7 +188,7 @@ export default function UpdateServiceAdmin() {
               <div className="flex-1 mt-4 sm:mt-0">
                 <label className="block mb-1 font-medium">Price</label>
                 <input
-                  type="text" // changed to string
+                  type="text"
                   value={service.pricing}
                   onChange={(e) => handlePricingChange(e.target.value)}
                   placeholder="e.g., $50 or ₹5000"
@@ -198,10 +227,10 @@ export default function UpdateServiceAdmin() {
             <div className="flex flex-col sm:flex-row gap-3 mt-4">
               <button
                 type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition w-full sm:w-auto"
+                disabled={submitting}
+                className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition w-full sm:w-auto disabled:opacity-50"
               >
-                {loading ? "Updating..." : "Update Service"}
+                {submitting ? "Updating..." : "Update Service"}
               </button>
 
               <button
