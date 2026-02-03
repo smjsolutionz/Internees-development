@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
 import VerifyEmail from "./pages/VerifyEmail";
+import Profile from "./pages/Profile";
 import Home from "./pages/Home";
 import Dashboard from "./pages/admin/Dashboard";
 
@@ -55,6 +56,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/profile" element={<Profile />} />
+
       
       {/* Admin Dashboard */}
       <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -80,6 +80,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gallery", galleryRoutes);
 
 app.use("/api/gallery/Customer", CustomerGalleryRoutes);
+app.use("/api/customer", customerProfileRoutes);
 
 app.use("/api/admin", adminProfileRoutes);
 app.use("/admin", adminTeamRoutes);
