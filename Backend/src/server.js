@@ -15,15 +15,20 @@ const CustomerGalleryRoutes = require("./routes/customerGalleryRoutes");
 const packageRoutes = require("./routes/packageRoutes");
 const adminUsersRoutes = require("./routes/adminUsers.routes");
 const adminAuthRoutes = require("./routes/adminAuth.routes");
+const adminProfileRoutes = require("./routes/adminProfile");
+
 
 const adminTeamRoutes = require("./routes/adminTeamRoutes");
 const customerTeamRoutes = require("./routes/customerTeamRoutes");
-const reviewCustomerRoutes = require("./routes/reviewCustomerRoutes");
-const reviewAdminRoutes = require("./routes/reviewAdminRoutes");
+const customerProfileRoutes = require("./routes/customerProfile");
+
+const reviewCustomerRoutes=require("./routes/reviewCustomerRoutes")
+
+
 
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const  adminappointment =require("./routes/adminAppointmentRoutes")
-
+const reviewAdminRoutes=require("./routes/reviewAdminRoutes")
 const app = express();
 
 // 🔹 Connect DB
@@ -87,7 +92,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gallery", galleryRoutes);
 
 app.use("/api/gallery/Customer", CustomerGalleryRoutes);
+app.use("/api/customer", customerProfileRoutes);
 
+app.use("/api/admin", adminProfileRoutes);
 app.use("/admin", adminTeamRoutes);
 app.use("/api/admin/reviews", reviewAdminRoutes); 
 app.use("/customer", customerTeamRoutes);

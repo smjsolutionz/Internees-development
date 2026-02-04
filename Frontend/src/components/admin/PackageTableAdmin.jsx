@@ -8,19 +8,36 @@ export default function PackagesTableAdmin({ packages }) {
   const navigate = useNavigate();
   const [loadingId, setLoadingId] = useState(null);
 
-  // ✅ DELETE STATES
+  /* ===============================
+     DELETE STATES
+  =============================== */
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePackageId, setDeletePackageId] = useState(null);
   const [deletePackageName, setDeletePackageName] = useState("");
 
+  /* ===============================
+     TOGGLE STATUS
+  =============================== */
   const toggleStatus = async (id) => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
       setLoadingId(id);
 
-      const res = await fetch(`${API_BASE_URL}/api/packages/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/packages/${id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await res.json();
       if (!data.success) {
@@ -36,7 +53,9 @@ export default function PackagesTableAdmin({ packages }) {
     }
   };
 
-  // ✅ DELETE FUNCTIONS (same as services)
+  /* ===============================
+     DELETE HANDLERS
+  =============================== */
   const openDeleteModal = (id, name) => {
     setDeletePackageId(id);
     setDeletePackageName(name);
@@ -50,10 +69,22 @@ export default function PackagesTableAdmin({ packages }) {
   };
 
   const handleDeletePackage = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     try {
-      await fetch(`${API_BASE_URL}/api/packages/${deletePackageId}`, {
-        method: "DELETE",
-      });
+      await fetch(
+        `${API_BASE_URL}/api/packages/${deletePackageId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       closeDeleteModal();
       window.location.reload();
@@ -79,7 +110,7 @@ export default function PackagesTableAdmin({ packages }) {
       {/* DESKTOP TABLE */}
       <div className="hidden md:block overflow-x-auto">
         <div className="rounded-lg shadow overflow-hidden">
-          <div className="grid grid-cols-[80px_1.5fr_2fr_1fr_1fr_1fr_1fr] bg-gray-100 text-sm font-semibold px-4 py-3 whitespace-nowrap">
+          <div className="grid grid-cols-[80px_1.5fr_2fr_1fr_1fr_1fr_1fr] bg-gray-100 text-sm font-semibold px-4 py-3">
             <span>Image</span>
             <span>Name</span>
             <span>Services</span>
@@ -92,8 +123,9 @@ export default function PackagesTableAdmin({ packages }) {
           {packages.map((pkg) => (
             <div
               key={pkg._id}
-              className="grid grid-cols-1 md:grid-cols-[80px_1.5fr_2fr_1fr_1fr_1fr_1fr] gap-2 bg-white px-4 py-4 rounded-lg shadow items-start mb-4"
+              className="grid grid-cols-1 md:grid-cols-[80px_1.5fr_2fr_1fr_1fr_1fr_1fr] gap-2 bg-white px-4 py-4 border-b"
             >
+              {/* Image */}
               <div>
                 {pkg.image ? (
                   <img
@@ -116,6 +148,7 @@ export default function PackagesTableAdmin({ packages }) {
               <div className="truncate">{pkg.totalDuration}</div>
               <div className="font-medium truncate">{pkg.price}</div>
 
+              {/* Status */}
               <div>
                 <button
                   disabled={loadingId === pkg._id}
@@ -134,7 +167,8 @@ export default function PackagesTableAdmin({ packages }) {
                 </button>
               </div>
 
-              <div className="flex md:justify-center gap-2">
+              {/* Actions */}
+              <div className="flex justify-center gap-2">
                 <FiEye
                   onClick={() => navigate(`/package-details/${pkg._id}`)}
                   className="cursor-pointer text-amber-600"
@@ -153,10 +187,10 @@ export default function PackagesTableAdmin({ packages }) {
         </div>
       </div>
 
-      {/* MOBILE CARDS */}
+      {/* MOBILE VIEW */}
       <div className="md:hidden flex flex-col space-y-4">
         {packages.map((pkg) => (
-          <div key={pkg._id} className="bg-white rounded-lg shadow p-4 flex flex-col gap-3">
+          <div key={pkg._id} className="bg-white rounded-lg shadow p-4 space-y-3">
             <div className="flex gap-3">
               {pkg.image ? (
                 <img
@@ -216,13 +250,14 @@ export default function PackagesTableAdmin({ packages }) {
         ))}
       </div>
 
-      {/* DELETE CONFIRMATION MODAL */}
+      {/* DELETE MODAL */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-80 shadow-lg">
             <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
             <p className="mb-6">
-              Are you sure you want to delete <b>{deletePackageName}</b>?
+              Are you sure you want to delete{" "}
+              <b>{deletePackageName}</b>?
             </p>
             <div className="flex justify-end gap-3">
               <button

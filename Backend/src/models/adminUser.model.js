@@ -32,15 +32,20 @@ const adminUserSchema = new mongoose.Schema(
     password_hash: {
       type: String,
       required: true,
-      
-      minlength: [8, "Password must be at least 8 characters"],
-       select: false,
-    
+      minlength: 8,
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ["ADMIN", "MANAGER", "INVENTORY_MANAGER", "RECEPTIONIST", "STAFF", "CUSTOMER"],
+      enum: [
+        "ADMIN",
+        "MANAGER",
+        "INVENTORY_MANAGER",
+        "RECEPTIONIST",
+        "STAFF",
+        "CUSTOMER",
+      ],
       default: "CUSTOMER",
     },
 
@@ -48,6 +53,24 @@ const adminUserSchema = new mongoose.Schema(
       type: String,
       enum: ["ACTIVE", "INACTIVE"],
       default: "ACTIVE",
+    },
+
+    // ✅ PROFILE FIELDS
+    profilePic: {
+      type: String,
+      default: "",
+    },
+
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+    },
+
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: 500,
     },
 
     created_by_admin_id: {
@@ -58,10 +81,5 @@ const adminUserSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-/* ❌ REMOVE DUPLICATE INDEX WARNING
-   Do NOT add schema.index({ email: 1 })
-   because unique:true already creates index
-*/
 
 module.exports = mongoose.model("AdminUser", adminUserSchema);

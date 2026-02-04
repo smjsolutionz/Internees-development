@@ -3,6 +3,7 @@ import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -13,34 +14,48 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [showUnverified, setShowUnverified] = useState(false);
 
+  const navigate = useNavigate();
+
+  // ✅ Single merged fetchUsers function
   const fetchUsers = async (filters = {}) => {
     try {
       const token = localStorage.getItem("accessToken");
+      if (!token) {
+        navigate("/login"); // redirect if not logged in
+        return;
+      }
 
-      // ✅ Build params correctly
+      // Merge filters with showUnverified toggle
       const params = { ...filters };
-
-      // Add isVerified filter if toggle is on
       if (showUnverified) {
         params.isVerified = "all";
       }
 
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` },
-        params, // Send all filters
+        params,
       });
 
-      if (data.success) {
-        setUsers(data.users);
-      }
+      if (data.success) setUsers(data.users);
     } catch (err) {
       console.error("Fetch Users Error:", err.response?.data || err.message);
       setError("Failed to fetch users");
+
+      // redirect if unauthorized
+      if (err.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      }
     }
   };
 
-  // Refetch when toggle changes
+  // ✅ Fetch users on mount or when showUnverified changes
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
     fetchUsers();
   }, [showUnverified]);
 
@@ -76,7 +91,7 @@ export default function Dashboard() {
           {/* Error */}
           {error && <p className="text-red-600 mb-4">{error}</p>}
 
-          {/* ✅ Toggle for Unverified Users */}
+          {/* Toggle for Unverified Users */}
           <div className="mb-4 flex items-center gap-2">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input

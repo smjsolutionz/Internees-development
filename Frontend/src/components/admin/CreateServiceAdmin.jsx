@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -7,26 +7,35 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function CreateServiceAdmin() {
   const navigate = useNavigate();
 
+  /* =======================
+     AUTH GUARD
+  ======================= */
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
+
   const [service, setService] = useState({
     name: "",
     category: "",
     description: "",
     duration: "",
-    pricing: "", // changed from 0 to empty string
+    pricing: "",
     images: [],
   });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /* =======================
+     HANDLERS
+  ======================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setService({ ...service, [name]: value });
-  };
-
-  // Pricing is now a string
-  const handlePricingChange = (value) => {
-    setService({ ...service, pricing: value });
   };
 
   const handleImageChange = (e) => {
@@ -39,35 +48,44 @@ export default function CreateServiceAdmin() {
     setError("");
 
     try {
+      const token = localStorage.getItem("accessToken");
+
       const formData = new FormData();
       formData.append("name", service.name);
       formData.append("category", service.category);
       formData.append("description", service.description);
       formData.append("duration", service.duration);
-
-      // Send pricing as string array
-      formData.append("pricing", service.pricing); // just a string
-
+      formData.append("pricing", service.pricing);
 
       service.images.forEach((img) => formData.append("images", img));
 
-      const { data } = await axios.post(`${API_BASE_URL}/api/services`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await axios.post(
+        `${API_BASE_URL}/api/services`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       if (data.success) {
-        navigate("/services-admin");
+        navigate("/services-admin", { replace: true });
       } else {
         setError("Failed to create service");
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setError("Error creating service");
     } finally {
       setLoading(false);
     }
   };
 
+  /* =======================
+     UI
+  ======================= */
   return (
     <div className="flex min-h-screen bg-gray-100">
       <main className="flex-1 w-full">
@@ -80,89 +98,77 @@ export default function CreateServiceAdmin() {
 
           <form
             onSubmit={handleSubmit}
-            className="space-y-4 sm:space-y-6 md:space-y-8 bg-white p-4 sm:p-6 md:p-8 rounded shadow max-w-3xl mx-auto"
+            className="space-y-4 sm:space-y-6 bg-white p-6 rounded shadow max-w-3xl mx-auto"
           >
-            {/* Service Name */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Service Name</label>
+              <label className="block mb-1 font-medium">Service Name</label>
               <input
                 type="text"
                 name="name"
                 value={service.name}
                 onChange={handleChange}
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border p-2 rounded"
                 required
               />
             </div>
 
-            {/* Category */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Category</label>
+              <label className="block mb-1 font-medium">Category</label>
               <input
                 type="text"
                 name="category"
                 value={service.category}
                 onChange={handleChange}
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border p-2 rounded"
                 required
               />
             </div>
 
-            {/* Description */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Description</label>
+              <label className="block mb-1 font-medium">Description</label>
               <textarea
                 name="description"
                 value={service.description}
                 onChange={handleChange}
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded h-24 sm:h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border p-2 rounded h-28 resize-none"
                 required
               />
             </div>
 
-            {/* Duration */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Duration</label>
+              <label className="block mb-1 font-medium">Duration</label>
               <input
                 type="text"
                 name="duration"
                 value={service.duration}
                 onChange={handleChange}
-                placeholder="e.g., 2 hours"
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border p-2 rounded"
                 required
               />
             </div>
 
-            {/* Pricing */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Price</label>
+              <label className="block mb-1 font-medium">Price</label>
               <input
-                type="text" // changed from number to text
-                placeholder="e.g., $50 or ₹5000"
+                type="text"
                 value={service.pricing}
-                onChange={(e) => handlePricingChange(e.target.value)}
-                className="w-full sm:w-48 border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) =>
+                  setService({ ...service, pricing: e.target.value })
+                }
+                className="w-full sm:w-48 border p-2 rounded"
                 required
               />
             </div>
 
-            {/* Images */}
             <div>
-              <label className="block mb-1 font-medium text-gray-700">Images</label>
-              <input
-                type="file"
-                multiple
-                onChange={handleImageChange}
-                className="w-full sm:w-auto"
-              />
+              <label className="block mb-1 font-medium">Images</label>
+              <input type="file" multiple onChange={handleImageChange} />
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
+              className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
             >
               {loading ? "Creating..." : "Create Service"}
             </button>
