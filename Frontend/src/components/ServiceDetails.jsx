@@ -17,7 +17,7 @@ const ServiceDetails = () => {
     const fetchService = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
+          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`,
         );
         const data = response.data;
         if (data.success && data.data) {
@@ -35,10 +35,12 @@ const ServiceDetails = () => {
     fetchService();
   }, [id]);
 
-  // Check if description exceeds 3 lines
   useEffect(() => {
     if (descRef.current) {
-      const lineHeight = parseInt(getComputedStyle(descRef.current).lineHeight, 10);
+      const lineHeight = parseInt(
+        getComputedStyle(descRef.current).lineHeight,
+        10,
+      );
       const maxHeight = lineHeight * 3;
       if (descRef.current.scrollHeight > maxHeight) {
         setShowReadMore(true);
@@ -63,10 +65,9 @@ const ServiceDetails = () => {
   return (
     <div className="max-w-7xl container mx-auto pt-[100px] mt-10 mb-10 py-12 px-4 sm:px-6 md:px-8">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12">
-
         {/* IMAGE SECTION */}
         <div className="w-full md:w-1/2 flex justify-center">
-          <div className="w-full h-[300px] sm:h-[350px]  md:h-[400px] overflow-hidden rounded-2xl">
+          <div className="w-full h-[300px] sm:h-[350px] md:h-[400px] overflow-hidden rounded-2xl">
             {service.images && service.images.length > 0 ? (
               <img
                 src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0].replace(/\\/g, "/")}`}
@@ -83,7 +84,6 @@ const ServiceDetails = () => {
 
         {/* TEXT SECTION */}
         <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6">
-          
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
             {service.name}
           </h1>
@@ -117,12 +117,13 @@ const ServiceDetails = () => {
           <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6 mt-4 sm:mt-6 justify-center md:justify-start w-full">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-800">Duration:</span>
-              <span className="text-gray-600">{service.duration}</span>
+              <span className="text-gray-600">{service.duration} min</span>
             </div>
 
             <div className="flex items-center gap-2 mt-2 sm:mt-0">
               <span className="font-semibold text-gray-800">Price:</span>
               <span className="text-gray-600">
+                Rs.{" "}
                 {Array.isArray(service.pricing)
                   ? service.pricing[0]
                   : service.pricing || "0"}
@@ -138,13 +139,13 @@ const ServiceDetails = () => {
             }}
             className="group relative px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base tracking-widest text-black border border-[#D79A4A] transition-all duration-300 hover:bg-[#BB8C4B] hover:text-white flex items-center justify-center gap-2 mt-6"
           >
-            Book Now <FaArrowRight className="inline-block text-sm sm:text-base" />
+            Book Now{" "}
+            <FaArrowRight className="inline-block text-sm sm:text-base" />
             <span className="absolute -top-2 -left-2 w-6 h-2 border-t border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -top-2 -right-2 w-6 h-2 border-t border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -bottom-2 -left-2 w-6 h-2 border-b border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -bottom-2 -right-2 w-6 h-2 border-b border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
           </button>
-
         </div>
       </div>
 
@@ -154,7 +155,12 @@ const ServiceDetails = () => {
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           service={service.name}
-          price={Array.isArray(service.pricing) ? service.pricing[0] : service.pricing || "0"}
+          serviceId={id} // ✅ Pass service ID
+          price={
+            Array.isArray(service.pricing)
+              ? service.pricing[0]
+              : service.pricing || "0"
+          }
         />
       )}
     </div>

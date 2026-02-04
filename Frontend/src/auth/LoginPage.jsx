@@ -22,6 +22,7 @@ const LoginPage = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("token", accessToken); // ← Fixed!
       setSuccessMessage("Login successful! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
@@ -32,7 +33,6 @@ const LoginPage = () => {
       setErrors({ form: "Social authentication failed. Please try again." });
     }
   }, []);
-
   const validateForm = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,7 +67,6 @@ const LoginPage = () => {
       setErrors((prev) => ({ ...prev, form: "" }));
     }
   };
-
 const handleSubmit = async (e) => {
   e.preventDefault();
   if (!validateForm()) return;
@@ -79,7 +78,7 @@ const handleSubmit = async (e) => {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-    // 1️⃣ Try user login first
+    // Try user login first
     const response = await fetch(`${apiUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,57 +87,51 @@ const handleSubmit = async (e) => {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      // If the backend gives a specific message like "User inactive" or "Wrong password"
-      const userMessage = data?.message || "Login failed";
+    if (response.ok) {
+      // User login success
+      localStorage.setItem("accessToken", data.token || data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setSuccessMessage("Login successful! Redirecting...");
 
-      // Only try admin login if the error is "user not found" or "wrong credentials"
-      if (userMessage.toLowerCase().includes("not found") || userMessage.toLowerCase().includes("invalid")) {
-        // Try admin login
-        const adminResponse = await fetch(`${apiUrl}/admin/auth/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: formData.email, password: formData.password }),
-        });
-
-        const adminData = await adminResponse.json();
-
-        if (!adminResponse.ok) {
-          // Show backend message for admin login
-          setErrors({ form: adminData?.message || "Login failed" });
-          setLoading(false);
-          return;
+      setTimeout(() => {
+        const userRole = data.user.role;
+        if (["  ADMIN", "STAFF", "MANAGER"].includes(userRole)) {
+          window.location.href = "/dashboard";
+        } else {
+          window.location.href = "/";
         }
+      }, 1000);
+    } else {
+      // Try admin login if user login failed
+      const adminResponse = await fetch(`${apiUrl}/admin/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email, password: formData.password }),
+      });
 
-        // Admin login success
-        localStorage.setItem("accessToken", adminData.token);
+      const adminData = await adminResponse.json();
+
+      if (adminResponse.ok) {
+        localStorage.setItem("accessToken", adminData.token || adminData.accessToken);
         localStorage.setItem("user", JSON.stringify(adminData.user));
-        setSuccessMessage("Login successful! Redirecting...");
+        setSuccessMessage("Login successful! Redirecting to dashboard...");
+
         setTimeout(() => {
           window.location.href = "/dashboard";
         }, 1000);
-        return;
+      } else {
+        setErrors({ form: data.message || adminData.message || "Login failed" });
       }
-
-      // User login failed with a meaningful message (inactive, invalid password, etc.)
-      setErrors({ form: userMessage });
-      setLoading(false);
-      return;
     }
-
-    // User login success
-    localStorage.setItem("accessToken", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setSuccessMessage("Login successful! Redirecting...");
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 1000);
-
   } catch (error) {
     setErrors({ form: error.message });
+  } finally {
     setLoading(false);
   }
 };
+
+ 
+
 
 
 
@@ -166,19 +159,6 @@ const handleSubmit = async (e) => {
 
       <div className="relative w-full max-w-md">
         <div className="mb-8 text-center">
-          {/* <div
-            className="inline-block p-1 mb-4 rounded-full"
-            style={{
-              background: "linear-gradient(135deg, #BB8C4B 0%, #BB8C4B 100%)",
-            }}
-          >
-            <div
-              className="p-4 rounded-full"
-              style={{ backgroundColor: "#222227" }}
-            >
-              <div className="text-4xl">💎</div>
-            </div>
-          </div> */}
           <h1
             className="mb-2 text-3xl font-bold md:text-4xl"
             style={{
@@ -522,38 +502,6 @@ const handleSubmit = async (e) => {
                 </svg>
                 <span className="text-sm font-medium">Google</span>
               </button>
-
-              {/* <button
-                type="button"
-                onClick={() => handleSocialLogin("facebook")}
-                disabled={loading}
-                className="flex items-center justify-center gap-2 py-3 transition-all duration-300 rounded-lg"
-                style={{
-                  backgroundColor: "#222227",
-                  borderWidth: "1px",
-                  borderColor: "#777777",
-                  color: "#FFFFFF",
-                  opacity: loading ? 0.6 : 1,
-                  cursor: loading ? "not-allowed" : "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.backgroundColor = "#303133";
-                    e.currentTarget.style.borderColor = "#BB8C4B";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.backgroundColor = "#222227";
-                    e.currentTarget.style.borderColor = "#777777";
-                  }
-                }}
-              >
-                <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-                <span className="text-sm font-medium">Facebook</span>
-              </button> */}
             </div>
 
             {/* Sign Up Link */}

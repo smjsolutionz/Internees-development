@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 
 import LoginPage from "./auth/LoginPage";
+import { Toaster } from "react-hot-toast";
+
 import RegisterPage from "./auth/RegisterPage";
 import VerifyEmail from "./pages/VerifyEmail";
 import Home from "./pages/Home";
@@ -41,8 +43,32 @@ import AllTeam from "./pages/admin/AllTeam";
 import AddTeam from "./pages/admin/Addteam"
 import EditTeam from "./pages/admin/EditTeam"
 
+import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
+
+// ✅ NEW Enhanced Components (Added alongside existing ones)
+import EnhancedMyAppointments from "./components/MyAppointments";
+import EnhancedAdminAppointments from "./components/admin/AdminAppointments";
+
 export default function App() {
   return (
+    <>
+    <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#363636",
+            color: "#fff",
+          },
+          success: {
+            iconTheme: {
+              primary: "#BB8C4B",
+              secondary: "#fff",
+            },
+          },
+        }}
+      />
+
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
@@ -77,6 +103,20 @@ export default function App() {
       <Route path="/services" element={<ServicePage />} />
       <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
       
+
+        
+        {/* <Route path="/book-appointment" element={<BookAppointment />} />
+
+        {/* ✅ NEW Enhanced Appointments Routes */}
+        <Route path="/appointment-details" element={<AllAppointmentsAdmin />} />
+        <Route path="/appointments" element={<AllAppointmentsAdmin />} />{" "}
+        {/* ← ADD THIS */}
+        {/* ✅ NEW Enhanced Admin Appointments */}
+        <Route
+          path="/admin/appointments"
+          element={<EnhancedAdminAppointments />}
+        />
+        <Route path="/appointments" element={<AllAppointmentsAdmin />} />
       {/* Gallery Routes */}
       <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
       <Route path="/gallery-admin" element={<AllGalleryimageAdmin/>} />
@@ -90,7 +130,12 @@ export default function App() {
 <Route path="/admin/team" element={<AllTeam/>} />
 <Route path="/admin/team/add" element={<AddTeam/>} />
 <Route path="/admin/team/edit/:id" element={<EditTeam />} />
+<Route path="/my-appointments" element={< EnhancedMyAppointments />} />
 
     </Routes>
+    
+    
+    </>
+    
   );
 }

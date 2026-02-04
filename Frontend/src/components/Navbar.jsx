@@ -12,17 +12,17 @@ const Navbar = () => {
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
   }, [isOpen]);
-const handlePackagesClick = () => {
-  navigate("/");
+  const handlePackagesClick = () => {
+    navigate("/");
 
-  // thora delay taake Home page load ho jaye
-  setTimeout(() => {
-    const section = document.getElementById("packages");
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth" });
-    }
-  }, 100);
-};
+    // thora delay taake Home page load ho jaye
+    setTimeout(() => {
+      const section = document.getElementById("packages");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100);
+  };
 
   // Menu items with paths
   const menuItems = [
@@ -40,7 +40,6 @@ const handlePackagesClick = () => {
       {/* MAIN CONTAINER */}
       <div className="max-w-7xl mx-auto container px-4 sm:px-6 lg:px-12">
         <div className="py-3 sm:py-4 flex items-center justify-between">
-          
           {/* LOGO */}
           <img
             src={logo}
@@ -55,13 +54,12 @@ const handlePackagesClick = () => {
                 key={item.name}
                 className="hover:text-[#BB8C4B] cursor-pointer transition"
                 onClick={() => {
-  if (item.name === "Deals/Packages") {
-    handlePackagesClick();
-  } else {
-    navigate(item.path);
-  }
-}}
-
+                  if (item.name === "Deals/Packages") {
+                    handlePackagesClick();
+                  } else {
+                    navigate(item.path);
+                  }
+                }}
               >
                 {item.name}
               </li>
@@ -117,14 +115,13 @@ const handlePackagesClick = () => {
             <li
               key={item.name}
               onClick={() => {
-  if (item.name === "Deals/Packages") {
-    handlePackagesClick();
-  } else {
-    navigate(item.path);
-  }
-  setIsOpen(false);
-}}
-
+                if (item.name === "Deals/Packages") {
+                  handlePackagesClick();
+                } else {
+                  navigate(item.path);
+                }
+                setIsOpen(false);
+              }}
               className="hover:text-[#BB8C4B] transition cursor-pointer"
             >
               {item.name}

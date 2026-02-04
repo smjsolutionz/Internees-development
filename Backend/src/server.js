@@ -21,6 +21,8 @@ const customerTeamRoutes = require("./routes/customerTeamRoutes");
 const reviewCustomerRoutes = require("./routes/reviewCustomerRoutes");
 const reviewAdminRoutes = require("./routes/reviewAdminRoutes");
 
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const  adminappointment =require("./routes/adminAppointmentRoutes")
 
 const app = express();
 
@@ -67,12 +69,16 @@ app.use("/api/services", serviceRoutes); // Services (Admin)
 app.use("/api/packages", packageRoutes); // ✅ Packages (Admin)
 app.use("/api/admin/auth", adminAuthRoutes); // Admin login
 app.use("/api/admin", adminUsersRoutes); // Admin users CRUD
+app.use("/api/admin/appointment",adminappointment  );
+
 /* =========================
    🔹 CUSTOMER ROUTES
    ========================= */
 app.use("/api/customer/services", customerServicesRoutes);
 app.use("/api/customer/reviews", reviewCustomerRoutes); // customer review routes
 
+
+app.use("/api/appointments", appointmentRoutes);
 
 /* =========================
    🔹 AUTH ROUTES
