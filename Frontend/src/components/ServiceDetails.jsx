@@ -1,38 +1,66 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import BookingDrawer from "./BookingDrawer";
 import axios from "axios";
-import { FaArrowRight } from "react-icons/fa";
+import BookingDrawer from "./BookingDrawer";
+import { FaArrowRight, FaStar } from "react-icons/fa";
 
 const ServiceDetails = () => {
   const { id } = useParams();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
+  const [ratingInput, setRatingInput] = useState(0);
+  const [messageInput, setMessageInput] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const descRef = useRef(null);
+
+const token = localStorage.getItem("accessToken");
+
+  // Helper: check if token expired
+  const isTokenExpired = (token) => {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return Date.now() >= payload.exp * 1000;
+    } catch {
+      return true;
+    }
+  };
+
+  const loggedIn = token && !isTokenExpired(token);
 
   useEffect(() => {
     const fetchService = async () => {
       try {
-        const response = await axios.get(
+        const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
         );
-        const data = response.data;
-        if (data.success && data.data) {
-          setService(data.data);
-        } else {
-          console.error("Service not found");
-        }
-      } catch (error) {
-        console.error("Error fetching service:", error);
+        if (res.data.success) setService(res.data.data);
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchService();
+  }, [id]);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/target/service/${id}`
+      );
+      if (res.data.success) setReviews(res.data.reviews);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
   }, [id]);
 
   // Check if description exceeds 3 lines
@@ -40,112 +68,159 @@ const ServiceDetails = () => {
     if (descRef.current) {
       const lineHeight = parseInt(getComputedStyle(descRef.current).lineHeight, 10);
       const maxHeight = lineHeight * 3;
-      if (descRef.current.scrollHeight > maxHeight) {
-        setShowReadMore(true);
-      }
+      if (descRef.current.scrollHeight > maxHeight) setShowReadMore(true);
     }
   }, [service]);
 
-  if (loading)
-    return (
-      <p className="text-center mt-10 text-gray-500 text-lg animate-pulse">
-        Loading service details...
-      </p>
-    );
+  // Submit review
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (ratingInput === 0 || messageInput.trim() === "") {
+      alert("Please provide a rating and message");
+      return;
+    }
+    if (!loggedIn) {
+      alert("Your session expired. Please log in again.");
+      return;
+    }
 
-  if (!service)
-    return (
-      <div className="flex justify-center items-center h-96">
-        <h2 className="text-xl text-gray-500">Service not found</h2>
-      </div>
-    );
+    setSubmitting(true);
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews`,
+        {
+          targetType: "Service",
+          targetId: id,
+          rating: Number(ratingInput),
+          message: messageInput.trim(),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (res.data.success) {
+        setMessageInput("");
+        setRatingInput(0);
+        fetchReviews(); // refresh reviews
+      }
+    } catch (err) {
+      console.error("Submission error:", err.response || err.message);
+      alert(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return <p className="text-center mt-10 text-gray-500 animate-pulse">Loading...</p>;
+  if (!service) return <p className="text-center mt-10 text-gray-500">Service not found</p>;
 
   return (
-    <div className="max-w-7xl container mx-auto pt-[100px] mt-10 mb-10 py-12 px-4 sm:px-6 md:px-8">
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12">
-
-        {/* IMAGE SECTION */}
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="w-full h-[300px] sm:h-[350px]  md:h-[400px] overflow-hidden rounded-2xl">
-            {service.images && service.images.length > 0 ? (
-              <img
-                src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0].replace(/\\/g, "/")}`}
-                alt={service.name}
-                className="w-full h-full object-cover rounded-2xl"
-              />
-            ) : (
-              <div className="text-8xl text-[#BB8C4B] animate-bounce w-full h-full flex items-center justify-center">
-                💈
-              </div>
-            )}
-          </div>
+    <div className="max-w-7xl mx-auto pt-28 px-4">
+      <div className="flex flex-col md:flex-row gap-10">
+        {/* Image */}
+        <div className="md:w-1/2 h-[400px] overflow-hidden rounded-2xl">
+          {service.images?.[0] ? (
+            <img
+              src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0].replace(/\\/g, "/")}`}
+              alt={service.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-8xl text-[#BB8C4B] animate-bounce">💈</div>
+          )}
         </div>
 
-        {/* TEXT SECTION */}
-        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6">
-          
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
-            {service.name}
-          </h1>
-
+        {/* Details */}
+        <div className="md:w-1/2 flex flex-col gap-4">
+          <h1 className="text-4xl font-extrabold">{service.name}</h1>
           {service.category && (
-            <span className="mt-2 inline-block bg-[#BB8C4B] text-white text-sm sm:text-base font-medium px-3 py-1 rounded-full uppercase tracking-wide">
-              {service.category}
-            </span>
+            <span className="bg-[#BB8C4B] text-white px-3 py-1 rounded-full text-sm">{service.category}</span>
           )}
 
-          {/* DESCRIPTION WITH READ MORE */}
-          <div className="mt-4 text-gray-700 text-base sm:text-lg md:text-lg leading-relaxed">
-            <p
-              ref={descRef}
-              className={`transition-all duration-300 ${!showFullDescription ? "line-clamp-3 overflow-hidden" : ""}`}
+          {/* Description */}
+          <p
+            ref={descRef}
+            className={`transition-all duration-300 ${!showFullDescription ? "line-clamp-3 overflow-hidden" : ""}`}
+          >
+            {service.description}
+          </p>
+          {showReadMore && (
+            <button
+              className="text-[#BB8C4B] font-semibold hover:underline"
+              onClick={() => setShowFullDescription(!showFullDescription)}
             >
-              {service.description}
-            </p>
+              {showFullDescription ? "Read Less" : "Read More"}
+            </button>
+          )}
 
-            {showReadMore && (
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-2 text-[#BB8C4B] font-semibold hover:underline"
-              >
-                {showFullDescription ? "Read Less" : "Read More"}
-              </button>
-            )}
+          {/* Duration & Price */}
+          <div className="flex gap-6 mt-4">
+            <span>Duration: {service.duration}</span>
+            <span>Price: {Array.isArray(service.pricing) ? service.pricing[0] : service.pricing || "0"}</span>
           </div>
 
-          {/* DURATION & PRICE */}
-          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6 mt-4 sm:mt-6 justify-center md:justify-start w-full">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-800">Duration:</span>
-              <span className="text-gray-600">{service.duration}</span>
-            </div>
+          {/* Book Button */}
+          <button
+            onClick={() => setIsOpen(true)}
+            className="mt-6 px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] hover:text-white flex items-center gap-2"
+          >
+            Book Now <FaArrowRight />
+          </button>
+        </div>
+      </div>
 
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <span className="font-semibold text-gray-800">Price:</span>
-              <span className="text-gray-600">
-                {Array.isArray(service.pricing)
-                  ? service.pricing[0]
-                  : service.pricing || "0"}
+      {/* Reviews */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+
+        {reviews.length === 0 && <p>No reviews yet.</p>}
+        {reviews.map((r) => (
+          <div key={r._id} className="mb-4 p-4 border rounded-md">
+            <div className="flex items-center gap-2 mb-1">
+              <strong>{r.customer?.name || "Anonymous"}</strong>
+              <span className="flex text-yellow-400">
+                {Array.from({ length: r.rating }).map((_, i) => (
+                  <FaStar key={i} />
+                ))}
               </span>
             </div>
+            <p>{r.message}</p>
           </div>
+        ))}
 
-          {/* BOOK NOW BUTTON */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(true);
-            }}
-            className="group relative px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base tracking-widest text-black border border-[#D79A4A] transition-all duration-300 hover:bg-[#BB8C4B] hover:text-white flex items-center justify-center gap-2 mt-6"
-          >
-            Book Now <FaArrowRight className="inline-block text-sm sm:text-base" />
-            <span className="absolute -top-2 -left-2 w-6 h-2 border-t border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -top-2 -right-2 w-6 h-2 border-t border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -bottom-2 -left-2 w-6 h-2 border-b border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -bottom-2 -right-2 w-6 h-2 border-b border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-          </button>
-
-        </div>
+        {/* Add Review Form */}
+        {loggedIn ? (
+          <div className="mt-6 p-6 border rounded-md bg-[#f9f9f9]">
+            <h3 className="text-xl font-semibold mb-3">Add Your Review</h3>
+            <form onSubmit={handleSubmitReview} className="flex flex-col gap-3">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <FaStar
+                    key={star}
+                    className={`cursor-pointer ${ratingInput >= star ? "text-yellow-400" : "text-gray-300"}`}
+                    onClick={() => setRatingInput(star)}
+                  />
+                ))}
+              </div>
+              <textarea
+                placeholder="Write your review..."
+                className="border p-2 rounded-md w-full"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                rows={3}
+              />
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-[#BB8C4B] text-white py-2 px-4 rounded-md mt-2 hover:bg-[#a07737]"
+              >
+                {submitting ? "Submitting..." : "Submit Review"}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <p className="text-red-500 mt-4">Please log in to submit a review.</p>
+        )}
       </div>
 
       {/* Booking Drawer */}

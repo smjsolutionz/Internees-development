@@ -8,7 +8,7 @@ exports.submitReview = async (req, res) => {
 
   try {
     const review = await Review.create({
-      customer: req.user._id,
+      CUSTOMER: req.user._id,
       targetType,
       targetId,
       rating,
@@ -24,7 +24,7 @@ exports.submitReview = async (req, res) => {
 exports.editReview = async (req, res) => {
   const review = await Review.findById(req.params.id);
   if (!review) return res.status(404).json({ message: "Review not found" });
-  if (!review.customer.equals(req.user._id))
+  if (!review.CUSTOMER.equals(req.user._id))
     return res.status(403).json({ message: "Cannot edit others' reviews" });
 
   review.rating = req.body.rating || review.rating;
@@ -38,7 +38,7 @@ exports.editReview = async (req, res) => {
 exports.deleteReview = async (req, res) => {
   const review = await Review.findById(req.params.id);
   if (!review) return res.status(404).json({ message: "Review not found" });
-  if (!review.customer.equals(req.user._id))
+  if (!review.CUSTOMER.equals(req.user._id))
     return res.status(403).json({ message: "Cannot delete others' reviews" });
 
   await review.deleteOne();
@@ -51,7 +51,7 @@ exports.getFeaturedReviews = async (req, res) => {
     const featuredReviews = await Review.find()
       .sort({ rating: -1, createdAt: -1 }) // top-rated first, newest first
       .limit(10) // show top 10
-      .populate("customer", "name") // reviewer name
+      .populate("CUSTOMER", "name") // reviewer name
       .populate("targetId", "name type"); // package/service name
 
     res.json({ success: true, featuredReviews });
@@ -70,7 +70,7 @@ exports.getReviewsForTarget = async (req, res) => {
   try {
     const reviews = await Review.find({ targetType, targetId })
       .sort({ createdAt: -1 })
-      .populate("customer", "name"); // show reviewer name
+      .populate("CUSTOMER", "name"); // show reviewer name
 
     res.json({ success: true, reviews });
   } catch (err) {

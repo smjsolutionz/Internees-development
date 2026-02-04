@@ -4,9 +4,11 @@ const AdminUser = require("../models/adminUser.model");
 
 exports.protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.startsWith("Bearer ")
-    ? authHeader.split(" ")[1]
-    : null;
+
+  const token =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
 
   if (!token) {
     return res.status(401).json({ message: "Not logged in" });
@@ -15,9 +17,16 @@ exports.protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
 
-    let user = await User.findById(decoded.id);
+    // 🔥 FIX HERE
+    const userId = decoded.id || decoded.userId;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
+
+    let user = await User.findById(userId);
     if (!user) {
-      user = await AdminUser.findById(decoded.id);
+      user = await AdminUser.findById(userId);
       if (!user) {
         return res.status(401).json({ message: "Invalid token" });
       }
