@@ -20,6 +20,9 @@ const adminProfileRoutes = require("./routes/adminProfile");
 
 const adminTeamRoutes = require("./routes/adminTeamRoutes");
 const customerTeamRoutes = require("./routes/customerTeamRoutes");
+const customerProfileRoutes = require("./routes/customerProfile");
+
+
 
 
 const app = express();
