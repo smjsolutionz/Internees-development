@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -11,6 +11,17 @@ export default function AddGalleryImage() {
 
   const navigate = useNavigate();
 
+  /* ===============================
+     ADMIN AUTH GUARD
+  =============================== */
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     setImage(file);
@@ -19,6 +30,13 @@ export default function AddGalleryImage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("category", category);
@@ -26,8 +44,15 @@ export default function AddGalleryImage() {
     formData.append("image", image);
 
     try {
-      await axios.post("http://localhost:5000/api/gallery", formData);
-      navigate("/gallery-admin");
+      await axios.post("http://localhost:5000/api/gallery", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      navigate("/gallery-admin", { replace: true });
+
       setTitle("");
       setCategory("");
       setStatus("active");
@@ -42,7 +67,10 @@ export default function AddGalleryImage() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-lg bg-white rounded-lg shadow-lg p-6 sm:p-8 md:p-10">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-center">Add New Gallery Image</h2>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-6 text-center">
+          Add New Gallery Image
+        </h2>
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input
             type="text"
@@ -51,6 +79,7 @@ export default function AddGalleryImage() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+
           <input
             type="text"
             placeholder="Category"
@@ -58,6 +87,7 @@ export default function AddGalleryImage() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           />
+
           <select
             className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-[#BB8C4B]"
             value={status}
@@ -66,12 +96,14 @@ export default function AddGalleryImage() {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
+
           <input
             type="file"
             onChange={handleImageChange}
             accept="image/*"
             className="w-full text-gray-700"
           />
+
           {preview && (
             <img
               src={preview}
@@ -79,6 +111,7 @@ export default function AddGalleryImage() {
               className="mt-2 w-full h-48 sm:h-64 object-cover rounded"
             />
           )}
+
           <button
             type="submit"
             className="w-full bg-[#BB8C4B] text-white px-4 py-2 rounded hover:bg-[#a3763e] transition-colors duration-200"

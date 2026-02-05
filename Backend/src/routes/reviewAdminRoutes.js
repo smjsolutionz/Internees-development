@@ -7,7 +7,7 @@ const {
 } = require("../controllers/reviewAdminController");
 const { protect, authorizeRoles } = require("../middleware/reviewAuth");
 
-router.use(protect, authorizeRoles(["ADMIN", "MANAGER"]));
+router.use(protect, authorizeRoles(["ADMIN"]));
 
 router.get("/", getAllReviews);
 

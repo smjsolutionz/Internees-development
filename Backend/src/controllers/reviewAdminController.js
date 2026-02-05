@@ -6,7 +6,7 @@ exports.getAllReviews = async (req, res) => {
   const filter = type ? { targetType: type } : {};
 
   const reviews = await Review.find(filter)
-    .populate("customer", "name email")
+    .populate("CUSTOMER", "name email")
     .sort({ createdAt: -1 });
 
   res.json({ success: true, reviews });

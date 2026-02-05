@@ -48,18 +48,17 @@ exports.deleteReview = async (req, res) => {
 // controllers/reviewCustomerController.js
 exports.getFeaturedReviews = async (req, res) => {
   try {
-    const featuredReviews = await Review.find()
-      .sort({ rating: -1, createdAt: -1 }) // top-rated first, newest first
-      .limit(10) // show top 10
-      .populate("CUSTOMER", "name") // reviewer name
-      .populate("targetId", "name type"); // package/service name
+    const reviews = await Review.find()
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(10)
+      .populate("CUSTOMER", "name avatar profession") // make sure to include name/avatar/profession
+      .populate("targetId", "name type");
 
-    res.json({ success: true, featuredReviews });
+    res.json({ success: true, reviews });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
 
 // Get all reviews for a target (package or service) — all reviews visible
 exports.getReviewsForTarget = async (req, res) => {

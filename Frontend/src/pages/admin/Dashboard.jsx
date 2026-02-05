@@ -3,6 +3,8 @@ import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
 import { useState, useEffect } from "react";
+
+import { useNavigate } from "react-router-dom"; // ✅ added
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -11,36 +13,45 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
-  const [showUnverified, setShowUnverified] = useState(false);
+  const navigate = useNavigate(); // ✅ added
+    const [showUnverified, setShowUnverified] = useState(false); 
 
+  // ✅ fetch users with auth
   const fetchUsers = async (filters = {}) => {
     try {
       const token = localStorage.getItem("accessToken");
-
-      // ✅ Build params correctly
-      const params = { ...filters };
-
-      // Add isVerified filter if toggle is on
-      if (showUnverified) {
-        params.isVerified = "all";
+      if (!token) {
+        navigate("/login"); // redirect if not logged in
+        return;
       }
 
       const { data } = await axios.get(`${API_BASE_URL}/api/admin/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params, // Send all filters
+        headers: {
+          Authorization: `Bearer ${token}`, // send token
+        },
+        params: filters, // role & search
       });
 
-      if (data.success) {
-        setUsers(data.users);
-      }
+      if (data.success) setUsers(data.users);
     } catch (err) {
       console.error("Fetch Users Error:", err.response?.data || err.message);
       setError("Failed to fetch users");
+
+      // redirect if unauthorized
+      if (err.response?.status === 401) {
+        localStorage.removeItem("accessToken");
+        navigate("/login");
+      }
     }
   };
 
-  // Refetch when toggle changes
+  // ✅ Check token on mount
   useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      navigate("/login"); // redirect if no token
+      return;
+    }
     fetchUsers();
   }, [showUnverified]);
 
