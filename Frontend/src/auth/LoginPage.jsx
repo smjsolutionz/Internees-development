@@ -95,7 +95,7 @@ const handleSubmit = async (e) => {
 
       setTimeout(() => {
         const userRole = data.user.role;
-        if (["  ADMIN", "STAFF", "MANAGER"].includes(userRole)) {
+        if (["ADMIN", "STAFF", "MANAGER"].includes(userRole)) {
           window.location.href = "/dashboard";
         } else {
           window.location.href = "/";

@@ -68,7 +68,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
         {/* Profile */}
         {admin && (
           <Link
-            to="/profile"
+            to="/admin/profile"
             onClick={() => setSidebarOpen(false)}
             className="flex flex-col items-center py-6 border-b border-white/10 hover:bg-white/5 transition"
           >

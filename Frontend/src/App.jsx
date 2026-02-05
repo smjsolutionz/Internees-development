@@ -1,14 +1,24 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
+// Auth
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
 import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+
+// Pages
 import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 
 // Admin
 import Dashboard from "./pages/admin/Dashboard";
 import ProfilePage from "./pages/admin/Profile";
+
+// Customer
+import Profile from "./pages/Profile";
 
 // Services Admin
 import ServicesAdmin from "./pages/admin/AllServicesAdmin";
@@ -21,13 +31,6 @@ import AllPackagesAdmin from "./pages/admin/AllPackages";
 import CreatePackage from "./pages/admin/CreatePackage";
 import UpdatePackage from "./pages/admin/UpdatePackage";
 import PackageDetails from "./pages/admin/PackageDetail";
-
-// User-facing
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import ServicePage from "./pages/ServicePage";
-import ServicesDetailPage from "./pages/ServicesDetailPage";
-import PackageDetailPage from "./pages/PackageDetailPage";
 
 // Gallery
 import Addgalleryimage from "./pages/admin/Addgalleryimage";
@@ -49,11 +52,13 @@ import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
 import EnhancedAdminAppointments from "./components/admin/AdminAppointments";
 
-// Pages
-import About from "./pages/About";
-import Contact from "./pages/Contact";
+// User-facing pages
+import ServicePage from "./pages/ServicePage";
+import ServicesDetailPage from "./pages/ServicesDetailPage";
+import PackageDetailPage from "./pages/PackageDetailPage";
 
 const isAuth = () => !!localStorage.getItem("accessToken");
+const getUserRole = () => localStorage.getItem("userRole"); // store role on login
 
 export default function App() {
   return (
@@ -122,10 +127,27 @@ export default function App() {
         <Route path="/edit-user/:id" element={<UpdateUser />} />
 
         {/* Admin Profile */}
-        <Route
-          path="/profile"
-          element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
-        />
+       <Route
+  path="/admin/profile"
+  element={
+    isAuth()
+      ? <ProfilePage />
+      : <Navigate to="/login" replace />
+  }
+/>
+
+
+        {/* Customer Profile */}
+   <Route
+  path="/customer/profile"
+  element={
+    isAuth()
+      ? <Profile />   // ← Use the correct imported component
+      : <Navigate to="/login" replace />
+  }
+/>
+
+
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
