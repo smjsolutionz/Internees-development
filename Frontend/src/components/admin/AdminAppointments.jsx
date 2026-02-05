@@ -20,33 +20,46 @@ const AdminAppointments = () => {
   }, [filters]);
 
   const fetchAppointments = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/all`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            ...filters,
-            status: filters.status || undefined,
-            date: filters.date || undefined,
-            search: filters.search || undefined,
-          },
-        },
-      );
+  setLoading(true);
+  const token = localStorage.getItem("token");
 
-      if (response.data.success) {
-        setAppointments(response.data.appointments);
-        setStats(response.data.stats);
+  try {
+    // 1️⃣ Fetch appointments
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/api/admin/appointments`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          ...filters,
+          status: filters.status || undefined,
+          date: filters.date || undefined,
+          search: filters.search || undefined,
+        },
       }
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-      toast.error("Failed to load appointments");
-    } finally {
-      setLoading(false);
+    );
+
+    if (response.data.success) {
+      setAppointments(response.data.appointments);
     }
-  };
+
+    // 2️⃣ Fetch stats
+    const statsRes = await axios.get(
+      `${import.meta.env.VITE_API_BASE_URL}/api/admin/appointments/stats`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (statsRes.data.success) {
+      setStats(statsRes.data.stats);
+    }
+
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    toast.error("Failed to load appointments");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const fetchStaff = async () => {
     try {

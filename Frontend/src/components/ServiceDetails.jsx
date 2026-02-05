@@ -40,8 +40,13 @@ const ServiceDetails = () => {
   useEffect(() => {
     const fetchService = async () => {
       try {
+<<<<<<< HEAD
         const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
+=======
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`,
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
         );
         if (res.data?.success) setService(res.data.data);
       } catch (err) {
@@ -53,6 +58,7 @@ const ServiceDetails = () => {
     fetchService();
   }, [id]);
 
+<<<<<<< HEAD
   /* ================= FETCH REVIEWS ================= */
   const fetchReviews = async () => {
     try {
@@ -62,6 +68,18 @@ const ServiceDetails = () => {
       if (res.data?.success) setReviews(res.data.reviews);
     } catch (err) {
       console.error("❌ Review fetch failed:", err);
+=======
+  useEffect(() => {
+    if (descRef.current) {
+      const lineHeight = parseInt(
+        getComputedStyle(descRef.current).lineHeight,
+        10,
+      );
+      const maxHeight = lineHeight * 3;
+      if (descRef.current.scrollHeight > maxHeight) {
+        setShowReadMore(true);
+      }
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
     }
   };
 
@@ -129,6 +147,7 @@ const ServiceDetails = () => {
 
   /* ================= UI ================= */
   return (
+<<<<<<< HEAD
     <div className="max-w-7xl mx-auto pt-28 px-4">
       {/* ===== SERVICE UI ===== */}
       <div className="flex flex-col md:flex-row gap-10">
@@ -148,6 +167,32 @@ const ServiceDetails = () => {
 
         <div className="md:w-1/2 flex flex-col gap-4">
           <h1 className="text-4xl font-extrabold">{service.name}</h1>
+=======
+    <div className="max-w-7xl container mx-auto pt-[100px] mt-10 mb-10 py-12 px-4 sm:px-6 md:px-8">
+      <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12">
+        {/* IMAGE SECTION */}
+        <div className="w-full md:w-1/2 flex justify-center">
+          <div className="w-full h-[300px] sm:h-[350px] md:h-[400px] overflow-hidden rounded-2xl">
+            {service.images && service.images.length > 0 ? (
+              <img
+                src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0].replace(/\\/g, "/")}`}
+                alt={service.name}
+                className="w-full h-full object-cover rounded-2xl"
+              />
+            ) : (
+              <div className="text-8xl text-[#BB8C4B] animate-bounce w-full h-full flex items-center justify-center">
+                💈
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* TEXT SECTION */}
+        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
+            {service.name}
+          </h1>
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
 
           {service.category && (
             <span className="bg-[#BB8C4B] text-white px-3 py-1 rounded-full w-fit text-sm">
@@ -172,17 +217,49 @@ const ServiceDetails = () => {
             )}
           </div>
 
+<<<<<<< HEAD
           
 
+=======
+          {/* DURATION & PRICE */}
+          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6 mt-4 sm:mt-6 justify-center md:justify-start w-full">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-gray-800">Duration:</span>
+              <span className="text-gray-600">{service.duration} min</span>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2 sm:mt-0">
+              <span className="font-semibold text-gray-800">Price:</span>
+              <span className="text-gray-600">
+                Rs.{" "}
+                {Array.isArray(service.pricing)
+                  ? service.pricing[0]
+                  : service.pricing || "0"}
+              </span>
+            </div>
+          </div>
+
+          {/* BOOK NOW BUTTON */}
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
           <button
             onClick={() => setIsOpen(true)}
             className="mt-6 px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] flex items-center gap-2"
           >
+<<<<<<< HEAD
             Book Now <FaArrowRight />
+=======
+            Book Now{" "}
+            <FaArrowRight className="inline-block text-sm sm:text-base" />
+            <span className="absolute -top-2 -left-2 w-6 h-2 border-t border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
+            <span className="absolute -top-2 -right-2 w-6 h-2 border-t border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
+            <span className="absolute -bottom-2 -left-2 w-6 h-2 border-b border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
+            <span className="absolute -bottom-2 -right-2 w-6 h-2 border-b border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
           </button>
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* ===== REVIEWS ===== */}
       <div className="mt-10">
         <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
@@ -281,6 +358,21 @@ const ServiceDetails = () => {
             </div>
           </div>
         </div>
+=======
+      {/* Booking Drawer */}
+      {service && (
+        <BookingDrawer
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          service={service.name}
+          serviceId={id} // ✅ Pass service ID
+          price={
+            Array.isArray(service.pricing)
+              ? service.pricing[0]
+              : service.pricing || "0"
+          }
+        />
+>>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
       )}
 
       <BookingDrawer
