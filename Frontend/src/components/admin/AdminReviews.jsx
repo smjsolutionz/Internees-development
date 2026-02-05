@@ -58,7 +58,7 @@ const AdminReviews = () => {
   if (loading) return <p style={{ padding: 20 }}>Loading reviews...</p>;
 
   return (
-    <div style={{ padding: 30 }}>
+    <div style={{ padding: "20px" }}>
       <h2 style={{ marginBottom: 20 }}>⭐ Customer Reviews</h2>
 
       {/* Filter Dropdown */}
@@ -80,10 +80,17 @@ const AdminReviews = () => {
       {reviews.length === 0 ? (
         <p>No reviews found</p>
       ) : (
-        <div style={{ overflowX: "auto" }}>
+        <div
+          style={{
+            overflowX: "auto",
+            borderRadius: 8,
+            border: "1px solid #ddd",
+          }}
+        >
           <table
             style={{
               width: "100%",
+              minWidth: 600, // ensures table looks okay on desktop
               borderCollapse: "collapse",
               tableLayout: "fixed",
               background: "#fff",
@@ -154,6 +161,7 @@ const td = {
   padding: "12px",
   borderBottom: "1px solid #eee",
   verticalAlign: "middle",
+  wordBreak: "break-word", // ensures long text wraps on small screens
 };
 
 export default AdminReviews;
