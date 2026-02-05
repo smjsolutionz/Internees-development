@@ -40,13 +40,8 @@ const ServiceDetails = () => {
   useEffect(() => {
     const fetchService = async () => {
       try {
-<<<<<<< HEAD
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
-=======
         const response = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`,
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
         );
         if (res.data?.success) setService(res.data.data);
       } catch (err) {
@@ -58,30 +53,19 @@ const ServiceDetails = () => {
     fetchService();
   }, [id]);
 
-<<<<<<< HEAD
-  /* ================= FETCH REVIEWS ================= */
-  const fetchReviews = async () => {
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/target/Service/${id}`
-      );
-      if (res.data?.success) setReviews(res.data.reviews);
-    } catch (err) {
-      console.error("❌ Review fetch failed:", err);
-=======
-  useEffect(() => {
-    if (descRef.current) {
-      const lineHeight = parseInt(
-        getComputedStyle(descRef.current).lineHeight,
-        10,
-      );
-      const maxHeight = lineHeight * 3;
-      if (descRef.current.scrollHeight > maxHeight) {
-        setShowReadMore(true);
-      }
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
+useEffect(() => {
+  if (descRef.current) {
+    const lineHeight = parseInt(
+      getComputedStyle(descRef.current).lineHeight,
+      10
+    );
+    const maxHeight = lineHeight * 3;
+    if (descRef.current.scrollHeight > maxHeight) {
+      setShowReadMore(true);
     }
-  };
+  }
+}, []);
+
 
   useEffect(() => {
     fetchReviews();
@@ -147,27 +131,6 @@ const ServiceDetails = () => {
 
   /* ================= UI ================= */
   return (
-<<<<<<< HEAD
-    <div className="max-w-7xl mx-auto pt-28 px-4">
-      {/* ===== SERVICE UI ===== */}
-      <div className="flex flex-col md:flex-row gap-10">
-        <div className="md:w-1/2 h-[400px] rounded-2xl overflow-hidden">
-          {service.images?.[0] ? (
-            <img
-              src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0]}`}
-              alt={service.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-8xl">
-              💈
-            </div>
-          )}
-        </div>
-
-        <div className="md:w-1/2 flex flex-col gap-4">
-          <h1 className="text-4xl font-extrabold">{service.name}</h1>
-=======
     <div className="max-w-7xl container mx-auto pt-[100px] mt-10 mb-10 py-12 px-4 sm:px-6 md:px-8">
       <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12">
         {/* IMAGE SECTION */}
@@ -192,7 +155,6 @@ const ServiceDetails = () => {
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
             {service.name}
           </h1>
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
 
           {service.category && (
             <span className="bg-[#BB8C4B] text-white px-3 py-1 rounded-full w-fit text-sm">
@@ -217,10 +179,6 @@ const ServiceDetails = () => {
             )}
           </div>
 
-<<<<<<< HEAD
-          
-
-=======
           {/* DURATION & PRICE */}
           <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6 mt-4 sm:mt-6 justify-center md:justify-start w-full">
             <div className="flex items-center gap-2">
@@ -240,125 +198,20 @@ const ServiceDetails = () => {
           </div>
 
           {/* BOOK NOW BUTTON */}
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
           <button
             onClick={() => setIsOpen(true)}
             className="mt-6 px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] flex items-center gap-2"
           >
-<<<<<<< HEAD
-            Book Now <FaArrowRight />
-=======
             Book Now{" "}
             <FaArrowRight className="inline-block text-sm sm:text-base" />
             <span className="absolute -top-2 -left-2 w-6 h-2 border-t border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -top-2 -right-2 w-6 h-2 border-t border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -bottom-2 -left-2 w-6 h-2 border-b border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
             <span className="absolute -bottom-2 -right-2 w-6 h-2 border-b border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
           </button>
         </div>
       </div>
 
-<<<<<<< HEAD
-      {/* ===== REVIEWS ===== */}
-      <div className="mt-10">
-        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-
-        {reviews.length === 0 && <p>No reviews yet.</p>}
-
-        {reviews.map((r) => {
-          const isOwner = r.CUSTOMER?._id === userId;
-          return (
-            <div key={r._id} className="border p-4 rounded-md mb-3">
-              <div className="flex justify-between">
-                <div>
-                  <strong>{r.CUSTOMER?.name || "Anonymous"}</strong>
-                  <div className="flex text-yellow-400">
-                    {[...Array(r.rating)].map((_, i) => (
-                      <FaStar key={i} />
-                    ))}
-                  </div>
-                </div>
-
-                {isOwner && (
-                  <div className="flex gap-3">
-                    <FaEdit
-                      className="cursor-pointer text-blue-600"
-                      onClick={() => {
-                        setEditReview(r);
-                        setEditMessage(r.message);
-                      }}
-                    />
-                    <FaTrash
-                      className="cursor-pointer text-red-600"
-                      onClick={() => deleteReview(r._id)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <p className="mt-2">{r.message}</p>
-            </div>
-          );
-        })}
-
-        {/* ADD REVIEW */}
-        {loggedIn && (
-          <form
-            onSubmit={handleSubmitReview}
-            className="mt-6 p-6 border rounded-md"
-          >
-            <h3 className="font-semibold mb-2">Add Review</h3>
-            <div className="flex gap-1 mb-2">
-              {[1, 2, 3, 4, 5].map((s) => (
-                <FaStar
-                  key={s}
-                  className={`cursor-pointer ${
-                    ratingInput >= s ? "text-yellow-400" : "text-gray-300"
-                  }`}
-                  onClick={() => setRatingInput(s)}
-                />
-              ))}
-            </div>
-
-            <textarea
-              className="border w-full p-2 rounded"
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-            />
-
-            <button
-              className="bg-[#BB8C4B] text-white px-4 py-2 mt-3 rounded"
-              disabled={submitting}
-            >
-              {submitting ? "Submitting..." : "Submit Review"}
-            </button>
-          </form>
-        )}
-      </div>
-
-      {/* ===== EDIT MODAL ===== */}
-      {editReview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-md w-[90%] max-w-md">
-            <h3 className="text-lg font-semibold mb-2">Edit Review</h3>
-            <textarea
-              className="border w-full p-2 rounded"
-              value={editMessage}
-              onChange={(e) => setEditMessage(e.target.value)}
-            />
-            <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setEditReview(null)}>Cancel</button>
-              <button
-                onClick={submitEditReview}
-                className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        </div>
-=======
       {/* Booking Drawer */}
       {service && (
         <BookingDrawer
@@ -372,7 +225,6 @@ const ServiceDetails = () => {
               : service.pricing || "0"
           }
         />
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
       )}
 
       <BookingDrawer

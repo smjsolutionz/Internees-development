@@ -3,12 +3,7 @@ import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
-
-import { useNavigate } from "react-router-dom"; // ✅ added
-=======
 import { useNavigate } from "react-router-dom";
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -17,18 +12,11 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
-<<<<<<< HEAD
-  const navigate = useNavigate(); // ✅ added
-    const [showUnverified, setShowUnverified] = useState(false); 
-
-  // ✅ fetch users with auth
-=======
   const [showUnverified, setShowUnverified] = useState(false);
 
   const navigate = useNavigate();
 
   // ✅ Single merged fetchUsers function
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
   const fetchUsers = async (filters = {}) => {
     try {
       const token = localStorage.getItem("accessToken");
@@ -61,11 +49,7 @@ export default function Dashboard() {
     }
   };
 
-<<<<<<< HEAD
-  // ✅ Check token on mount
-=======
   // ✅ Fetch users on mount or when showUnverified changes
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) {

@@ -43,11 +43,6 @@ import EditTeam from "./pages/admin/EditTeam";
 // Users
 import CreateUser from "./pages/admin/CreateUser";
 import UpdateUser from "./pages/admin/UpdateUser";
-<<<<<<< HEAD
-import ProfilePage from "./pages/admin/Profile";
-import AdminReviews from "./pages/admin/AdminReviews";
-=======
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
 
 // Appointments
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
@@ -62,68 +57,6 @@ const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
   return (
-<<<<<<< HEAD
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/about" element={<About />} /> {/* ✅ NEW: About page */}
-      <Route path="/contact" element={<Contact />} /> {/* ✅ NEW: Contact page */}
-      <Route path="/packages/:id" element={<PackageDetailPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/profile" element={<Profile />} />
-
-      
-      {/* Admin Dashboard */}
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route path="/dashboard"
-  element={isAuth() ? <Dashboard /> : <Navigate to="/login" replace />}
-/>
-      
-      {/* Services Admin */}
-      <Route path="/services-admin" element={<ServicesAdmin />} />
-      <Route path="/create-service" element={<CreateService />} />
-      <Route path="/update-service/:id" element={<UpdateService />} />
-      <Route
-        path="/service-details/:id"
-        element={<ServiceDetailsAdmin />}
-      /> {/* ✅ Added */}
-      
-      {/* Packages Admin */}
-      <Route path="/packages-admin" element={<AllPackagesAdmin />} />
-      <Route path="/create-package" element={<CreatePackage />} />
-      <Route path="/update-package/:id" element={<UpdatePackage />} />
-      <Route path="/package-details/:id" element={<PackageDetails />} />
-      
-      {/* User-facing Services */}
-      <Route path="/services" element={<ServicePage />} />
-      <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
-      
-      {/* Gallery Routes */}
-      <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-      <Route path="/gallery-admin" element={<AllGalleryimageAdmin/>} />
-      <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-      <Route path="/cutomergallery" element={<CustomerGallerypage/>} />
-      
-      {/* User Management */}
-      <Route path="/create-user" element={<CreateUser />} />
-      <Route path="/edit-user/:id" element={<UpdateUser />} />
-    
-<Route path="/admin/team" element={<AllTeam/>} />
-<Route path="/admin/team/add" element={<AddTeam/>} />
-<Route path="/admin/team/edit/:id" element={<EditTeam />} />
-
-  <Route
-        path="/profile"
-        element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
-      />
-
-      <Route path="*" element={<Navigate to="/login" replace />} />
-       <Route path="/admin/reviews" element={<AdminReviews />} />
-    </Routes>
-=======
     <>
       <Toaster
         position="top-right"
@@ -198,6 +131,5 @@ export default function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </>
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
   );
 }

@@ -22,11 +22,7 @@ const LoginPage = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-<<<<<<< HEAD
-     
-=======
       localStorage.setItem("token", accessToken); // ← Fixed!
->>>>>>> 73d6e898a43a265dd1be88dec15dd01123cb3390
       setSuccessMessage("Login successful! Redirecting...");
       setTimeout(() => {
         window.location.href = "/";
