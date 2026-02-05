@@ -66,21 +66,21 @@ const adminCreateUser = async (req, res) => {
       email,
       password_hash,
       role: role || "ADMIN",
-       created_by_admin_id: req.user ? req.user.id : null,
+      created_by_admin_id: req.user ? req.user.id : null,
     });
     await AdminAuditLog.create({
-  action: "ADMIN_CREATED_USER",
-  actor_admin_id: req.user.id,          // the admin who created the user
-  target_user_id: admin._id,            // the new user ID
-  metadata: {
-    name: admin.name,
-    username: admin.username,
-    email: admin.email,
-    role: admin.role
-  },
-  ip_address: req.ip,
-  user_agent: req.headers["user-agent"]
-});
+      action: "ADMIN_CREATED_USER",
+      actor_admin_id: req.user.id, // the admin who created the user
+      target_user_id: admin._id, // the new user ID
+      metadata: {
+        name: admin.name,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role,
+      },
+      ip_address: req.ip,
+      user_agent: req.headers["user-agent"],
+    });
 
     // ✅ Send response without password_hash
     const adminResponse = admin.toObject();
@@ -97,40 +97,96 @@ const adminCreateUser = async (req, res) => {
   }
 };
 
-/* =========================
-   LIST USERS (Admin + Customers)
-========================= */
 const adminListUsers = async (req, res) => {
   try {
-    const { search, role } = req.query;
+    const { search, role, isVerified } = req.query;
+
+    console.log("📥 Admin List Users - Query params:", {
+      search,
+      role,
+      isVerified,
+    });
 
     const adminFilter = { name: { $ne: "Super Admin" } };
-    const userFilter = {};
+    const userFilter = { isVerified: true };
 
+    // ✅ Handle isVerified filter
+    if (isVerified === "false") {
+      userFilter.isVerified = false;
+    } else if (isVerified === "all") {
+      delete userFilter.isVerified;
+    }
+
+    // ✅ Handle search filter
     if (search) {
       const regex = { $regex: search, $options: "i" };
-      adminFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
+      adminFilter.$or = [
+        { name: regex },
+        { username: regex },
+        { email: regex },
+      ];
       userFilter.$or = [{ name: regex }, { username: regex }, { email: regex }];
     }
 
-    if (role) {
-      adminFilter.role = role;
-      userFilter.role = role.toLowerCase();
+    // ✅ FIX: Handle role filter with proper collection targeting
+    let queryAdminUsers = true;
+    let queryCustomers = true;
+
+    if (role && role !== "ALL") {
+      if (role === "CUSTOMER") {
+        // Only query User collection, don't add role filter (all users in User collection are customers)
+        queryAdminUsers = false;
+        // Don't add userFilter.role = role because User model has CUSTOMER as default
+      } else if (
+        [
+          "ADMIN",
+          "MANAGER",
+          "INVENTORY_MANAGER",
+          "RECEPTIONIST",
+          "STAFF",
+        ].includes(role)
+      ) {
+        // Only query AdminUser collection
+        queryCustomers = false;
+        adminFilter.role = role;
+      }
     }
 
-    const adminUsers = await AdminUser.find(adminFilter).select("-password_hash");
-    const customers = await User.find(userFilter).select("-password");
+    console.log(
+      "🔍 Query AdminUsers:",
+      queryAdminUsers,
+      "Filter:",
+      adminFilter,
+    );
+    console.log("🔍 Query Customers:", queryCustomers, "Filter:", userFilter);
+
+    // ✅ Conditionally query based on role
+    const adminUsers = queryAdminUsers
+      ? await AdminUser.find(adminFilter).select("-password_hash")
+      : [];
+
+    const customers = queryCustomers
+      ? await User.find(userFilter).select(
+          "-password -refreshTokens -verificationOTP -verificationOTPExpire -resetPasswordToken -resetPasswordExpire",
+        )
+      : [];
+
+    console.log(
+      `✅ Found ${adminUsers.length} admin users, ${customers.length} customers`,
+    );
 
     const users = [
-      ...adminUsers.map(u => ({
+      ...adminUsers.map((u) => ({
         ...u.toObject(),
         status: u.status,
         userType: "ADMIN",
+        isVerified: true,
       })),
-      ...customers.map(u => ({
+      ...customers.map((u) => ({
         ...u.toObject(),
         status: u.isActive ? "ACTIVE" : "INACTIVE",
         userType: "CUSTOMER",
+        isVerified: u.isVerified,
       })),
     ];
 
@@ -140,11 +196,10 @@ const adminListUsers = async (req, res) => {
       users,
     });
   } catch (error) {
-    console.error("adminListUsers error:", error);
+    console.error("❌ adminListUsers error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
 /* =========================
    GET SINGLE USER
 ========================= */

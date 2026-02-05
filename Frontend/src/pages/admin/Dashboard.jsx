@@ -3,6 +3,7 @@ import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
 import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom"; // ✅ added
 import axios from "axios";
 
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const navigate = useNavigate(); // ✅ added
+    const [showUnverified, setShowUnverified] = useState(false); 
 
   // ✅ fetch users with auth
   const fetchUsers = async (filters = {}) => {
@@ -51,7 +53,7 @@ export default function Dashboard() {
       return;
     }
     fetchUsers();
-  }, []);
+  }, [showUnverified]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -70,12 +72,33 @@ export default function Dashboard() {
               value={users.length.toLocaleString()}
               color="bg-purple-500"
             />
-            <StatCard title="Total Orders" value="200,521" color="bg-blue-500" />
-            <StatCard title="Available Products" value="215,542" color="bg-pink-500" />
+            <StatCard
+              title="Total Orders"
+              value="200,521"
+              color="bg-blue-500"
+            />
+            <StatCard
+              title="Available Products"
+              value="215,542"
+              color="bg-pink-500"
+            />
           </div>
 
           {/* Error */}
           {error && <p className="text-red-600 mb-4">{error}</p>}
+
+          {/* ✅ Toggle for Unverified Users */}
+          <div className="mb-4 flex items-center gap-2">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showUnverified}
+                onChange={(e) => setShowUnverified(e.target.checked)}
+                className="rounded w-4 h-4"
+              />
+              <span>Show Unverified Users</span>
+            </label>
+          </div>
 
           {/* Users Table */}
           <UsersTableAdmin users={users} refreshUsers={fetchUsers} />

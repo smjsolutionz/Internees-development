@@ -10,8 +10,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
   const [openGallery, setOpenGallery] = useState(false);
-  const [admin, setAdmin] = useState(null);
   const [openTeam, setOpenTeam] = useState(false);
+  const [admin, setAdmin] = useState(null);
 
   useEffect(() => {
     const fetchAdmin = async () => {
@@ -19,7 +19,9 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
         const token = localStorage.getItem("accessToken");
         const res = await axios.get(
           `${API_BASE_URL}/api/admin/profile`,
-          { headers: { Authorization: `Bearer ${token}` } }
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         setAdmin(res.data.admin);
       } catch (err) {
@@ -30,15 +32,18 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
     fetchAdmin();
   }, []);
 
+  // 🔹 SIDEBAR MENU
   const menu = [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Appointments", path: "/appointments" },
     { name: "Services", path: "/services-admin" },
     { name: "Packages", path: "/packages-admin" },
+    { name: "Reviews", path: "/admin/reviews" }, // ✅ ADDED
   ];
 
   return (
     <>
+      {/* Overlay (mobile) */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden"
@@ -46,8 +51,12 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
         />
       )}
 
-      <aside className={`fixed md:relative top-0 left-0 bottom-0 z-50 w-64 bg-black text-white border-r border-white/10 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 flex flex-col`}>
-        
+      {/* Sidebar */}
+      <aside
+        className={`fixed md:relative top-0 left-0 bottom-0 z-50 w-64 bg-black text-white border-r border-white/10 transform transition-transform duration-300 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 flex flex-col`}
+      >
         {/* Logo */}
         <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
           <img src={logo} alt="Logo" className="w-32" />
@@ -69,17 +78,20 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
                   ? `${API_BASE_URL}${admin.profilePic}`
                   : "/avatar.png"
               }
+              alt="Admin"
               className="w-16 h-16 rounded-full object-cover border mb-2"
             />
             <h4 className="font-semibold">{admin.name}</h4>
             <span className="text-xs text-gray-400">{admin.role}</span>
-            <span className="text-xs text-[#BB8C4B] mt-1">View Profile</span>
+            <span className="text-xs text-[#BB8C4B] mt-1">
+              View Profile
+            </span>
           </Link>
         )}
 
         {/* Menu */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {/* Main links */}
+          {/* Main Links */}
           {menu.map((item) => (
             <Link
               key={item.name}
@@ -95,11 +107,11 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
             </Link>
           ))}
 
-          {/* Gallery */}
+          {/* Gallery Dropdown */}
           <div>
             <button
               onClick={() => setOpenGallery(!openGallery)}
-              className="w-full flex justify-between px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium"
+              className="w-full flex justify-between px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
             >
               <span>Gallery</span>
               {openGallery ? <FaChevronUp /> : <FaChevronDown />}
@@ -107,10 +119,18 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
 
             {openGallery && (
               <div className="ml-4 mt-2 space-y-1">
-                <Link to="/gallery-admin" className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md">
+                <Link
+                  to="/gallery-admin"
+                  onClick={() => setSidebarOpen(false)}
+                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
+                >
                   All Images
                 </Link>
-                <Link to="/gallery-admin/add" className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md">
+                <Link
+                  to="/gallery-admin/add"
+                  onClick={() => setSidebarOpen(false)}
+                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
+                >
                   Add New Image
                 </Link>
               </div>
@@ -131,6 +151,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
               <div className="ml-4 mt-2 space-y-1">
                 <Link
                   to="/admin/team"
+                  onClick={() => setSidebarOpen(false)}
                   className={`block px-4 py-2 text-sm rounded-md ${
                     location.pathname === "/admin/team"
                       ? "bg-[#BB8C4B]"
@@ -142,6 +163,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
 
                 <Link
                   to="/admin/team/add"
+                  onClick={() => setSidebarOpen(false)}
                   className={`block px-4 py-2 text-sm rounded-md ${
                     location.pathname === "/admin/team/add"
                       ? "bg-[#BB8C4B]"

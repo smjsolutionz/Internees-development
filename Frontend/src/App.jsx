@@ -35,6 +35,7 @@ import CustomerGallerypage from "./pages/CustomerGallerypage";
 import CreateUser from "./pages/admin/CreateUser";
 import UpdateUser from "./pages/admin/UpdateUser";
 import ProfilePage from "./pages/admin/Profile";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 // ✅ NEW: Import About and Contact pages
 import About from "./pages/About";
@@ -62,8 +63,7 @@ export default function App() {
       {/* Admin Dashboard */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
-      <Route
-  path="/dashboard"
+      <Route path="/dashboard"
   element={isAuth() ? <Dashboard /> : <Navigate to="/login" replace />}
 />
       
@@ -106,7 +106,7 @@ export default function App() {
       />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
-
+       <Route path="/admin/reviews" element={<AdminReviews />} />
     </Routes>
   );
 }

@@ -120,11 +120,12 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
 
       {/* USERS TABLE */}
       <div className="overflow-x-auto bg-white rounded-lg shadow">
-        {/* Desktop Header */}
-        <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_90px] bg-gray-100 text-gray-700 font-semibold text-sm px-3 py-3 gap-3">
+        {/* Desktop Header - ✅ Added Verified column */}
+        <div className="hidden md:grid grid-cols-[2fr_2fr_1fr_1fr_1fr_90px] bg-gray-100 text-gray-700 font-semibold text-sm px-3 py-3 gap-3">
           <span>Name</span>
           <span>Email</span>
           <span>Role</span>
+          <span>Verified</span>
           <span>Status</span>
           <span className="text-center">Actions</span>
         </div>
@@ -136,7 +137,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
           users.map((user) => (
             <div
               key={user._id}
-              className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_1fr_90px] px-3 py-4 gap-3 items-center border-t text-sm hover:bg-gray-50"
+              className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_1fr_1fr_90px] px-3 py-4 gap-3 items-center border-t text-sm hover:bg-gray-50"
             >
               <div className="flex flex-col md:block">
                 <span className="font-medium md:hidden">Name:</span>
@@ -149,6 +150,19 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
               <div className="flex flex-col md:block">
                 <span className="font-medium md:hidden">Role:</span>
                 {user.role}
+              </div>
+              {/* ✅ Verification Status */}
+              <div className="flex flex-col md:block">
+                <span className="font-medium md:hidden">Verified:</span>
+                {user.isVerified ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                    ✓ Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                    ⚠ Pending
+                  </span>
+                )}
               </div>
               <div className="flex flex-col md:block">
                 <span className="font-medium md:hidden">Status:</span>

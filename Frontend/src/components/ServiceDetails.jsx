@@ -1,162 +1,293 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import BookingDrawer from "./BookingDrawer";
 import axios from "axios";
-import { FaArrowRight } from "react-icons/fa";
+import BookingDrawer from "./BookingDrawer";
+import { FaArrowRight, FaStar, FaTrash, FaEdit } from "react-icons/fa";
 
 const ServiceDetails = () => {
   const { id } = useParams();
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [showFullDescription, setShowFullDescription] = useState(false);
-  const [showReadMore, setShowReadMore] = useState(false);
-  const descRef = useRef(null);
 
+  const [reviews, setReviews] = useState([]);
+  const [ratingInput, setRatingInput] = useState(0);
+  const [messageInput, setMessageInput] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Edit modal state
+  const [editReview, setEditReview] = useState(null);
+  const [editMessage, setEditMessage] = useState("");
+
+  const descRef = useRef(null);
+  const token = localStorage.getItem("accessToken");
+
+  /* ================= AUTH ================= */
+  const getUserIdFromToken = (token) => {
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload._id || payload.id || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const userId = getUserIdFromToken(token);
+  const loggedIn = !!userId;
+
+  /* ================= FETCH SERVICE ================= */
   useEffect(() => {
     const fetchService = async () => {
       try {
-        const response = await axios.get(
+        const res = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
         );
-        const data = response.data;
-        if (data.success && data.data) {
-          setService(data.data);
-        } else {
-          console.error("Service not found");
-        }
-      } catch (error) {
-        console.error("Error fetching service:", error);
+        if (res.data?.success) setService(res.data.data);
+      } catch (err) {
+        console.error("❌ Service fetch failed:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchService();
   }, [id]);
 
-  // Check if description exceeds 3 lines
-  useEffect(() => {
-    if (descRef.current) {
-      const lineHeight = parseInt(getComputedStyle(descRef.current).lineHeight, 10);
-      const maxHeight = lineHeight * 3;
-      if (descRef.current.scrollHeight > maxHeight) {
-        setShowReadMore(true);
-      }
+  /* ================= FETCH REVIEWS ================= */
+  const fetchReviews = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/target/Service/${id}`
+      );
+      if (res.data?.success) setReviews(res.data.reviews);
+    } catch (err) {
+      console.error("❌ Review fetch failed:", err);
     }
-  }, [service]);
+  };
 
-  if (loading)
-    return (
-      <p className="text-center mt-10 text-gray-500 text-lg animate-pulse">
-        Loading service details...
-      </p>
-    );
+  useEffect(() => {
+    fetchReviews();
+  }, [id]);
 
-  if (!service)
-    return (
-      <div className="flex justify-center items-center h-96">
-        <h2 className="text-xl text-gray-500">Service not found</h2>
-      </div>
-    );
+  /* ================= ADD REVIEW ================= */
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!ratingInput || !messageInput.trim()) return;
 
+    setSubmitting(true);
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews`,
+        {
+          targetType: "Service",
+          targetId: id,
+          rating: ratingInput,
+          message: messageInput,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setRatingInput(0);
+      setMessageInput("");
+      fetchReviews();
+    } catch (err) {
+      console.error("❌ Add review failed:", err.response || err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  /* ================= EDIT REVIEW ================= */
+  const submitEditReview = async () => {
+    try {
+      await axios.put(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/${editReview._id}`,
+        { message: editMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEditReview(null);
+      fetchReviews();
+    } catch (err) {
+      console.error("❌ Edit review failed:", err.response || err.message);
+    }
+  };
+
+  /* ================= DELETE REVIEW ================= */
+  const deleteReview = async (reviewId) => {
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/${reviewId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      fetchReviews();
+    } catch (err) {
+      console.error("❌ Delete review failed:", err.response || err.message);
+    }
+  };
+
+  if (loading) return <p className="text-center mt-10">Loading...</p>;
+  if (!service) return <p>Service not found</p>;
+
+  /* ================= UI ================= */
   return (
-    <div className="max-w-7xl container mx-auto pt-[100px] mt-10 mb-10 py-12 px-4 sm:px-6 md:px-8">
-      <div className="flex flex-col md:flex-row items-center md:items-start gap-10 md:gap-12">
-
-        {/* IMAGE SECTION */}
-        <div className="w-full md:w-1/2 flex justify-center">
-          <div className="w-full h-[300px] sm:h-[350px]  md:h-[400px] overflow-hidden rounded-2xl">
-            {service.images && service.images.length > 0 ? (
-              <img
-                src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0].replace(/\\/g, "/")}`}
-                alt={service.name}
-                className="w-full h-full object-cover rounded-2xl"
-              />
-            ) : (
-              <div className="text-8xl text-[#BB8C4B] animate-bounce w-full h-full flex items-center justify-center">
-                💈
-              </div>
-            )}
-          </div>
+    <div className="max-w-7xl mx-auto pt-28 px-4">
+      {/* ===== SERVICE UI ===== */}
+      <div className="flex flex-col md:flex-row gap-10">
+        <div className="md:w-1/2 h-[400px] rounded-2xl overflow-hidden">
+          {service.images?.[0] ? (
+            <img
+              src={`${import.meta.env.VITE_API_BASE_URL}/${service.images[0]}`}
+              alt={service.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-8xl">
+              💈
+            </div>
+          )}
         </div>
 
-        {/* TEXT SECTION */}
-        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left space-y-4 sm:space-y-6">
-          
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900">
-            {service.name}
-          </h1>
+        <div className="md:w-1/2 flex flex-col gap-4">
+          <h1 className="text-4xl font-extrabold">{service.name}</h1>
 
           {service.category && (
-            <span className="mt-2 inline-block bg-[#BB8C4B] text-white text-sm sm:text-base font-medium px-3 py-1 rounded-full uppercase tracking-wide">
+            <span className="bg-[#BB8C4B] text-white px-3 py-1 rounded-full w-fit text-sm">
               {service.category}
             </span>
           )}
+          <p ref={descRef} className="line-clamp-3 mt-2">
+            {service.description}
+          </p>
 
-          {/* DESCRIPTION WITH READ MORE */}
-          <div className="mt-4 text-gray-700 text-base sm:text-lg md:text-lg leading-relaxed">
-            <p
-              ref={descRef}
-              className={`transition-all duration-300 ${!showFullDescription ? "line-clamp-3 overflow-hidden" : ""}`}
-            >
-              {service.description}
-            </p>
-
-            {showReadMore && (
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="mt-2 text-[#BB8C4B] font-semibold hover:underline"
-              >
-                {showFullDescription ? "Read Less" : "Read More"}
-              </button>
+          {/* Duration & Price */}
+          <div className="flex gap-4 mt-2 text-gray-700">
+            {service.duration && (
+              <span>
+                <strong>Duration:</strong> {service.duration} 
+              </span>
+            )}
+            {service.pricing && (
+              <span>
+                <strong>Price:</strong> {service.pricing}
+              </span>
             )}
           </div>
 
-          {/* DURATION & PRICE */}
-          <div className="flex flex-col items-center sm:flex-row sm:items-center gap-6 mt-4 sm:mt-6 justify-center md:justify-start w-full">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-800">Duration:</span>
-              <span className="text-gray-600">{service.duration}</span>
-            </div>
+          
 
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <span className="font-semibold text-gray-800">Price:</span>
-              <span className="text-gray-600">
-                {Array.isArray(service.pricing)
-                  ? service.pricing[0]
-                  : service.pricing || "0"}
-              </span>
-            </div>
-          </div>
-
-          {/* BOOK NOW BUTTON */}
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsOpen(true);
-            }}
-            className="group relative px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base tracking-widest text-black border border-[#D79A4A] transition-all duration-300 hover:bg-[#BB8C4B] hover:text-white flex items-center justify-center gap-2 mt-6"
+            onClick={() => setIsOpen(true)}
+            className="mt-6 px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] flex items-center gap-2"
           >
-            Book Now <FaArrowRight className="inline-block text-sm sm:text-base" />
-            <span className="absolute -top-2 -left-2 w-6 h-2 border-t border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -top-2 -right-2 w-6 h-2 border-t border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -bottom-2 -left-2 w-6 h-2 border-b border-l border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
-            <span className="absolute -bottom-2 -right-2 w-6 h-2 border-b border-r border-[#D79A4A] group-hover:w-8 transition-all duration-300" />
+            Book Now <FaArrowRight />
           </button>
-
         </div>
       </div>
 
-      {/* Booking Drawer */}
-      {service && (
-        <BookingDrawer
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          service={service.name}
-          price={Array.isArray(service.pricing) ? service.pricing[0] : service.pricing || "0"}
-        />
+      {/* ===== REVIEWS ===== */}
+      <div className="mt-10">
+        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+
+        {reviews.length === 0 && <p>No reviews yet.</p>}
+
+        {reviews.map((r) => {
+          const isOwner = r.CUSTOMER?._id === userId;
+          return (
+            <div key={r._id} className="border p-4 rounded-md mb-3">
+              <div className="flex justify-between">
+                <div>
+                  <strong>{r.CUSTOMER?.name || "Anonymous"}</strong>
+                  <div className="flex text-yellow-400">
+                    {[...Array(r.rating)].map((_, i) => (
+                      <FaStar key={i} />
+                    ))}
+                  </div>
+                </div>
+
+                {isOwner && (
+                  <div className="flex gap-3">
+                    <FaEdit
+                      className="cursor-pointer text-blue-600"
+                      onClick={() => {
+                        setEditReview(r);
+                        setEditMessage(r.message);
+                      }}
+                    />
+                    <FaTrash
+                      className="cursor-pointer text-red-600"
+                      onClick={() => deleteReview(r._id)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <p className="mt-2">{r.message}</p>
+            </div>
+          );
+        })}
+
+        {/* ADD REVIEW */}
+        {loggedIn && (
+          <form
+            onSubmit={handleSubmitReview}
+            className="mt-6 p-6 border rounded-md"
+          >
+            <h3 className="font-semibold mb-2">Add Review</h3>
+            <div className="flex gap-1 mb-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <FaStar
+                  key={s}
+                  className={`cursor-pointer ${
+                    ratingInput >= s ? "text-yellow-400" : "text-gray-300"
+                  }`}
+                  onClick={() => setRatingInput(s)}
+                />
+              ))}
+            </div>
+
+            <textarea
+              className="border w-full p-2 rounded"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+            />
+
+            <button
+              className="bg-[#BB8C4B] text-white px-4 py-2 mt-3 rounded"
+              disabled={submitting}
+            >
+              {submitting ? "Submitting..." : "Submit Review"}
+            </button>
+          </form>
+        )}
+      </div>
+
+      {/* ===== EDIT MODAL ===== */}
+      {editReview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md w-[90%] max-w-md">
+            <h3 className="text-lg font-semibold mb-2">Edit Review</h3>
+            <textarea
+              className="border w-full p-2 rounded"
+              value={editMessage}
+              onChange={(e) => setEditMessage(e.target.value)}
+            />
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setEditReview(null)}>Cancel</button>
+              <button
+                onClick={submitEditReview}
+                className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
       )}
+
+      <BookingDrawer
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        service={service.name}
+      />
     </div>
   );
 };

@@ -25,11 +25,32 @@ exports.register = async (req, res, next) => {
     });
 
     if (existingUser) {
-      if (existingUser.email === email) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-      if (existingUser.username === username) {
-        return res.status(400).json({ message: "Username already taken" });
+      // ✅ If user exists but is NOT verified, delete and allow re-registration
+      if (!existingUser.isVerified) {
+        if (existingUser.email === email) {
+          // Delete unverified user with matching email
+          await User.findByIdAndDelete(existingUser._id);
+          console.log(`Deleted unverified user: ${email}`);
+        } else if (existingUser.username === username) {
+          // Username taken by unverified user
+          return res.status(400).json({
+            message:
+              "Username already taken by another unverified account. Please choose a different username.",
+          });
+        }
+      } else {
+        // ✅ User is verified - cannot re-register
+        if (existingUser.email === email) {
+          return res.status(400).json({
+            message:
+              "Email already registered. Please login or use forgot password.",
+          });
+        }
+        if (existingUser.username === username) {
+          return res.status(400).json({
+            message: "Username already taken",
+          });
+        }
       }
     }
 
@@ -41,7 +62,7 @@ exports.register = async (req, res, next) => {
       name,
       phone,
       role: "CUSTOMER",
-      isVerified: false, // ✅ Not verified by default
+      isVerified: false,
     });
 
     // Generate OTP
@@ -106,7 +127,7 @@ exports.register = async (req, res, next) => {
         success: true,
         message:
           "Registration successful. Please check your email for verification code.",
-        userId: user._id, // Send userId for verification page
+        userId: user._id,
         email: user.email,
       });
     } catch (emailError) {
@@ -123,7 +144,6 @@ exports.register = async (req, res, next) => {
     next(error);
   }
 };
-
 // @desc    Verify email with OTP
 // @route   POST /api/auth/verify-email
 // @access  Public
