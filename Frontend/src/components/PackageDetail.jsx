@@ -281,7 +281,7 @@ const PackageDetail = () => {
         </div>
       </div>
 
-      {/* ===== REVIEWS SECTION - REDESIGNED ===== */}
+      {/* ===== REVIEWS SECTION ===== */}
       <div className="mt-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h2 className="text-2xl font-semibold">
@@ -293,51 +293,91 @@ const PackageDetail = () => {
             )}
           </h2>
           
+          {/* ✅ درست حل: Write a Review بٹن ہمیشہ دکھائیں اگر صارف لاگ ان ہو اور فارم نہ دکھ رہا ہو */}
           {loggedIn && !showReviewForm && (
             <button
               onClick={() => setShowReviewForm(true)}
               className="mt-2 md:mt-0 px-4 py-2 bg-[#c0954d] text-white rounded-md hover:bg-[#a87c3e]"
             >
-              Write a Review
+              {reviews.length === 0 ? "Write First Review" : "Write a Review"}
             </button>
           )}
         </div>
 
-        {reviews.length === 0 ? (
-          <div className="text-center py-10 border rounded-lg">
-            <p className="text-gray-500">No reviews yet. Be the first to review this package!</p>
-            {loggedIn && !showReviewForm && (
-              <button
-                onClick={() => setShowReviewForm(true)}
-                className="mt-4 px-4 py-2 bg-[#c0954d] text-white rounded-md hover:bg-[#a87c3e]"
+        {/* ✅ درست حل: Review Form کو الگ سے ہمیشہ رینڈر کریں اگر showReviewForm true ہے */}
+        {showReviewForm && loggedIn && (
+          <div className="mb-8 p-6 border rounded-lg bg-white shadow-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Write Your Review</h3>
+              <button 
+                onClick={() => setShowReviewForm(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
               >
-                Write First Review
+                ✕
               </button>
-            )}
+            </div>
+            <form onSubmit={handleSubmitReview}>
+              <div className="flex gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <FaStar
+                    key={s}
+                    className={`cursor-pointer ${ratingInput >= s ? "text-yellow-400" : "text-gray-300"}`}
+                    onClick={() => setRatingInput(s)}
+                    size={30}
+                  />
+                ))}
+              </div>
+              <textarea
+                className="border w-full p-4 rounded text-lg"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                placeholder="Share your experience with this package..."
+                rows={5}
+              />
+              <div className="flex justify-end gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewForm(false)}
+                  className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#c0954d] text-white px-6 py-2 rounded-md hover:bg-[#a87c3e]"
+                  disabled={submitting || !ratingInput || !messageInput.trim()}
+                >
+                  {submitting ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
           </div>
-        ) : (
-          <div className="flex flex-col lg:flex-row gap-6">
-            {/* LEFT: Rating Summary and Filters */}
-            <div className="lg:w-1/4">
-              <div className="bg-gray-50 p-4 rounded-lg border">
-                {/* Average Rating */}
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-800">{reviewStats.average}</div>
-                  <div className="flex justify-center my-2">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar 
-                        key={i} 
-                        className={i < Math.floor(reviewStats.average) ? "text-yellow-400" : "text-gray-300"} 
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-gray-600">{reviewStats.total} reviews</p>
+        )}
+
+        {/* ✅ درست حل: Reviews کو conditional rendering سے باہر نکالیں */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* LEFT: Rating Summary and Filters - ہمیشہ دکھائیں چاہے کوئی رِویو ہو یا نہ ہو */}
+          <div className="lg:w-1/4">
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              {/* Average Rating */}
+              <div className="text-center mb-6">
+                <div className="text-4xl font-bold text-gray-800">{reviewStats.average || 0}</div>
+                <div className="flex justify-center my-2">
+                  {[...Array(5)].map((_, i) => (
+                    <FaStar 
+                      key={i} 
+                      className={i < Math.floor(reviewStats.average) ? "text-yellow-400" : "text-gray-300"} 
+                    />
+                  ))}
                 </div>
-                
-                {/* Rating Distribution */}
-                {renderRatingBars()}
-                
-                {/* Filter by Rating */}
+                <p className="text-sm text-gray-600">{reviewStats.total} review{reviewStats.total !== 1 ? 's' : ''}</p>
+              </div>
+              
+              {/* Rating Distribution - صرف تبھی دکھائیں جب رِویوز ہوں */}
+              {reviewStats.total > 0 && renderRatingBars()}
+              
+              {/* Filter by Rating - صرف تبھی دکھائیں جب رِویوز ہوں */}
+              {reviewStats.total > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center text-sm font-medium mb-2">
                     <FaFilter className="mr-1" size={12} />
@@ -361,8 +401,10 @@ const PackageDetail = () => {
                     ))}
                   </div>
                 </div>
-                
-                {/* Sort Options */}
+              )}
+              
+              {/* Sort Options - صرف تبھی دکھائیں جبن رِویوز ہوں */}
+              {reviewStats.total > 0 && (
                 <div>
                   <div className="flex items-center text-sm font-medium mb-2">
                     <FaSort className="mr-1" size={12} />
@@ -378,213 +420,179 @@ const PackageDetail = () => {
                     <option value="lowest">Lowest Rated</option>
                   </select>
                 </div>
-              </div>
-              
-              {/* Add Review Form in Compact View */}
-              {loggedIn && showReviewForm && (
-                <div className="mt-4 p-4 border rounded-lg bg-white">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold">Write Your Review</h3>
-                    <button 
-                      onClick={() => setShowReviewForm(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <form onSubmit={handleSubmitReview}>
-                    <div className="flex gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <FaStar
-                          key={s}
-                          className={`cursor-pointer ${ratingInput >= s ? "text-yellow-400" : "text-gray-300"}`}
-                          onClick={() => setRatingInput(s)}
-                          size={20}
-                        />
-                      ))}
-                    </div>
-                    <textarea
-                      className="border w-full p-3 rounded text-sm"
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder="Share your experience..."
-                      rows={3}
-                    />
-                    <div className="flex justify-end mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowReviewForm(false)}
-                        className="px-4 py-2 text-gray-700 mr-2"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="bg-[#c0954d] text-white px-4 py-2 rounded"
-                        disabled={submitting || !ratingInput || !messageInput.trim()}
-                      >
-                        {submitting ? "Submitting..." : "Submit"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-            
-            {/* RIGHT: Reviews List with Pagination */}
-            <div className="lg:w-3/4">
-              {/* Reviews Count and Filter Info */}
-              <div className="mb-4 text-sm text-gray-600">
-                Showing {indexOfFirstReview + 1}-{Math.min(indexOfLastReview, filteredReviews.length)} of {filteredReviews.length} reviews
-                {filterRating > 0 && ` • Filtered by ${filterRating} star${filterRating > 1 ? 's' : ''}`}
-              </div>
-              
-              {/* Reviews List - Compact Design */}
-              <div className="space-y-4">
-                {currentReviews.map((r) => {
-                  const isOwner = r.CUSTOMER?._id === userId;
-                  const isExpanded = expandedReview === r._id;
-                  
-                  return (
-                    <div
-                      key={r._id}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-all duration-150 bg-white"
-                    >
-                      <div className="flex justify-between">
-                        <div className="flex items-start">
-                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold mr-3">
-                            {r.CUSTOMER?.name?.charAt(0) || "A"}
-                          </div>
-                          <div>
-                            <div className="flex items-center">
-                              <strong className="text-gray-800">
-                                {r.CUSTOMER?.name || "Anonymous"}
-                              </strong>
-                              <span className="mx-2 text-gray-400">•</span>
-                              <div className="flex text-yellow-400">
-                                {[...Array(r.rating)].map((_, i) => (
-                                  <FaStar key={i} size={14} />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recently'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {isOwner && (
-                          <div className="flex gap-3">
-                            <FaEdit
-                              className="cursor-pointer text-blue-600 hover:text-blue-800"
-                              onClick={() => {
-                                setEditReview(r);
-                                setEditMessage(r.message);
-                              }}
-                              size={16}
-                            />
-                            <FaTrash
-                              className="cursor-pointer text-red-600 hover:text-red-800"
-                              onClick={() => deleteReview(r._id)}
-                              size={16}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="mt-3">
-                        <p className={`text-gray-700 ${!isExpanded && 'line-clamp-2'}`}>
-                          {r.message}
-                        </p>
-                        
-                        {r.message.length > 150 && (
-                          <button
-                            onClick={() => setExpandedReview(isExpanded ? null : r._id)}
-                            className="text-[#c0954d] text-sm mt-1 flex items-center"
-                          >
-                            {isExpanded ? (
-                              <>
-                                Show less <FaChevronUp className="ml-1" size={12} />
-                              </>
-                            ) : (
-                              <>
-                                Read more <FaChevronDown className="ml-1" size={12} />
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Pagination */}
-              {filteredReviews.length > reviewsPerPage && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t">
-                  <div className="text-sm text-gray-600 mb-4 sm:mb-0">
-                    Page {currentPage} of {totalPages}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={handlePrevPage}
-                      disabled={currentPage === 1}
-                      className={`px-4 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
-                    >
-                      Previous
-                    </button>
-                    
-                    <div className="flex space-x-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => paginate(pageNum)}
-                            className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-[#c0954d] text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-                      
-                      {totalPages > 5 && currentPage < totalPages - 2 && (
-                        <>
-                          <span className="px-2">...</span>
-                          <button
-                            onClick={() => paginate(totalPages)}
-                            className="w-10 h-10 rounded-md bg-gray-200 hover:bg-gray-300"
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
-                    </div>
-                    
-                    <button
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                      className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
               )}
             </div>
           </div>
-        )}
+            
+          {/* RIGHT: Reviews List with Pagination */}
+          <div className="lg:w-3/4">
+            {reviews.length === 0 ? (
+              <div className="text-center py-10 border rounded-lg">
+                <p className="text-gray-500">No reviews yet. Be the first to review this package!</p>
+                {loggedIn && !showReviewForm && (
+                  <button
+                    onClick={() => setShowReviewForm(true)}
+                    className="mt-4 px-4 py-2 bg-[#c0954d] text-white rounded-md hover:bg-[#a87c3e]"
+                  >
+                    Write First Review
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Reviews Count and Filter Info */}
+                <div className="mb-4 text-sm text-gray-600">
+                  Showing {indexOfFirstReview + 1}-{Math.min(indexOfLastReview, filteredReviews.length)} of {filteredReviews.length} reviews
+                  {filterRating > 0 && ` • Filtered by ${filterRating} star${filterRating > 1 ? 's' : ''}`}
+                </div>
+                
+                {/* Reviews List - Compact Design */}
+                <div className="space-y-4">
+                  {currentReviews.map((r) => {
+                    const isOwner = r.CUSTOMER?._id === userId;
+                    const isExpanded = expandedReview === r._id;
+                    
+                    return (
+                      <div
+                        key={r._id}
+                        className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-all duration-150 bg-white"
+                      >
+                        <div className="flex justify-between">
+                          <div className="flex items-start">
+                            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold mr-3">
+                              {r.CUSTOMER?.name?.charAt(0) || "A"}
+                            </div>
+                            <div>
+                              <div className="flex items-center">
+                                <strong className="text-gray-800">
+                                  {r.CUSTOMER?.name || "Anonymous"}
+                                </strong>
+                                <span className="mx-2 text-gray-400">•</span>
+                                <div className="flex text-yellow-400">
+                                  {[...Array(r.rating)].map((_, i) => (
+                                    <FaStar key={i} size={14} />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recently'}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {isOwner && (
+                            <div className="flex gap-3">
+                              <FaEdit
+                                className="cursor-pointer text-blue-600 hover:text-blue-800"
+                                onClick={() => {
+                                  setEditReview(r);
+                                  setEditMessage(r.message);
+                                }}
+                                size={16}
+                              />
+                              <FaTrash
+                                className="cursor-pointer text-red-600 hover:text-red-800"
+                                onClick={() => deleteReview(r._id)}
+                                size={16}
+                              />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3">
+                          <p className={`text-gray-700 ${!isExpanded && 'line-clamp-2'}`}>
+                            {r.message}
+                          </p>
+                          
+                          {r.message.length > 150 && (
+                            <button
+                              onClick={() => setExpandedReview(isExpanded ? null : r._id)}
+                              className="text-[#c0954d] text-sm mt-1 flex items-center"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  Show less <FaChevronUp className="ml-1" size={12} />
+                                </>
+                              ) : (
+                                <>
+                                  Read more <FaChevronDown className="ml-1" size={12} />
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Pagination */}
+                {filteredReviews.length > reviewsPerPage && (
+                  <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t">
+                    <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+                      Page {currentPage} of {totalPages}
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      >
+                        Previous
+                      </button>
+                      
+                      <div className="flex space-x-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => paginate(pageNum)}
+                              className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-[#c0954d] text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <>
+                            <span className="px-2">...</span>
+                            <button
+                              onClick={() => paginate(totalPages)}
+                              className="w-10 h-10 rounded-md bg-gray-200 hover:bg-gray-300"
+                            >
+                              {totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      
+                      <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ===== EDIT MODAL ===== */}

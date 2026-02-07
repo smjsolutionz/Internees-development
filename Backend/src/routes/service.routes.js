@@ -17,7 +17,7 @@ router.post(
     next();
   },
   upload.array("images", 5),
-  createService
+  createService,
 );
 
 // ➤ GET ALL SERVICES
@@ -31,7 +31,7 @@ router.put(
     next();
   },
   upload.array("images", 5),
-  updateService
+  updateService,
 );
 
 // ➤ DELETE SERVICE

@@ -2,7 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import BookingDrawer from "./BookingDrawer";
-import { FaArrowRight, FaStar, FaTrash, FaEdit, FaChevronDown, FaChevronUp, FaFilter, FaSort } from "react-icons/fa";
+import {
+  FaArrowRight,
+  FaStar,
+  FaTrash,
+  FaEdit,
+  FaChevronDown,
+  FaChevronUp,
+  FaFilter,
+  FaSort,
+} from "react-icons/fa";
 
 const ServiceDetails = () => {
   const { id } = useParams();
@@ -22,7 +31,11 @@ const ServiceDetails = () => {
   const [filterRating, setFilterRating] = useState(0); // 0 = all, 1-5 = filter by rating
   const [expandedReview, setExpandedReview] = useState(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviewStats, setReviewStats] = useState({ average: 0, total: 0, distribution: [] });
+  const [reviewStats, setReviewStats] = useState({
+    average: 0,
+    total: 0,
+    distribution: [],
+  });
 
   // Edit modal state
   const [editReview, setEditReview] = useState(null);
@@ -50,7 +63,7 @@ const ServiceDetails = () => {
     const fetchService = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`
+          `${import.meta.env.VITE_API_BASE_URL}/api/customer/services/${id}`,
         );
         if (res.data?.success) setService(res.data.data);
       } catch (err) {
@@ -66,30 +79,33 @@ const ServiceDetails = () => {
   const fetchReviews = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/target/Service/${id}`
+        `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/target/Service/${id}`,
       );
       if (res.data?.success) {
         const reviewsData = res.data.reviews;
         setReviews(reviewsData);
-        
+
         // Calculate review statistics
         if (reviewsData.length > 0) {
           const total = reviewsData.length;
-          const sum = reviewsData.reduce((acc, review) => acc + review.rating, 0);
+          const sum = reviewsData.reduce(
+            (acc, review) => acc + review.rating,
+            0,
+          );
           const average = (sum / total).toFixed(1);
-          
+
           // Calculate rating distribution
           const distribution = [0, 0, 0, 0, 0]; // 5,4,3,2,1 stars
-          reviewsData.forEach(review => {
+          reviewsData.forEach((review) => {
             if (review.rating >= 1 && review.rating <= 5) {
               distribution[5 - review.rating]++; // 5-star at index 0
             }
           });
-          
+
           setReviewStats({
             average,
             total,
-            distribution
+            distribution,
           });
         } else {
           setReviewStats({ average: 0, total: 0, distribution: [] });
@@ -119,7 +135,7 @@ const ServiceDetails = () => {
           rating: ratingInput,
           message: messageInput,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setRatingInput(0);
       setMessageInput("");
@@ -138,7 +154,7 @@ const ServiceDetails = () => {
       await axios.put(
         `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/${editReview._id}`,
         { message: editMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setEditReview(null);
       fetchReviews();
@@ -150,11 +166,11 @@ const ServiceDetails = () => {
   /* ================= DELETE REVIEW ================= */
   const deleteReview = async (reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
-    
+
     try {
       await axios.delete(
         `${import.meta.env.VITE_API_BASE_URL}/api/customer/reviews/${reviewId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       fetchReviews();
     } catch (err) {
@@ -165,14 +181,14 @@ const ServiceDetails = () => {
   /* ================= SORT AND FILTER REVIEWS ================= */
   const getFilteredAndSortedReviews = () => {
     let filtered = [...reviews];
-    
+
     // Filter by rating
     if (filterRating > 0) {
-      filtered = filtered.filter(review => review.rating === filterRating);
+      filtered = filtered.filter((review) => review.rating === filterRating);
     }
-    
+
     // Sort reviews
-    switch(sortBy) {
+    switch (sortBy) {
       case "highest":
         filtered.sort((a, b) => b.rating - a.rating);
         break;
@@ -181,10 +197,14 @@ const ServiceDetails = () => {
         break;
       case "latest":
       default:
-        filtered.sort((a, b) => new Date(b.createdAt || b.updatedAt) - new Date(a.createdAt || a.updatedAt));
+        filtered.sort(
+          (a, b) =>
+            new Date(b.createdAt || b.updatedAt) -
+            new Date(a.createdAt || a.updatedAt),
+        );
         break;
     }
-    
+
     return filtered;
   };
 
@@ -192,15 +212,18 @@ const ServiceDetails = () => {
   const filteredReviews = getFilteredAndSortedReviews();
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
-  const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview);
+  const currentReviews = filteredReviews.slice(
+    indexOfFirstReview,
+    indexOfLastReview,
+  );
   const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  
+
   const handlePrevPage = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-  
+
   const handleNextPage = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
@@ -208,13 +231,14 @@ const ServiceDetails = () => {
   /* ================= RENDER RATING BARS ================= */
   const renderRatingBars = () => {
     if (reviewStats.total === 0) return null;
-    
+
     return (
-      <div className="space-y-1 mb-4 ">
+      <div className="space-y-1 mb-4">
         {[5, 4, 3, 2, 1].map((star) => {
           const count = reviewStats.distribution[5 - star] || 0;
-          const percentage = reviewStats.total > 0 ? (count / reviewStats.total) * 100 : 0;
-          
+          const percentage =
+            reviewStats.total > 0 ? (count / reviewStats.total) * 100 : 0;
+
           return (
             <div key={star} className="flex items-center">
               <div className="flex items-center w-16">
@@ -222,8 +246,8 @@ const ServiceDetails = () => {
                 <FaStar className="text-yellow-400 ml-1" size={12} />
               </div>
               <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden ml-2">
-                <div 
-                  className="h-full bg-yellow-400" 
+                <div
+                  className="h-full bg-yellow-400"
                   style={{ width: `${percentage}%` }}
                 ></div>
               </div>
@@ -239,7 +263,7 @@ const ServiceDetails = () => {
   if (!service) return <p>Service not found</p>;
 
   return (
-    <div className="max-w-7xl mx-auto container  pt-28 px-4">
+    <div className="max-w-7xl mx-auto container pt-28 px-4">
       {/* ===== SERVICE UI ===== */}
       <div className="flex flex-col md:flex-row gap-10">
         <div className="md:w-1/2 h-[400px] rounded-2xl overflow-hidden">
@@ -283,9 +307,9 @@ const ServiceDetails = () => {
 
           <button
             onClick={() => setIsOpen(true)}
-            className="mt-6 max-h-12 max-w-50  px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] flex items-center gap-2"
+            className="mt-6 max-h-12 max-w-50 px-6 py-3 border border-[#D79A4A] hover:bg-[#BB8C4B] flex items-center gap-2"
           >
-            Book Now <FaArrowRight  size={10}/>
+            Book Now <FaArrowRight size={10} />
           </button>
         </div>
       </div>
@@ -294,14 +318,15 @@ const ServiceDetails = () => {
       <div className="mt-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h2 className="text-2xl font-semibold">
-            Customer Reviews 
+            Customer Reviews
             {reviewStats.total > 0 && (
               <span className="ml-2 text-lg font-normal text-gray-600">
                 ({reviewStats.total} reviews)
               </span>
             )}
           </h2>
-          
+
+          {/* ✅ FIX: Always show Write a Review button when logged in and form is not showing */}
           {loggedIn && !showReviewForm && (
             <button
               onClick={() => setShowReviewForm(true)}
@@ -312,9 +337,61 @@ const ServiceDetails = () => {
           )}
         </div>
 
+        {/* ✅ FIX: Show review form separately when it's open */}
+        {showReviewForm && loggedIn && (
+          <div className="mb-8 p-6 border rounded-lg bg-white shadow-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold">Write Your Review</h3>
+              <button
+                onClick={() => setShowReviewForm(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSubmitReview}>
+              <div className="flex gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <FaStar
+                    key={s}
+                    className={`cursor-pointer ${ratingInput >= s ? "text-yellow-400" : "text-gray-300"}`}
+                    onClick={() => setRatingInput(s)}
+                    size={30}
+                  />
+                ))}
+              </div>
+              <textarea
+                className="border w-full p-4 rounded text-lg"
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                placeholder="Share your experience with this service..."
+                rows={5}
+              />
+              <div className="flex justify-end gap-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowReviewForm(false)}
+                  className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-[#BB8C4B] text-white px-6 py-2 rounded-md hover:bg-[#D79A4A]"
+                  disabled={submitting || !ratingInput || !messageInput.trim()}
+                >
+                  {submitting ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {reviews.length === 0 ? (
           <div className="text-center py-10 border rounded-lg">
-            <p className="text-gray-500">No reviews yet. Be the first to review this service!</p>
+            <p className="text-gray-500">
+              No reviews yet. Be the first to review this service!
+            </p>
             {loggedIn && !showReviewForm && (
               <button
                 onClick={() => setShowReviewForm(true)}
@@ -331,21 +408,29 @@ const ServiceDetails = () => {
               <div className="bg-gray-50 p-4 rounded-lg border">
                 {/* Average Rating */}
                 <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-800">{reviewStats.average}</div>
+                  <div className="text-4xl font-bold text-gray-800">
+                    {reviewStats.average}
+                  </div>
                   <div className="flex justify-center my-2">
                     {[...Array(5)].map((_, i) => (
-                      <FaStar 
-                        key={i} 
-                        className={i < Math.floor(reviewStats.average) ? "text-yellow-400" : "text-gray-300"} 
+                      <FaStar
+                        key={i}
+                        className={
+                          i < Math.floor(reviewStats.average)
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }
                       />
                     ))}
                   </div>
-                  <p className="text-sm text-gray-600">{reviewStats.total} reviews</p>
+                  <p className="text-sm text-gray-600">
+                    {reviewStats.total} reviews
+                  </p>
                 </div>
-                
+
                 {/* Rating Distribution */}
                 {renderRatingBars()}
-                
+
                 {/* Filter by Rating */}
                 <div className="mb-4">
                   <div className="flex items-center text-sm font-medium mb-2">
@@ -355,22 +440,22 @@ const ServiceDetails = () => {
                   <div className="flex flex-wrap gap-2">
                     <button
                       onClick={() => setFilterRating(0)}
-                      className={`px-3 py-1 text-xs rounded-full ${filterRating === 0 ? 'bg-[#BB8C4B] text-white' : 'bg-gray-200'}`}
+                      className={`px-3 py-1 text-xs rounded-full ${filterRating === 0 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}
                     >
                       All
                     </button>
-                    {[5, 4, 3, 2, 1].map(rating => (
+                    {[5, 4, 3, 2, 1].map((rating) => (
                       <button
                         key={rating}
                         onClick={() => setFilterRating(rating)}
-                        className={`px-3 py-1 text-xs rounded-full flex items-center ${filterRating === rating ? 'bg-[#BB8C4B] text-white' : 'bg-gray-200'}`}
+                        className={`px-3 py-1 text-xs rounded-full flex items-center ${filterRating === rating ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}
                       >
                         {rating} <FaStar className="ml-1" size={10} />
                       </button>
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Sort Options */}
                 <div>
                   <div className="flex items-center text-sm font-medium mb-2">
@@ -388,72 +473,25 @@ const ServiceDetails = () => {
                   </select>
                 </div>
               </div>
-              
-              {/* Add Review Form in Compact View */}
-              {loggedIn && showReviewForm && (
-                <div className="mt-4 p-4 border rounded-lg bg-white">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold">Write Your Review</h3>
-                    <button 
-                      onClick={() => setShowReviewForm(false)}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <form onSubmit={handleSubmitReview}>
-                    <div className="flex gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <FaStar
-                          key={s}
-                          className={`cursor-pointer ${ratingInput >= s ? "text-yellow-400" : "text-gray-300"}`}
-                          onClick={() => setRatingInput(s)}
-                          size={20}
-                        />
-                      ))}
-                    </div>
-                    <textarea
-                      className="border w-full p-3 rounded text-sm"
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      placeholder="Share your experience..."
-                      rows={3}
-                    />
-                    <div className="flex justify-end mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setShowReviewForm(false)}
-                        className="px-4 py-2 text-gray-700 mr-2"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-                        disabled={submitting || !ratingInput || !messageInput.trim()}
-                      >
-                        {submitting ? "Submitting..." : "Submit"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
             </div>
-            
+
             {/* RIGHT: Reviews List with Pagination */}
             <div className="lg:w-3/4">
               {/* Reviews Count and Filter Info */}
               <div className="mb-4 text-sm text-gray-600">
-                Showing {indexOfFirstReview + 1}-{Math.min(indexOfLastReview, filteredReviews.length)} of {filteredReviews.length} reviews
-                {filterRating > 0 && ` • Filtered by ${filterRating} star${filterRating > 1 ? 's' : ''}`}
+                Showing {indexOfFirstReview + 1}-
+                {Math.min(indexOfLastReview, filteredReviews.length)} of{" "}
+                {filteredReviews.length} reviews
+                {filterRating > 0 &&
+                  ` • Filtered by ${filterRating} star${filterRating > 1 ? "s" : ""}`}
               </div>
-              
+
               {/* Reviews List - Compact Design */}
               <div className="space-y-4">
                 {currentReviews.map((r) => {
                   const isOwner = r.CUSTOMER?._id === userId;
                   const isExpanded = expandedReview === r._id;
-                  
+
                   return (
                     <div
                       key={r._id}
@@ -477,11 +515,13 @@ const ServiceDetails = () => {
                               </div>
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                              {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recently'}
+                              {r.createdAt
+                                ? new Date(r.createdAt).toLocaleDateString()
+                                : "Recently"}
                             </p>
                           </div>
                         </div>
-                        
+
                         {isOwner && (
                           <div className="flex gap-3">
                             <FaEdit
@@ -500,24 +540,30 @@ const ServiceDetails = () => {
                           </div>
                         )}
                       </div>
-                      
+
                       <div className="mt-3">
-                        <p className={`text-gray-700 ${!isExpanded && 'line-clamp-2'}`}>
+                        <p
+                          className={`text-gray-700 ${!isExpanded && "line-clamp-2"}`}
+                        >
                           {r.message}
                         </p>
-                        
+
                         {r.message.length > 150 && (
                           <button
-                            onClick={() => setExpandedReview(isExpanded ? null : r._id)}
+                            onClick={() =>
+                              setExpandedReview(isExpanded ? null : r._id)
+                            }
                             className="text-[#BB8C4B] text-sm mt-1 flex items-center"
                           >
                             {isExpanded ? (
                               <>
-                                Show less <FaChevronUp className="ml-1" size={12} />
+                                Show less{" "}
+                                <FaChevronUp className="ml-1" size={12} />
                               </>
                             ) : (
                               <>
-                                Read more <FaChevronDown className="ml-1" size={12} />
+                                Read more{" "}
+                                <FaChevronDown className="ml-1" size={12} />
                               </>
                             )}
                           </button>
@@ -527,47 +573,50 @@ const ServiceDetails = () => {
                   );
                 })}
               </div>
-              
+
               {/* Pagination */}
               {filteredReviews.length > reviewsPerPage && (
                 <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t">
                   <div className="text-sm text-gray-600 mb-4 sm:mb-0">
                     Page {currentPage} of {totalPages}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handlePrevPage}
                       disabled={currentPage === 1}
-                      className={`px-4 py-2 rounded-md ${currentPage === 1 ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      className={`px-4 py-2 rounded-md ${currentPage === 1 ? "bg-gray-100 text-gray-400" : "bg-gray-200 hover:bg-gray-300"}`}
                     >
                       Previous
                     </button>
-                    
+
                     <div className="flex space-x-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={i}
-                            onClick={() => paginate(pageNum)}
-                            className={`w-10 h-10 rounded-md ${currentPage === pageNum ? 'bg-[#BB8C4B] text-white' : 'bg-gray-200 hover:bg-gray-300'}`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-                      
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => paginate(pageNum)}
+                              className={`w-10 h-10 rounded-md ${currentPage === pageNum ? "bg-[#BB8C4B] text-white" : "bg-gray-200 hover:bg-gray-300"}`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        },
+                      )}
+
                       {totalPages > 5 && currentPage < totalPages - 2 && (
                         <>
                           <span className="px-2">...</span>
@@ -580,20 +629,17 @@ const ServiceDetails = () => {
                         </>
                       )}
                     </div>
-                    
+
                     <button
                       onClick={handleNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-4 py-2 rounded-md ${currentPage === totalPages ? 'bg-gray-100 text-gray-400' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      className={`px-4 py-2 rounded-md ${currentPage === totalPages ? "bg-gray-100 text-gray-400" : "bg-gray-200 hover:bg-gray-300"}`}
                     >
                       Next
                     </button>
                   </div>
                 </div>
               )}
-              
-             
-           
             </div>
           </div>
         )}
@@ -616,7 +662,7 @@ const ServiceDetails = () => {
               rows={4}
             />
             <div className="flex justify-end gap-3 mt-4">
-              <button 
+              <button
                 onClick={() => setEditReview(null)}
                 className="px-4 py-2 text-gray-700"
               >
