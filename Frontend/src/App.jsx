@@ -16,6 +16,7 @@ import Contact from "./pages/Contact";
 // Admin
 import Dashboard from "./pages/admin/Dashboard";
 import ProfilePage from "./pages/admin/Profile";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 // Customer
 import Profile from "./pages/Profile";
@@ -50,12 +51,13 @@ import UpdateUser from "./pages/admin/UpdateUser";
 // Appointments
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
-import EnhancedAdminAppointments from "./components/admin/AdminAppointments";
+
 
 // User-facing pages
 import ServicePage from "./pages/ServicePage";
 import ServicesDetailPage from "./pages/ServicesDetailPage";
 import PackageDetailPage from "./pages/PackageDetailPage";
+
 
 const isAuth = () => !!localStorage.getItem("accessToken");
 const getUserRole = () => localStorage.getItem("userRole"); // store role on login
@@ -98,6 +100,8 @@ export default function App() {
         <Route path="/create-service" element={<CreateService />} />
         <Route path="/update-service/:id" element={<UpdateService />} />
         <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
+        <Route path="/admin/reviews" element={<AdminReviews />} />
+        
 
         {/* Packages */}
         <Route path="/packages/:id" element={<PackageDetailPage />} />
@@ -108,7 +112,7 @@ export default function App() {
 
         {/* Appointments */}
         <Route path="/appointments" element={<AllAppointmentsAdmin />} />
-        <Route path="/admin/appointments" element={<EnhancedAdminAppointments />} />
+    
         <Route path="/my-appointments" element={<EnhancedMyAppointments />} />
 
         {/* Gallery */}

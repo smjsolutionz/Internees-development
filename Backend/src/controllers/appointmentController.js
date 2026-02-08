@@ -101,7 +101,7 @@ exports.createAppointment = async (req, res, next) => {
       appointmentTime,
       duration: service.duration || 60,
       notes: notes?.trim() || "",
-      price: service.price || 0,
+      price: service.pricing|| 0,
       status: "pending",
     };
 
@@ -117,7 +117,7 @@ exports.createAppointment = async (req, res, next) => {
     }
 
     const appointment = await Appointment.create(data);
-    await appointment.populate("service", "name description price duration");
+    await appointment.populate("service", "name description pricing duration");
 
     // Send email
     try {
@@ -146,7 +146,7 @@ exports.getMyAppointments = async (req, res, next) => {
     if (status) query.status = status;
 
     const appointments = await Appointment.find(query)
-      .populate("service", "name description price duration")
+      .populate("service", "name description pricing duration")
       .populate("staff", "name email phone")
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(limit * 1)

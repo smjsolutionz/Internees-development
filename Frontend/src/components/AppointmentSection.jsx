@@ -168,7 +168,7 @@ export default function AppointmentSection() {
 
               <select name="serviceId" value={formData.serviceId} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required>
                 <option value="">Select Service</option>
-                {services.map(s => <option key={s._id} value={s._id}>{s.name} - PKR {s.price}</option>)}
+                {services.map(s => <option key={s._id} value={s._id}>{s.name}  {s.pricing}</option>)}
               </select>
 
               <input type="date" name="date" value={formData.date} onChange={handleChange} min={getMinDate()} max={getMaxDate()} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />

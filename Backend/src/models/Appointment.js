@@ -37,10 +37,10 @@ const appointmentSchema = new mongoose.Schema(
     customerName: String,
     customerEmail: String,
     customerPhone: String,
-    price: { type: Number, required: true },
+    price: { type: String, required: true },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "cancelled"],
+      enum: ["pending", "cancelled","completed","confirmed"],
       default: "pending",
     },
     cancelledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

@@ -74,7 +74,7 @@ app.use("/api/services", serviceRoutes); // Services (Admin)
 app.use("/api/packages", packageRoutes); // ✅ Packages (Admin)
 app.use("/api/admin/auth", adminAuthRoutes); // Admin login
 app.use("/api/admin", adminUsersRoutes); // Admin users CRUD
-app.use("/api/admin/appointment",adminappointment  );
+app.use("/api/appointment/admin",adminappointment)
 
 /* =========================
    🔹 CUSTOMER ROUTES

@@ -160,9 +160,7 @@ const MyAppointments = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-[120px]">
       <div className="mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
-          My Appointments
-        </h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Appointments</h1>
         <p className="mt-2 text-gray-600">
           View and manage your upcoming and past appointments
         </p>
@@ -171,30 +169,26 @@ const MyAppointments = () => {
       {/* Filters */}
       <div className="mb-6 border-b border-gray-200">
         <div className="flex flex-wrap gap-4">
-          {["all", "pending", "confirmed", "completed", "cancelled"].map(
-            (f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-2 font-medium capitalize transition-all ${
-                  filter === f
-                    ? "border-b-2 border-[#BB8C4B] text-[#BB8C4B]"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                {f}
-              </button>
-            )
-          )}
+          {["all", "pending", "confirmed", "completed", "cancelled"].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-4 py-2 font-medium capitalize transition-all ${
+                filter === f
+                  ? "border-b-2 border-[#BB8C4B] text-[#BB8C4B]"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
       {appointments.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📅</div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            No appointments found
-          </h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No appointments found</h3>
           <p className="text-gray-600">
             {filter === "all"
               ? "You haven't booked any appointments yet"
@@ -215,9 +209,14 @@ const MyAppointments = () => {
               className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] p-4 text-white flex justify-between">
+              <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] p-4 text-white flex justify-between flex-col">
                 <h3 className="font-bold text-lg">{a.service?.name}</h3>
-                {getStatusBadge(a.status)}
+                {/* Customer info */}
+                <p className="text-sm text-gray-200 mt-1">
+                  {a.CUSTOMER?.email || a.customerEmail} <br />
+                  {a.CUSTOMER?.phone || a.customerPhone}
+                </p>
+                <div className="mt-2">{getStatusBadge(a.status)}</div>
               </div>
 
               {/* Body */}
@@ -232,11 +231,11 @@ const MyAppointments = () => {
                 </div>
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaTag className="text-[#BB8C4B]" />
-                  <span>{a.duration} minutes</span>
+                  <span>{a.duration} </span>
                 </div>
                 <div className="flex items-center gap-3 text-gray-700">
                   <FaDollarSign className="text-[#BB8C4B]" />
-                  <span>Rs. {a.price}</span>
+                  <span> { a.service?.pricing || 0}</span>
                 </div>
 
                 {a.notes && (
@@ -249,7 +248,6 @@ const MyAppointments = () => {
               {/* Footer with Cancel + Reschedule */}
               {a.status !== "cancelled" && a.status !== "completed" && (
                 <div className="px-4 pb-4 space-y-2">
-                  {/* Cancel Button */}
                   <button
                     onClick={() => handleCancel(a._id, a.appointmentDate)}
                     className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition text-sm font-medium"
@@ -257,7 +255,6 @@ const MyAppointments = () => {
                     Cancel
                   </button>
 
-                  {/* Reschedule Button / Inputs */}
                   {reschedulingId !== a._id ? (
                     <button
                       onClick={() => setReschedulingId(a._id)}
