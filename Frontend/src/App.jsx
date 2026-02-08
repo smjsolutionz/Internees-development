@@ -43,6 +43,12 @@ import Contact from "./pages/Contact";
 import AllTeam from "./pages/admin/AllTeam";
 import AddTeam from "./pages/admin/Addteam"
 import EditTeam from "./pages/admin/EditTeam"
+import Reception from "./pages/receptionist/reception";
+import Inventory from "./pages/inventory/inventory";
+import Manager from "./pages/manager/manager";
+import Staff from "./pages/staff/staff";
+
+
 
 const isAuth = () => !!localStorage.getItem("accessToken");
 
@@ -57,7 +63,6 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
-      <Route path="/profile" element={<Profile />} />
 
       
       {/* Admin Dashboard */}
@@ -100,13 +105,34 @@ export default function App() {
 <Route path="/admin/team/add" element={<AddTeam/>} />
 <Route path="/admin/team/edit/:id" element={<EditTeam />} />
 
-  <Route
-        path="/profile"
-        element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
-      />
+     {/* Admin Profile */}
+       <Route
+  path="/admin/profile"
+  element={
+    isAuth()
+      ? <ProfilePage />
+      : <Navigate to="/login" replace />
+  }
+/>
+
+
+        {/* Customer Profile */}
+   <Route
+  path="/customer/profile"
+  element={
+    isAuth()
+      ? <Profile />   // ← Use the correct imported component
+      : <Navigate to="/login" replace />
+  }
+/>
 
       <Route path="*" element={<Navigate to="/login" replace />} />
        <Route path="/admin/reviews" element={<AdminReviews />} />
+
+       <Route path="/reception" element={<Reception />} />
+       <Route path="/inventory" element={<Inventory />} />
+       <Route path="/manager" element={<Manager />} />
+       <Route path="/staff" element={<Staff />} />
     </Routes>
   );
 }

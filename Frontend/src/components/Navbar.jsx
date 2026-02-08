@@ -16,18 +16,34 @@ const Navbar = () => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
   }, [isOpen]);
 
-  // Fetch profile if token exists
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) return;
+  const storedUser = localStorage.getItem("user");
+  const token = localStorage.getItem("accessToken");
 
+  if (!storedUser || !token) return;
+
+  const parsedUser = JSON.parse(storedUser);
+
+  // ✅ If CUSTOMER → fetch customer profile
+  if (parsedUser.role === "customer" || parsedUser.role === "user") {
     axios
       .get("http://localhost:5000/api/customer/profile", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => setUser(res.data))
-      .catch(() => localStorage.removeItem("accessToken"));
-  }, []);
+      .catch(() => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
+        setUser(null);
+      });
+  }
+
+  // ✅ If ADMIN → directly use stored user
+  else {
+    setUser(parsedUser);
+  }
+}, []);
+
 
   const handlePackagesClick = () => {
     navigate("/");
@@ -90,7 +106,7 @@ const Navbar = () => {
                   <div className="absolute right-0 mt-2 w-40 bg-[#333338] text-white rounded shadow-lg z-50">
                     <button
                       onClick={() => {
-                        navigate("/profile");
+                        navigate("/customer/profile");
                         setDropdownOpen(false);
                       }}
                       className="block w-full text-left px-4 py-2 hover:bg-[#BB8C4B]"

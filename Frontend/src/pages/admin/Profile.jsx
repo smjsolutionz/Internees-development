@@ -4,8 +4,17 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
+const PROFILE_API_BY_ROLE = {
+  super_admin: "/api/super-admin/profile",
+  admin: "/api/admin/profile",
+  manager: "/api/manager/profile",
+  staff: "/api/staff/profile",
+  receptionist: "/api/reception/profile",
+  inventory_manager: "/api/inventory-manager/profile",
+};
+
 export default function ProfilePage() {
-  const [admin, setAdmin] = useState(null);
+  const [user, setUser] = useState(null);
   const [form, setForm] = useState({});
   const [profilePic, setProfilePic] = useState(null);
   const [removePic, setRemovePic] = useState(false);
@@ -13,80 +22,80 @@ export default function ProfilePage() {
 
   const navigate = useNavigate();
 
-  // 🔐 PROTECT PAGE + FETCH PROFILE
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+  const storedUser = JSON.parse(localStorage.getItem("user"));
 
-    if (!token) {
+  if (!token || !storedUser) {
+    navigate("/login", { replace: true });
+    return;
+  }
+
+  const role = storedUser.role?.toLowerCase();
+  const profileApi = PROFILE_API_BY_ROLE[role];
+
+  if (!profileApi) {
+    navigate("/", { replace: true });
+    return;
+  }
+
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}${profileApi}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setUser(res.data.user || res.data.admin);
+      setForm(res.data.user || res.data.admin);
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      localStorage.clear();
       navigate("/login", { replace: true });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(
-          `${API_BASE_URL}/api/admin/profile`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        setAdmin(res.data.admin);
-        setForm(res.data.admin);
-      } catch (err) {
-        // token invalid or expired
-        localStorage.removeItem("accessToken");
-        navigate("/login", { replace: true });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [navigate]);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🚪 LOGOUT (CLEAR HISTORY)
-  const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
+  fetchProfile();
+}, [navigate]);
 
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleLogout = () => {
+    localStorage.clear();
     navigate("/login", { replace: true });
   };
 
-  // 💾 SAVE PROFILE
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   const token = localStorage.getItem("accessToken");
+  const role = user.role.toLowerCase();
+  const profileApi = PROFILE_API_BY_ROLE[role]; // Use correct role-based API
+
   const formData = new FormData();
 
   Object.keys(form).forEach((key) => {
     if (form[key]) formData.append(key, form[key]);
   });
 
-  if (profilePic) {
-    formData.append("profilePic", profilePic);
-  }
-
-  if (removePic) {
-    formData.append("removeProfilePic", "true");
-  }
+  if (profilePic) formData.append("profilePic", profilePic);
+  if (removePic) formData.append("removeProfilePic", "true");
 
   try {
-    await axios.put(
-      `${API_BASE_URL}/api/admin/profile`,
-      formData,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    await axios.put(`${API_BASE_URL}${profileApi}`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-    // ✅ Redirect to dashboard after save
     navigate("/dashboard", { replace: true });
-  } catch (error) {
+  } catch (err) {
+    console.error("Profile update error:", err.response || err);
     alert("Profile update failed");
   }
 };
+
 
   if (loading) return <p className="p-6">Loading...</p>;
 
@@ -96,9 +105,11 @@ export default function ProfilePage() {
         onSubmit={handleSubmit}
         className="bg-white w-full max-w-sm rounded-lg shadow-lg p-6 space-y-4"
       >
-        <h1 className="text-lg font-semibold text-center">My Profile</h1>
+        <h1 className="text-lg font-semibold text-center capitalize">
+          {user.role.replace("_", " ")} Profile
+        </h1>
 
-        {/* PROFILE PICTURE */}
+        {/* PROFILE IMAGE */}
         <div className="flex flex-col items-center gap-2">
           <img
             src={
@@ -106,8 +117,8 @@ export default function ProfilePage() {
                 ? "/avatar.png"
                 : profilePic
                 ? URL.createObjectURL(profilePic)
-                : admin.profilePic
-                ? `${API_BASE_URL}${admin.profilePic}`
+                : user.profilePic
+                ? `${API_BASE_URL}${user.profilePic}`
                 : "/avatar.png"
             }
             className="w-24 h-24 rounded-full object-cover border"
@@ -127,7 +138,7 @@ export default function ProfilePage() {
               />
             </label>
 
-            {admin.profilePic && !removePic && (
+            {user.profilePic && !removePic && (
               <button
                 type="button"
                 className="text-red-500"
@@ -144,10 +155,9 @@ export default function ProfilePage() {
 
         <Input label="Name" name="name" value={form.name || ""} onChange={handleChange} />
         <Input label="Username" name="username" value={form.username || ""} onChange={handleChange} />
-        <Input label="Email (cannot edit)" value={form.email || ""} disabled />
+        <Input label="Email" value={form.email || ""} disabled />
         <Input label="Phone" name="phone" value={form.phone || ""} onChange={handleChange} />
 
-        {/* BIO */}
         <div>
           <label className="block text-sm font-medium">Bio</label>
           <textarea
@@ -159,19 +169,14 @@ export default function ProfilePage() {
           />
         </div>
 
-        {/* ACTION BUTTONS */}
         <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            className="flex-1 bg-yellow-600 text-white py-2 rounded hover:bg-yellow-700"
-          >
+          <button className="flex-1 bg-yellow-600 text-white py-2 rounded">
             Save
           </button>
-
           <button
             type="button"
             onClick={handleLogout}
-            className="flex-1 bg-gray-700 text-white py-2 rounded hover:bg-gray-800"
+            className="flex-1 bg-gray-700 text-white py-2 rounded"
           >
             Logout
           </button>
