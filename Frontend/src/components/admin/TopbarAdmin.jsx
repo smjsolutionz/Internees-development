@@ -74,7 +74,7 @@ export default function Topbar({ setSidebarOpen }) {
               ? `${API_BASE_URL}${profilePic}`
               : "/avatar.png"
           }
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/admin/profile")}
           className="w-8 h-8 rounded-full border border-white/20 cursor-pointer hover:opacity-80"
           alt="User"
         />
