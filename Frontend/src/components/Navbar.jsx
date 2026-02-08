@@ -98,6 +98,15 @@ const Navbar = () => {
                       Profile
                     </button>
                     <button
+      onClick={() => {
+        navigate("/my-appointments");
+        setDropdownOpen(false);
+      }}
+      className="block w-full text-left px-4 py-2 hover:bg-[#BB8C4B]"
+    >
+      My Appointments
+    </button>
+                    <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 hover:bg-[#BB8C4B]"
                     >
