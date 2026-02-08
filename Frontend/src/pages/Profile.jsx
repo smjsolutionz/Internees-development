@@ -34,13 +34,17 @@ const Profile = () => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleUpdate = () => {
-    axios.put("http://localhost:5000/api/customer/profile", profile, {
-      headers: { Authorization: `Bearer ${token}` }
+ const handleUpdate = () => {
+  axios.put("http://localhost:5000/api/customer/profile", profile, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => {
+      alert(res.data.message); // optional, you can keep this
+      navigate("/"); // redirect to home page
     })
-      .then(res => alert(res.data.message))
-      .catch(err => console.error(err));
-  };
+    .catch(err => console.error(err));
+};
+
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -55,11 +59,12 @@ const Profile = () => {
     <div className="max-w-md mx-auto mt-20 p-6 border  shadow z-10 bg-white rounded-md">
       <h2 className="text-2xl mb-4">My Profile</h2>
       <div className="flex flex-col items-center mb-6">
-  <img
-    src={profile.profileImage || "https://i.pravatar.cc/150?img=3"}
-    alt="Profile"
-    className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
-  />
+ <img
+  src={profile.profileImage || "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"} // new avatar
+  alt="Profile"
+  className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
+/>
+
 </div>
       
       <div className="mb-3">

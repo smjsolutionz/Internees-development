@@ -81,7 +81,7 @@ const Navbar = () => {
             {user ? (
               <div className="relative">
                 <img
-                    src="https://i.pravatar.cc/150?img=3"
+                    src= "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
                   alt="Profile"
                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 text-white border-[#BB8C4B] cursor-pointer"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
