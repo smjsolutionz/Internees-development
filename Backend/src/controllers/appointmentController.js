@@ -58,6 +58,12 @@ exports.createAppointment = async (req, res, next) => {
   try {
     const { serviceId, appointmentDate, appointmentTime, customerName, customerEmail, customerPhone, notes } = req.body;
     const isAuth = req.user && req.user._id;
+    if (isAuth && customerEmail && customerEmail !== req.user.email) {
+  return res.status(400).json({
+    success: false,
+    message: "Please use the email you logged in with to book an appointment"
+  });
+}
 
     // Validation
     const errors = {};

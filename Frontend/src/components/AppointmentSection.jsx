@@ -18,6 +18,18 @@ export default function AppointmentSection() {
   const [success, setSuccess] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  useEffect(() => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (user?.email) {
+    setFormData(prev => ({
+      ...prev,
+      email: user.email,
+      name: user.name || prev.name,
+      phone: user.phone || prev.phone
+    }));
+  }
+}, []);
+
 
   // Fetch services on mount
   useEffect(() => {
@@ -69,6 +81,11 @@ export default function AppointmentSection() {
     e.preventDefault();
     setError("");
     setSuccess(false);
+     const user = JSON.parse(localStorage.getItem("user"));
+  if (user?.email !== formData.email) {
+    setError("Please use the email you logged in with.");
+    return; // stops submission
+  }
 
     // Basic validation
     const { name, email, phone, serviceId, date, time } = formData;
@@ -154,6 +171,7 @@ export default function AppointmentSection() {
               Make an appointment
             </h2>
 
+
             <p className="text-gray-400 mb-12 leading-relaxed max-w-lg text-center lg:text-left">
               Our beauty salon provides you with the highest levels of professional services.
             </p>
@@ -163,7 +181,16 @@ export default function AppointmentSection() {
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-4 sm:gap-x-6 gap-y-4 sm:gap-y-6">
               <input type="text" name="name" placeholder="Name" value={formData.name} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />
-              <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />
+
+              <input
+  type="email"
+  name="email"
+  value={formData.email}
+  readOnly
+  className="h-[56px] bg-gray-200 text-black px-4 sm:px-6 outline-none w-full cursor-not-allowed"
+  required
+/>
+
               <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />
 
               <select name="serviceId" value={formData.serviceId} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required>
