@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import appointmentImg from "../assets/images/appointment.jpg";
 import satelliteMap from "../assets/images/satellite-map.png";
 
@@ -16,19 +18,24 @@ export default function AppointmentSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
+
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  useEffect(() => {
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
   const user = JSON.parse(localStorage.getItem("user"));
-  if (user?.email) {
+
+  if (token && user?.email) {
     setFormData(prev => ({
       ...prev,
       email: user.email,
-      name: user.name || prev.name,
-      phone: user.phone || prev.phone
+      name: user.name || "",
+      phone: user.phone || ""
     }));
   }
 }, []);
+
 
 
   // Fetch services on mount
@@ -81,6 +88,14 @@ export default function AppointmentSection() {
     e.preventDefault();
     setError("");
     setSuccess(false);
+     const token = localStorage.getItem("accessToken");
+
+  // ❌ If not logged in
+  if (!token) {
+    setError("Please login first to book an appointment.");
+    setTimeout(() => navigate("/login"), 1500);
+    return;
+  }
      const user = JSON.parse(localStorage.getItem("user"));
   if (user?.email !== formData.email) {
     setError("Please use the email you logged in with.");
@@ -185,11 +200,17 @@ export default function AppointmentSection() {
               <input
   type="email"
   name="email"
+  placeholder="Email"
   value={formData.email}
-  readOnly
-  className="h-[56px] bg-gray-200 text-black px-4 sm:px-6 outline-none w-full cursor-not-allowed"
+  readOnly={!!localStorage.getItem("accessToken")}
+  className={`h-[56px] px-4 sm:px-6 outline-none w-full text-black ${
+    localStorage.getItem("accessToken")
+      ? "bg-gray-200 cursor-not-allowed"
+      : "bg-white"
+  }`}
   required
 />
+
 
               <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />
 
