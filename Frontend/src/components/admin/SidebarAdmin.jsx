@@ -13,24 +13,26 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const [openTeam, setOpenTeam] = useState(false);
   const [admin, setAdmin] = useState(null);
 
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        const res = await axios.get(
-          `${API_BASE_URL}/api/admin/profile`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setAdmin(res.data.admin);
-      } catch (err) {
-        console.error("Sidebar profile load failed");
-      }
-    };
+useEffect(() => {
+  const fetchAdmin = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
 
-    fetchAdmin();
-  }, []);
+      const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setAdmin(res.data.admin); // ← Use admin directly
+    } catch (err) {
+      console.error("Sidebar profile load failed", err);
+    }
+  };
+
+  fetchAdmin();
+}, []);
+
+
 
   // 🔹 SIDEBAR MENU
   const menu = [

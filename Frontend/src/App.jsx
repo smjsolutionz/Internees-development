@@ -8,7 +8,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 
-// Pages
+// Public Pages
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -21,11 +21,18 @@ import AdminReviews from "./pages/admin/AdminReviews";
 // Customer
 import Profile from "./pages/Profile";
 
+// Services
+import ServicePage from "./pages/ServicePage";
+import ServicesDetailPage from "./pages/ServicesDetailPage";
+
 // Services Admin
 import ServicesAdmin from "./pages/admin/AllServicesAdmin";
 import CreateService from "./pages/admin/CreateService";
 import UpdateService from "./pages/admin/UpdateService";
 import ServiceDetailsAdmin from "./pages/admin/ServiceDetail";
+
+// Packages
+import PackageDetailPage from "./pages/PackageDetailPage";
 
 // Packages Admin
 import AllPackagesAdmin from "./pages/admin/AllPackages";
@@ -52,15 +59,7 @@ import UpdateUser from "./pages/admin/UpdateUser";
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
 
-
-// User-facing pages
-import ServicePage from "./pages/ServicePage";
-import ServicesDetailPage from "./pages/ServicesDetailPage";
-import PackageDetailPage from "./pages/PackageDetailPage";
-
-
 const isAuth = () => !!localStorage.getItem("accessToken");
-const getUserRole = () => localStorage.getItem("userRole"); // store role on login
 
 export default function App() {
   return (
@@ -93,18 +92,20 @@ export default function App() {
           element={isAuth() ? <Dashboard /> : <Navigate to="/login" replace />}
         />
 
-        {/* Services */}
+        {/* Services (User) */}
         <Route path="/services" element={<ServicePage />} />
         <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
+
+        {/* Services Admin */}
         <Route path="/services-admin" element={<ServicesAdmin />} />
         <Route path="/create-service" element={<CreateService />} />
         <Route path="/update-service/:id" element={<UpdateService />} />
         <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
-        <Route path="/admin/reviews" element={<AdminReviews />} />
-        
 
         {/* Packages */}
         <Route path="/packages/:id" element={<PackageDetailPage />} />
+
+        {/* Packages Admin */}
         <Route path="/packages-admin" element={<AllPackagesAdmin />} />
         <Route path="/create-package" element={<CreatePackage />} />
         <Route path="/update-package/:id" element={<UpdatePackage />} />
@@ -112,7 +113,6 @@ export default function App() {
 
         {/* Appointments */}
         <Route path="/appointments" element={<AllAppointmentsAdmin />} />
-    
         <Route path="/my-appointments" element={<EnhancedMyAppointments />} />
 
         {/* Gallery */}
@@ -130,28 +130,18 @@ export default function App() {
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/edit-user/:id" element={<UpdateUser />} />
 
-        {/* Admin Profile */}
-       <Route
-  path="/admin/profile"
-  element={
-    isAuth()
-      ? <ProfilePage />
-      : <Navigate to="/login" replace />
-  }
-/>
+        {/* Profiles */}
+        <Route
+          path="/admin/profile"
+          element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/customer/profile"
+          element={isAuth() ? <Profile /> : <Navigate to="/login" replace />}
+        />
 
-
-        {/* Customer Profile */}
-   <Route
-  path="/customer/profile"
-  element={
-    isAuth()
-      ? <Profile />   // ← Use the correct imported component
-      : <Navigate to="/login" replace />
-  }
-/>
-
-
+        {/* Reviews */}
+        <Route path="/admin/reviews" element={<AdminReviews />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />

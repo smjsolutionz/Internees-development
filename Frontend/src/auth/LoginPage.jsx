@@ -1,6 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
 
+/* ================= ROLE → ROUTE ================= */
+const getRedirectPathByRole = (user) => {
+  if (!user || !user.role) return "/";
+
+  const role = user.role.toLowerCase();
+
+  if (role === "customer" || role === "user") return "/";
+  if (role === "super_admin" || role === "superadmin") return "/";
+  if (role === "admin") return "/dashboard";
+  if (role === "receptionist") return "/reception";
+  if (role === "inventory_manager") return "/inventory";
+  if (role === "manager") return "/manager";
+  if (role === "staff") return "/staff";
+
+  return "/";
+};
+
+
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
@@ -12,7 +30,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Check for OAuth callback tokens
+  // OAuth callback handling
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get("accessToken");
@@ -22,10 +40,15 @@ const LoginPage = () => {
     if (accessToken && refreshToken) {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("token", accessToken); // ← Fixed!
+
+      // If user info is returned in localStorage or backend API
+      const user = localStorage.getItem("user")
+        ? JSON.parse(localStorage.getItem("user"))
+        : null;
+
       setSuccessMessage("Login successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = getRedirectPathByRole(user);
       }, 1000);
     }
 
@@ -33,21 +56,19 @@ const LoginPage = () => {
       setErrors({ form: "Social authentication failed. Please try again." });
     }
   }, []);
+
+  // Form validation
   const validateForm = () => {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!emailRegex.test(formData.email)) {
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!emailRegex.test(formData.email))
       newErrors.email = "Invalid email format";
-    }
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,80 +81,75 @@ const LoginPage = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
 
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-    if (errors.form) {
-      setErrors((prev) => ({ ...prev, form: "" }));
-    }
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (errors.form) setErrors((prev) => ({ ...prev, form: "" }));
   };
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
 
-  setLoading(true);
-  setErrors({});
-  setSuccessMessage("");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    setLoading(true);
+    setErrors({});
+    setSuccessMessage("");
 
-    // Try user login first
-    const response = await fetch(`${apiUrl}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.email, password: formData.password }),
-    });
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-    const data = await response.json();
-
-    if (response.ok) {
-      // User login success
-      localStorage.setItem("accessToken", data.token || data.accessToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setSuccessMessage("Login successful! Redirecting...");
-
-      setTimeout(() => {
-        const userRole = data.user.role;
-        if (["ADMIN", "STAFF", "MANAGER"].includes(userRole)) {
-          window.location.href = "/dashboard";
-        } else {
-          window.location.href = "/";
-        }
-      }, 1000);
-    } else {
-      // Try admin login if user login failed
-      const adminResponse = await fetch(`${apiUrl}/admin/auth/login`, {
+      // 1️⃣ Try user login
+      const response = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, password: formData.password }),
       });
 
-      const adminData = await adminResponse.json();
+      const data = await response.json();
 
-      if (adminResponse.ok) {
-        localStorage.setItem("accessToken", adminData.token || adminData.accessToken);
-        localStorage.setItem("user", JSON.stringify(adminData.user));
-        setSuccessMessage("Login successful! Redirecting to dashboard...");
+      if (!response.ok) {
+        const msg = data?.message || "Login failed";
 
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1000);
-      } else {
-        setErrors({ form: data.message || adminData.message || "Login failed" });
+        // Try admin login if user not found or invalid credentials
+        if (msg.toLowerCase().includes("not found") || msg.toLowerCase().includes("invalid")) {
+          const adminResponse = await fetch(`${apiUrl}/admin/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: formData.email, password: formData.password }),
+          });
+
+          const adminData = await adminResponse.json();
+          if (!adminResponse.ok) {
+            setErrors({ form: adminData?.message || "Login failed" });
+            setLoading(false);
+            return;
+          }
+
+          // Admin login success
+          localStorage.setItem("accessToken", adminData.token);
+          localStorage.setItem("user", JSON.stringify(adminData.user));
+          setSuccessMessage("Login successful! Redirecting...");
+          setTimeout(() => {
+            window.location.href = getRedirectPathByRole(adminData.user);
+          }, 1000);
+          return;
+        }
+
+        setErrors({ form: msg });
+        setLoading(false);
+        return;
       }
+
+      // User login success
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setSuccessMessage("Login successful! Redirecting...");
+      setTimeout(() => {
+        window.location.href = getRedirectPathByRole(data.user);
+      }, 1000);
+    } catch (error) {
+      setErrors({ form: error.message });
+      setLoading(false);
     }
-  } catch (error) {
-    setErrors({ form: error.message });
-  } finally {
-    setLoading(false);
-  }
-};
-
- 
-
-
-
+  };
 
   const handleSocialLogin = (provider) => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -202,7 +218,6 @@ const handleSubmit = async (e) => {
               Sign in to your account
             </p>
 
-            {/* Error Message */}
             {errors.form && (
               <div
                 className="flex items-start gap-2 p-3 mb-4 rounded-lg"
@@ -222,7 +237,6 @@ const handleSubmit = async (e) => {
               </div>
             )}
 
-            {/* Success Message */}
             {successMessage && (
               <div
                 className="flex items-start gap-2 p-3 mb-4 rounded-lg"
@@ -275,14 +289,6 @@ const handleSubmit = async (e) => {
                       opacity: loading ? 0.6 : 1,
                     }}
                     placeholder="your@email.com"
-                    onFocus={(e) =>
-                      !errors.email && (e.target.style.borderColor = "#BB8C4B")
-                    }
-                    onBlur={(e) =>
-                      (e.target.style.borderColor = errors.email
-                        ? "#ef4444"
-                        : "#777777")
-                    }
                   />
                 </div>
                 {errors.email && (
@@ -322,34 +328,15 @@ const handleSubmit = async (e) => {
                       opacity: loading ? 0.6 : 1,
                     }}
                     placeholder="••••••••"
-                    onFocus={(e) =>
-                      !errors.password &&
-                      (e.target.style.borderColor = "#BB8C4B")
-                    }
-                    onBlur={(e) =>
-                      (e.target.style.borderColor = errors.password
-                        ? "#ef4444"
-                        : "#777777")
-                    }
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     disabled={loading}
-                    className="absolute transition-colors transform -translate-y-1/2 right-3 top-1/2"
+                    className="absolute transform -translate-y-1/2 right-3 top-1/2"
                     style={{ color: "#777777" }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#BB8C4B")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#777777")
-                    }
                   >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
                 {errors.password && (
@@ -369,26 +356,16 @@ const handleSubmit = async (e) => {
                     onChange={handleChange}
                     disabled={loading}
                     className="w-4 h-4 rounded cursor-pointer focus:ring-2"
-                    style={{
-                      accentColor: "#BB8C4B",
-                      backgroundColor: "#222227",
-                      borderColor: "#777777",
-                    }}
+                    style={{ accentColor: "#BB8C4B", backgroundColor: "#222227", borderColor: "#777777" }}
                   />
                   <span className="ml-2 text-sm" style={{ color: "#999999" }}>
                     Remember me
                   </span>
                 </label>
                 <a
-                  href="#forgot"
-                  className="text-sm transition-colors"
+                  href="/forgot-password"
+                  className="text-sm"
                   style={{ color: "#BB8C4B" }}
-                  onMouseEnter={(e) => (e.target.style.color = "#DDDDDD")}
-                  onMouseLeave={(e) => (e.target.style.color = "#BB8C4B")}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = "/forgot-password";
-                  }}
                 >
                   Forgot Password?
                 </a>
@@ -401,32 +378,17 @@ const handleSubmit = async (e) => {
                 disabled={loading}
                 className="w-full font-bold py-3 rounded-lg transition-all duration-300 transform hover:scale-[1.02] relative"
                 style={{
-                  background: loading
-                    ? "#777777"
-                    : "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)",
+                  background: loading ? "#777777" : "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)",
                   color: "#222227",
                   boxShadow: "0 10px 25px rgba(187, 140, 75, 0.2)",
                   cursor: loading ? "not-allowed" : "pointer",
                 }}
-                onMouseEnter={(e) =>
-                  !loading &&
-                  (e.target.style.background =
-                    "linear-gradient(135deg, #DDDDDD 0%, #BB8C4B 100%)")
-                }
-                onMouseLeave={(e) =>
-                  !loading &&
-                  (e.target.style.background =
-                    "linear-gradient(135deg, #BB8C4B 0%, #DDDDDD 100%)")
-                }
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <div
                       className="w-5 h-5 border-2 rounded-full border-t-transparent animate-spin"
-                      style={{
-                        borderColor: "#222227",
-                        borderTopColor: "transparent",
-                      }}
+                      style={{ borderColor: "#222227", borderTopColor: "transparent" }}
                     ></div>
                     Signing in...
                   </span>
@@ -439,86 +401,39 @@ const handleSubmit = async (e) => {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div
-                  className="w-full"
-                  style={{ borderTopWidth: "1px", borderColor: "#777777" }}
-                ></div>
+                <div className="w-full" style={{ borderTopWidth: "1px", borderColor: "#777777" }}></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span
-                  className="px-4 text-sm"
-                  style={{ backgroundColor: "#303133", color: "#999999" }}
-                >
+                <span className="px-4 text-sm" style={{ backgroundColor: "#303133", color: "#999999" }}>
                   Or continue with
                 </span>
               </div>
             </div>
 
-            {/* Social Login Buttons */}
+            {/* Social Login */}
             <div className="flex flex-col gap-4">
               <button
                 type="button"
                 onClick={() => handleSocialLogin("google")}
                 disabled={loading}
                 className="flex items-center justify-center gap-2 py-3 transition-all duration-300 rounded-lg"
-                style={{
-                  backgroundColor: "#222227",
-                  borderWidth: "1px",
-                  borderColor: "#777777",
-                  color: "#FFFFFF",
-                  opacity: loading ? 0.6 : 1,
-                  cursor: loading ? "not-allowed" : "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.backgroundColor = "#303133";
-                    e.currentTarget.style.borderColor = "#BB8C4B";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.backgroundColor = "#222227";
-                    e.currentTarget.style.borderColor = "#777777";
-                  }
-                }}
+                style={{ backgroundColor: "#222227", borderWidth: "1px", borderColor: "#777777", color: "#FFFFFF", opacity: loading ? 0.6 : 1 }}
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
                 <span className="text-sm font-medium">Google</span>
               </button>
             </div>
 
-            {/* Sign Up Link */}
+            {/* Sign Up */}
             <div className="mt-6 text-center">
               <p className="text-sm" style={{ color: "#999999" }}>
                 Don't have an account?{" "}
-                <a
-                  href="#register"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    window.location.href = "/register";
-                  }}
-                  className="font-medium transition-colors"
-                  style={{ color: "#BB8C4B" }}
-                  onMouseEnter={(e) => (e.target.style.color = "#DDDDDD")}
-                  onMouseLeave={(e) => (e.target.style.color = "#BB8C4B")}
-                >
+                <a href="/register" className="font-medium" style={{ color: "#BB8C4B" }}>
                   Sign Up
                 </a>
               </p>
