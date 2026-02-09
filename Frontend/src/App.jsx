@@ -50,6 +50,10 @@ import CustomerGallerypage from "./pages/CustomerGallerypage";
 import AllTeam from "./pages/admin/AllTeam";
 import AddTeam from "./pages/admin/Addteam";
 import EditTeam from "./pages/admin/EditTeam";
+import Reception from "./pages/receptionist/reception";
+import Inventory from "./pages/inventory/inventory";
+import Manager from "./pages/manager/manager";
+import Staff from "./pages/staff/staff";
 
 // Users
 import CreateUser from "./pages/admin/CreateUser";
@@ -130,15 +134,33 @@ export default function App() {
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/edit-user/:id" element={<UpdateUser />} />
 
+
+        
         {/* Profiles */}
-        <Route
-          path="/admin/profile"
-          element={isAuth() ? <ProfilePage /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/customer/profile"
-          element={isAuth() ? <Profile /> : <Navigate to="/login" replace />}
-        />
+         <Route path="/reception" element={<Reception />} />
+       <Route path="/inventory" element={<Inventory />} />
+       <Route path="/manager" element={<Manager />} />
+       <Route path="/staff" element={<Staff />} />
+
+         <Route
+  path="/admin/profile"
+  element={
+    isAuth()
+      ? <ProfilePage />
+      : <Navigate to="/login" replace />
+  }
+/>
+
+
+        {/* Customer Profile */}
+   <Route
+  path="/customer/profile"
+  element={
+    isAuth()
+      ? <Profile />   // ← Use the correct imported component
+      : <Navigate to="/login" replace />
+  }
+/>
 
         {/* Reviews */}
         <Route path="/admin/reviews" element={<AdminReviews />} />

@@ -174,7 +174,7 @@ const MyAppointments = () => {
               <div key={a._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] p-4 text-white flex justify-between flex-col">
-                  <h3 className="font-bold text-lg">{a.service?.name}</h3>
+                  <h3 className="font-bold text-lg">  {  a.package?.name || a.service?.name ||  a.serviceName || a.packageName}</h3>
                   <p className="text-sm text-gray-200 mt-1">{a.CUSTOMER?.email || a.customerEmail} <br /> {a.CUSTOMER?.phone || a.customerPhone}</p>
                   <div className="mt-2">{getStatusBadge(a.status)}</div>
                 </div>
@@ -183,8 +183,8 @@ const MyAppointments = () => {
                 <div className="p-4 space-y-3">
                   <div className="flex items-center gap-3 text-gray-700"><FaCalendarAlt className="text-[#BB8C4B]" /><span>{formatDate(a.appointmentDate)}</span></div>
                   <div className="flex items-center gap-3 text-gray-700"><FaClock className="text-[#BB8C4B]" /><span>{formatTime(a.appointmentTime)}</span></div>
-                  <div className="flex items-center gap-3 text-gray-700"><FaTag className="text-[#BB8C4B]" /><span>{a.duration} mins</span></div>
-                  <div className="flex items-center gap-3 text-gray-700"><FaDollarSign className="text-[#BB8C4B]" /><span>{a.service?.pricing || 0}</span></div>
+                  <div className="flex items-center gap-3 text-gray-700"><FaTag className="text-[#BB8C4B]" /><span>{a.duration ||  a.package?.totalDuration || a.service?.duration || 0}</span></div>
+                  <div className="flex items-center gap-3 text-gray-700"><FaDollarSign className="text-[#BB8C4B]" /><span>{a.price || a.service?.pricing || a.package?.price || 0}</span></div>
                   {a.notes && <p className="text-sm text-gray-600 pt-2 border-t"><b>Notes:</b> {a.notes}</p>}
                 </div>
 

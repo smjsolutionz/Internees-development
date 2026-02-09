@@ -12,6 +12,7 @@ const appointmentSchema = new mongoose.Schema(
       ref: "Service",
       required: [true, "Service is required"],
     },
+    package: { type: mongoose.Schema.Types.ObjectId, ref: "Package", required: false},
     staff: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -39,6 +39,7 @@ const packageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+     availableForBooking: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

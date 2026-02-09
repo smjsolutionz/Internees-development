@@ -1,5 +1,6 @@
 const Appointment = require("../models/Appointment");
 const Service = require("../models/Service.model");
+const Package = require("../models/Package"); // agar package model exist karta hai
 const User = require("../models/User");
 const sendEmail = require("../utils/sendEmail");
 
@@ -8,10 +9,7 @@ const sendEmail = require("../utils/sendEmail");
 =============================== */
 exports.getAllServices = async (req, res, next) => {
   try {
-    // Fetch all services without isActive
-    const services = await Service.find({})
-      .sort({ category: 1, name: 1 });
-
+    const services = await Service.find({}).sort({ category: 1, name: 1 });
     res.json({ success: true, count: services.length, services });
   } catch (error) {
     next(error);
@@ -24,14 +22,24 @@ exports.getAllServices = async (req, res, next) => {
 exports.getAvailableSlots = async (req, res, next) => {
   try {
     const { date } = req.params;
-    const { serviceId } = req.query;
+    const { serviceId, packageId } = req.query;
 
-    const service = await Service.findById(serviceId);
-    if (!service) return res.status(404).json({ success: false, message: "Service not found" });
+    if (!serviceId && !packageId) return res.status(400).json({ success: false, message: "serviceId or packageId is required" });
 
+    const service = serviceId ? await Service.findById(serviceId) : null;
+    const pkg = packageId ? await Package.findById(packageId) : null;
+
+    if (serviceId && !service) return res.status(404).json({ success: false, message: "Service not found" });
+    if (packageId && !pkg) return res.status(404).json({ success: false, message: "Package not found" });
+
+    // Fetch all appointments for this date related to the service or package
     const appointments = await Appointment.find({
       appointmentDate: new Date(date),
       status: { $nin: ["cancelled"] },
+      $or: [
+        { service: serviceId || null },
+        { package: packageId || null }
+      ]
     });
 
     const workingHours = { start: 9, end: 21 };
@@ -56,18 +64,29 @@ exports.getAvailableSlots = async (req, res, next) => {
 =============================== */
 exports.createAppointment = async (req, res, next) => {
   try {
-    const { serviceId, appointmentDate, appointmentTime, customerName, customerEmail, customerPhone, notes } = req.body;
+    const {
+      serviceId,
+      packageId,
+      appointmentDate,
+      appointmentTime,
+      customerName,
+      customerEmail,
+      customerPhone,
+      notes
+    } = req.body;
+
     const isAuth = req.user && req.user._id;
+
     if (isAuth && customerEmail && customerEmail !== req.user.email) {
-  return res.status(400).json({
-    success: false,
-    message: "Please use the email you logged in with to book an appointment"
-  });
-}
+      return res.status(400).json({
+        success: false,
+        message: "Please use the email you logged in with to book an appointment"
+      });
+    }
 
     // Validation
     const errors = {};
-    if (!serviceId) errors.serviceId = "Service is required";
+    if (!serviceId && !packageId) errors.serviceOrPackage = "Service or Package is required";
     if (!appointmentDate) errors.appointmentDate = "Date is required";
     if (!appointmentTime) errors.appointmentTime = "Time is required";
 
@@ -83,13 +102,16 @@ exports.createAppointment = async (req, res, next) => {
 
     if (Object.keys(errors).length) return res.status(400).json({ success: false, errors });
 
-    // Service check
-    const service = await Service.findById(serviceId);
-    if (!service) return res.status(400).json({ success: false, message: "Service not available" });
+    // Fetch service or package
+    const service = serviceId ? await Service.findById(serviceId) : null;
+    const pkg = packageId ? await Package.findById(packageId) : null;
+
+    if (serviceId && !service) return res.status(400).json({ success: false, message: "Service not available" });
+    if (packageId && !pkg) return res.status(400).json({ success: false, message: "Package not available" });
 
     // Date in future
     const selectedDate = new Date(appointmentDate);
-    if (selectedDate < new Date().setHours(0, 0, 0, 0)) 
+    if (selectedDate < new Date().setHours(0, 0, 0, 0))
       return res.status(400).json({ success: false, message: "Cannot book past date" });
 
     // Slot availability
@@ -97,17 +119,22 @@ exports.createAppointment = async (req, res, next) => {
       appointmentDate: selectedDate,
       appointmentTime,
       status: { $nin: ["cancelled"] },
+      $or: [
+        { service: serviceId || null },
+        { package: packageId || null }
+      ]
     });
     if (existing) return res.status(400).json({ success: false, message: "Slot already booked" });
 
     // Create appointment object
     const data = {
-      service: serviceId,
+      service: serviceId || (pkg?.services?.[0] || null), // representative service
+      package: packageId || null,
       appointmentDate: selectedDate,
       appointmentTime,
-      duration: service.duration || 60,
+      duration: service?.duration || pkg?.totalDuration || 60,
       notes: notes?.trim() || "",
-      price: service.pricing|| 0,
+      price: service?.pricing || pkg?.price || 0,
       status: "pending",
     };
 
@@ -123,7 +150,7 @@ exports.createAppointment = async (req, res, next) => {
     }
 
     const appointment = await Appointment.create(data);
-    await appointment.populate("service", "name description pricing duration");
+    await appointment.populate("service package", "name description pricing duration totalDuration");
 
     // Send email
     try {
@@ -131,7 +158,7 @@ exports.createAppointment = async (req, res, next) => {
         <html><body>
         <h2>Appointment Confirmation</h2>
         <p>Hi ${data.customerName},</p>
-        <p>Your appointment for <b>${service.name}</b> on <b>${selectedDate.toDateString()}</b> at <b>${appointmentTime}</b> is booked.</p>
+        <p>Your appointment for <b>${pkg ? pkg.name : service.name}</b> on <b>${selectedDate.toDateString()}</b> at <b>${appointmentTime}</b> is booked.</p>
         </body></html>`;
       await sendEmail({ to: data.customerEmail, subject: "Appointment Confirmation", html });
     } catch (e) { console.error("Email failed:", e); }
@@ -152,11 +179,14 @@ exports.getMyAppointments = async (req, res, next) => {
     if (status) query.status = status;
 
     const appointments = await Appointment.find(query)
-      .populate("service", "name description pricing duration")
-      .populate("staff", "name email phone")
-      .sort({ appointmentDate: -1, appointmentTime: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+  .populate("service", "name pricing duration")
+  .populate("package", "name price totalDuration")
+  .populate("CUSTOMER", "name email phone")
+  .populate("staff", "name email phone")
+  .sort({ appointmentDate: -1, appointmentTime: -1 })
+  .limit(limit * 1)
+  .skip((page - 1) * limit);
+
 
     const count = await Appointment.countDocuments(query);
     res.json({ success: true, appointments, totalPages: Math.ceil(count / limit), currentPage: page, total: count });
@@ -171,7 +201,7 @@ exports.getMyAppointments = async (req, res, next) => {
 exports.cancelAppointment = async (req, res, next) => {
   try {
     const { cancellationReason } = req.body;
-    const appointment = await Appointment.findById(req.params.id).populate("service");
+    const appointment = await Appointment.findById(req.params.id).populate("service package");
 
     if (!appointment) return res.status(404).json({ success: false, message: "Not found" });
     if (new Date(appointment.appointmentDate) < new Date()) return res.status(400).json({ success: false, message: "Cannot cancel past appointments" });
@@ -183,7 +213,7 @@ exports.cancelAppointment = async (req, res, next) => {
     await appointment.save();
 
     try {
-      const html = `<p>Your appointment for ${appointment.service.name} on ${appointment.appointmentDate.toDateString()} at ${appointment.appointmentTime} has been cancelled.</p>`;
+      const html = `<p>Your appointment for ${appointment.package ? appointment.package.name : appointment.service.name} on ${appointment.appointmentDate.toDateString()} at ${appointment.appointmentTime} has been cancelled.</p>`;
       await sendEmail({ to: appointment.customerEmail, subject: "Appointment Cancelled", html });
     } catch (e) { console.error(e); }
 
@@ -197,7 +227,7 @@ exports.cancelAppointment = async (req, res, next) => {
 exports.rescheduleAppointment = async (req, res, next) => {
   try {
     const { appointmentDate, appointmentTime } = req.body;
-    const appointment = await Appointment.findById(req.params.id).populate("service").populate("CUSTOMER");
+    const appointment = await Appointment.findById(req.params.id).populate("service package CUSTOMER");
 
     if (!appointment) return res.status(404).json({ success: false, message: "Not found" });
     if (appointment.customer?._id.toString() !== req.user._id.toString() && !["CUSTOMER"].includes(req.user.role))
@@ -226,8 +256,3 @@ exports.rescheduleAppointment = async (req, res, next) => {
     res.json({ success: true, message: "Rescheduled", appointment });
   } catch (error) { next(error); }
 };
-
-
-
-
-

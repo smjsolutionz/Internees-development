@@ -256,9 +256,6 @@ const PackageDetail = () => {
             <span className="text-3xl font-bold text-[#c0954d]">{pkg.price}/-</span>
           </div>
 
-          <div ref={descRef} className="line-clamp-3 mt-2">
-            <p>{pkg.description || "No description available"}</p>
-          </div>
 
           <h3 className="text-xl font-semibold mt-6">Included Services</h3>
           <ul className="mb-6 border rounded-lg p-4">
@@ -634,8 +631,10 @@ const PackageDetail = () => {
         <BookingDrawer
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
+         type="Package"
+          packageId={pkg._id}          // <--- important for package booking
+          serviceId={pkg.services._id} // default service for slot checking
           service={pkg.name}
-          type="package"
           price={pkg.price}
           duration={pkg.totalDuration}
         />

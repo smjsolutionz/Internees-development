@@ -125,6 +125,7 @@ const Services = () => {
           onClose={onClose}
           service={selectedService.name}
           price={selectedService.pricing || "0"}
+          serviceId={selectedService._id}
         />
       )}
     </section>
