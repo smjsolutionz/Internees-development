@@ -97,7 +97,7 @@ const Navbar = () => {
             {user ? (
               <div className="relative">
                 <img
-                    src="https://i.pravatar.cc/150?img=3"
+                    src= "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
                   alt="Profile"
                   className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 text-white border-[#BB8C4B] cursor-pointer"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -113,6 +113,15 @@ const Navbar = () => {
                     >
                       Profile
                     </button>
+                    <button
+      onClick={() => {
+        navigate("/my-appointments");
+        setDropdownOpen(false);
+      }}
+      className="block w-full text-left px-4 py-2 hover:bg-[#BB8C4B]"
+    >
+      My Appointments
+    </button>
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 hover:bg-[#BB8C4B]"

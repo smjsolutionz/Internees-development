@@ -1,350 +1,249 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-hot-toast";
-import { FaSearch, FaFilter } from "react-icons/fa";
 
-const AdminAppointments = () => {
+const AllAppointmentsAdmin = () => {
   const [appointments, setAppointments] = useState([]);
-  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const [filters, setFilters] = useState({
     status: "",
     date: "",
     search: "",
   });
-  const [staffList, setStaffList] = useState([]);
 
-  useEffect(() => {
-    fetchAppointments();
-    fetchStaff();
-  }, [filters]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+  });
 
-  const fetchAppointments = async () => {
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
+
+  // Fetch appointments from backend
+  const fetchAppointments = async (pageToFetch = 1) => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/all`,
+      const token = localStorage.getItem("accessToken");
+      if (!token) throw new Error("Login required");
+
+      const res = await axios.get(
+        "http://localhost:5000/api/appointment/admin/appointments",
         {
           headers: { Authorization: `Bearer ${token}` },
           params: {
-            ...filters,
             status: filters.status || undefined,
             date: filters.date || undefined,
             search: filters.search || undefined,
+            page: pageToFetch,
+            limit,
           },
-        },
+        }
       );
 
-      if (response.data.success) {
-        setAppointments(response.data.appointments);
-        setStats(response.data.stats);
-      }
-    } catch (error) {
-      console.error("Error fetching appointments:", error);
-      toast.error("Failed to load appointments");
+      const data = res.data.appointments || [];
+      const totalItems = res.data.total || data.length;
+
+      // Backend currentPage and totalPages are now numbers
+      const currentPage = Number(res.data.currentPage) || pageToFetch;
+      const totalPagesFromBackend = Number(res.data.totalPages) || Math.ceil(totalItems / limit);
+
+      setAppointments(data);
+      setPage(currentPage);
+      setTotalPages(totalPagesFromBackend);
+
+      // Update stats from current page data
+      setStats({
+        total: totalItems,
+        pending: data.filter(a => a.status === "pending").length,
+        confirmed: data.filter(a => a.status === "confirmed").length,
+        completed: data.filter(a => a.status === "completed").length,
+        cancelled: data.filter(a => a.status === "cancelled").length,
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || err.message);
+      setAppointments([]);
+      setPage(1);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStaff = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/admin/users`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { role: "staff" },
-        },
-      );
+  // Fetch page 1 whenever filters change
+  useEffect(() => {
+    fetchAppointments(1);
+  }, [filters]);
 
-      if (response.data.success) {
-        setStaffList(response.data.users);
-      }
-    } catch (error) {
-      console.error("Error fetching staff:", error);
-    }
+  // Handle pagination clicks
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage); // immediately update page
+    fetchAppointments(newPage);
   };
 
-  const handleStatusUpdate = async (appointmentId, newStatus) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/${appointmentId}/status`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      if (response.data.success) {
-        toast.success(`Appointment ${newStatus}`);
-        fetchAppointments();
-      }
-    } catch (error) {
-      console.error("Status update error:", error);
-      toast.error("Failed to update status");
-    }
-  };
-
-  const handleStaffAssignment = async (appointmentId, staffId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/admin/${appointmentId}/assign-staff`,
-        { staffId },
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      if (response.data.success) {
-        toast.success("Staff assigned successfully");
-        fetchAppointments();
-      }
-    } catch (error) {
-      console.error("Staff assignment error:", error);
-      toast.error("Failed to assign staff");
-    }
-  };
-
-  const getStatusColor = (status) => {
-    const colors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-green-100 text-green-800",
-      completed: "bg-blue-100 text-blue-800",
-      cancelled: "bg-red-100 text-red-800",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const formatDate = (date) =>
+    date
+      ? new Date(date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "N/A";
 
   const formatTime = (time) => {
-    const [hours, minutes] = time.split(":");
-    const hour = parseInt(hours);
+    if (!time) return "N/A";
+    const [h, m] = time.split(":");
+    const hour = parseInt(h, 10);
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    return `${hour12}:${m} ${ampm}`;
   };
 
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Appointments Management
-        </h1>
-        <p className="mt-2 text-gray-600">
-          View and manage all customer appointments
-        </p>
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-14 w-14 border-b-2 border-[#BB8C4B] rounded-full" />
       </div>
+    );
+  }
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        {stats &&
-          Object.entries({
-            total: "Total",
-            pending: "Pending",
-            confirmed: "Confirmed",
-            completed: "Completed",
-            cancelled: "Cancelled",
-          }).map(([key, label]) => (
-            <div
-              key={key}
-              className="bg-white p-4 rounded-lg shadow border border-gray-200"
-            >
-              <p className="text-sm text-gray-600">{label}</p>
-              <p className="text-2xl font-bold text-[#BB8C4B]">
-                {stats.find((s) => s._id === key)?.count || 0}
-              </p>
-            </div>
-          ))}
-      </div>
+  if (error) return <div className="text-center text-red-600">{error}</div>;
+
+  return (
+    <div className="max-w-7xl bg-white   mx-auto p-6">
+      <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">All Appointments</h1>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
-          <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or email"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#BB8C4B] focus:border-transparent"
-            />
-          </div>
-
-          {/* Status Filter */}
-          <select
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#BB8C4B] focus:border-transparent"
-          >
-            <option value="">All Statuses</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-
-          {/* Date Filter */}
-          <input
-            type="date"
-            value={filters.date}
-            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-            className="px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-[#BB8C4B] focus:border-transparent"
-          />
-
-          {/* Clear Filters */}
-          <button
-            onClick={() => setFilters({ status: "", date: "", search: "" })}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
-          >
-            Clear Filters
-          </button>
-        </div>
+      <div className="bg-white p-4 rounded shadow grid md:grid-cols-3 gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search name or email"
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          className="border p-2 rounded"
+        />
+        <input
+          type="date"
+          value={filters.date}
+          onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+          className="border p-2 rounded"
+        />
+        <select
+          value={filters.status}
+          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          className="border p-2 rounded"
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
       </div>
 
-      {/* Appointments Table */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BB8C4B]"></div>
-        </div>
-      ) : appointments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500">No appointments found</p>
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        {Object.entries(stats).map(([key, val]) => (
+          <div key={key} className="bg-white p-4 rounded shadow text-center">
+            <p className="text-sm text-gray-500 capitalize">{key}</p>
+            <p className="text-2xl font-bold text-[#BB8C4B]">{val}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Table */}
+      {appointments.length === 0 ? (
+        <div className="text-center text-gray-500 bg-white p-10 rounded shadow">
+          No appointments found
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+        <>
+          <div className="bg-white rounded shadow overflow-x-auto">
+            <table className="min-w-full divide-y">
+              <thead className="bg-[#BB8C4B] text-white">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Customer
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Service
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Staff
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left">Customer</th>
+                  <th className="px-6 py-3 text-left">Price</th>
+                  <th className="px-6 py-3 text-left">Service</th>
+                  <th className="px-6 py-3 text-left">Date</th>
+                  <th className="px-6 py-3 text-left">Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {appointments.map((appointment) => (
-                  <tr key={appointment._id} className="hover:bg-gray-50">
-                    {/* Customer */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {appointment.customerName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.customerEmail}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {appointment.customerPhone}
-                        </div>
-                      </div>
+              <tbody className="divide-y">
+                {appointments.map((appt) => (
+                  <tr key={appt._id}>
+                    <td className="px-6 py-4">
+                      <p className="font-medium text-gray-900">
+                        {appt.CUSTOMER?.name || appt.customerName || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500">{appt.customerEmail || "N/A"}</p>
+                      <p className="text-sm text-gray-500">{appt.customerPhone || "N/A"}</p>
                     </td>
-
-                    {/* Service */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {appointment.service.name}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Rs. {appointment.price}
-                      </div>
+                    <td className="px-6 py-4 font-semibold text-gray-800">{appt.service?.pricing || 0}</td>
+                    <td className="px-6 py-4">{appt.service?.name || "N/A"}</td>
+                    <td className="px-6 py-4">
+                      <p>{formatDate(appt.appointmentDate)}</p>
+                      <p>{formatTime(appt.appointmentTime)}</p>
                     </td>
-
-                    {/* Date & Time */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {formatDate(appointment.appointmentDate)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {formatTime(appointment.appointmentTime)}
-                      </div>
-                    </td>
-
-                    {/* Status */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={appointment.status}
-                        onChange={(e) =>
-                          handleStatusUpdate(appointment._id, e.target.value)
-                        }
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}
-                        disabled={
-                          appointment.status === "cancelled" ||
-                          appointment.status === "completed"
-                        }
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          appt.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : appt.status === "confirmed"
+                            ? "bg-green-100 text-green-800"
+                            : appt.status === "completed"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
                       >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                    </td>
-
-                    {/* Staff Assignment */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={appointment.staff?._id || ""}
-                        onChange={(e) =>
-                          handleStaffAssignment(appointment._id, e.target.value)
-                        }
-                        className="text-sm border border-gray-300 rounded px-2 py-1"
-                      >
-                        <option value="">Assign Staff</option>
-                        {staffList.map((staff) => (
-                          <option key={staff._id} value={staff._id}>
-                            {staff.name}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => {
-                          // View appointment details modal
-                          alert(JSON.stringify(appointment, null, 2));
-                        }}
-                        className="text-[#BB8C4B] hover:text-[#A97C42] font-medium"
-                      >
-                        View Details
-                      </button>
+                        {appt.status}
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400"
+            >
+              Prev
+            </button>
+
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePageChange(i + 1)}
+                className={`px-3 py-1 rounded ${page === i + 1 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
 };
 
-export default AdminAppointments;
+export default AllAppointmentsAdmin;
