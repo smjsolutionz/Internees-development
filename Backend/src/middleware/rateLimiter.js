@@ -10,6 +10,6 @@ exports.loginLimiter = rateLimit({
 
 exports.appointmentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 appointments per IP per 15 minutes
+  max: 20, // 5 appointments per IP per 15 minutes
   message: "Too many appointment requests, please try again later",
 });

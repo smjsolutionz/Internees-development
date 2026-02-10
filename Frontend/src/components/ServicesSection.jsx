@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import BookingDrawer from "./BookingDrawer";
+import BookingDrawer from "./BookingDrawer"; // enhanced drawer
 import { FaArrowRight, FaEye } from "react-icons/fa";
 import axios from "axios";
 
@@ -13,6 +13,7 @@ const ServicesSection = () => {
   const navigate = useNavigate();
   const onClose = () => setIsOpen(false);
 
+  // Fetch services
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -36,7 +37,6 @@ const ServicesSection = () => {
   return (
     <section className="bg-white py-24 mt-10">
       <div className="max-w-7xl mx-auto container px-4 sm:px-6 lg:px-12">
-
         {/* Heading */}
         <div className="text-center mb-20">
           <p className="text-[#BB8C4B] tracking-widest uppercase mb-3 text-sm sm:text-base">
@@ -91,7 +91,7 @@ const ServicesSection = () => {
               {/* Pricing */}
               {service.pricing && (
                 <p className="text-gray-800 mb-4 text-lg font-semibold">
-                  Price: {service.pricing}
+                  Price: Rs. {service.pricing}
                 </p>
               )}
 
@@ -131,6 +131,7 @@ const ServicesSection = () => {
           onClose={onClose}
           service={selectedService.name}
           price={selectedService.pricing || "0"}
+          serviceId={selectedService._id}
         />
       )}
     </section>
