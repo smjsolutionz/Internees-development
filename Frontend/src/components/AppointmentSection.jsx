@@ -20,7 +20,6 @@ export default function AppointmentSection() {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
  useEffect(() => {
   const token = localStorage.getItem("accessToken");
@@ -35,7 +34,6 @@ export default function AppointmentSection() {
     }));
   }
 }, []);
-
 
 
   // Fetch services on mount
@@ -186,7 +184,6 @@ export default function AppointmentSection() {
               Make an appointment
             </h2>
 
-
             <p className="text-gray-400 mb-12 leading-relaxed max-w-lg text-center lg:text-left">
               Our beauty salon provides you with the highest levels of professional services.
             </p>
@@ -210,7 +207,6 @@ export default function AppointmentSection() {
   }`}
   required
 />
-
 
               <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} className="h-[56px] bg-white text-black px-4 sm:px-6 outline-none w-full" required />
 

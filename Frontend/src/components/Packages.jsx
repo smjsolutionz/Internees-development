@@ -56,7 +56,7 @@ const Packages = () => {
   }
 
   return (
-    <section  id="packages" className="bg-[#faf7f2] mt-20">
+    <section id="packages" className="mt-20">
       <div className="max-w-7xl mx-auto px-4 relative">
 
         <h2 className="text-4xl font-serif text-center mb-10">
@@ -65,22 +65,20 @@ const Packages = () => {
 
         {/* SCROLL BUTTONS */}
         <button
-  onClick={scrollLeft}
-  className="absolute left-4 top-1/2 -translate-y-1/2 z-20
-  bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
->
-  ❮
-</button>
-
+          onClick={scrollLeft}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20
+          bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
+        >
+          ❮
+        </button>
 
         <button
-  onClick={scrollRight}
-  className="absolute right-4 top-1/2 -translate-y-1/2 z-20
-  bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
->
-  ❯
-</button>
-
+          onClick={scrollRight}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20
+          bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
+        >
+          ❯
+        </button>
 
         {/* HORIZONTAL SCROLL */}
         {filteredPackages.length === 0 ? (
@@ -109,3 +107,4 @@ const Packages = () => {
 };
 
 export default Packages;
+
