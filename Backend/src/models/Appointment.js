@@ -8,11 +8,22 @@ const appointmentSchema = new mongoose.Schema(
       required: false, // Allow guest bookings
     },
     service: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Service",
-      required: [true, "Service is required"],
-    },
-    package: { type: mongoose.Schema.Types.ObjectId, ref: "Package", required: false},
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Service",
+  required: function() {
+    // Only required if package is NOT set
+    return !this.package;
+  },
+},
+package: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Package",
+  required: function() {
+    // Only required if service is NOT set
+    return !this.service;
+  },
+},
+
     staff: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

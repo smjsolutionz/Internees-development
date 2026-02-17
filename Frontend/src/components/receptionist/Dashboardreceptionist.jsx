@@ -1,26 +1,28 @@
 import { useState } from "react";
-import ReceptionistSidebar  from  "../../components/receptionist/receptionistsidebar.jsx";
+import ReceptionistSidebar from "../../components/receptionist/receptionistsidebar";
 import Topbar from "../../components/admin/TopbarAdmin";
 
-export default function Reception() {
+
+export default function ReceptionDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <ReceptionistSidebar 
+      <ReceptionistSidebar
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
       />
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col">
         <Topbar setSidebarOpen={setSidebarOpen} />
 
-        {/* Page Content */}
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold">Reception Dashboard</h1>
-        </div>
+        <section className="p-4 sm:p-6">
+          <h1 className="text-2xl font-semibold mb-6">
+            Receptionist Dashboard
+          </h1>
+
+       
+        </section>
       </main>
     </div>
   );

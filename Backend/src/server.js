@@ -16,7 +16,7 @@ const packageRoutes = require("./routes/packageRoutes");
 const adminUsersRoutes = require("./routes/adminUsers.routes");
 const adminAuthRoutes = require("./routes/adminAuth.routes");
 const adminProfileRoutes = require("./routes/adminProfile");
-
+const walkInRoutes = require("./routes/receptionist/walkInRoutes");
 
 const adminTeamRoutes = require("./routes/adminTeamRoutes");
 const customerTeamRoutes = require("./routes/customerTeamRoutes");
@@ -24,6 +24,7 @@ const customerProfileRoutes = require("./routes/customerProfile");
 
 const reviewCustomerRoutes=require("./routes/reviewCustomerRoutes")
 
+const receptionistRoutes = require("./routes/receptionist/receptionistRoutes");
 
 
 const appointmentRoutes = require("./routes/appointmentRoutes");
@@ -98,6 +99,11 @@ app.use("/api/admin", adminProfileRoutes);
 app.use("/admin", adminTeamRoutes);
 app.use("/api/admin/reviews", reviewAdminRoutes); 
 app.use("/customer", customerTeamRoutes);
+
+app.use("/api/appointment/receptionist", receptionistRoutes);
+// Prefix all walk-in routes under /api/receptionist/walkin
+app.use("/api/receptionist/walkin", walkInRoutes);
+
 
 // 🔹 Global Error Handler
 app.use((err, req, res, next) => {
