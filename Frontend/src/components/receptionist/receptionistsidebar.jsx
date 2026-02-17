@@ -1,46 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import logo from "../../assets/images/logo.png";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
+export default function SidebarReceptionist({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
   const [openGallery, setOpenGallery] = useState(false);
-  const [openTeam, setOpenTeam] = useState(false);
-  const [admin, setAdmin] = useState(null);
+  const [openServices, setOpenServices] = useState(false);
 
-useEffect(() => {
-  const fetchAdmin = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) return;
-
-      const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setAdmin(res.data.admin); // ← Use admin directly
-    } catch (err) {
-      console.error("Sidebar profile load failed", err);
-    }
-  };
-
-  fetchAdmin();
-}, []);
-
-
-
-  // 🔹 SIDEBAR MENU
+  // Sidebar menu for receptionist
   const menu = [
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Appointments", path: "/appointments" },
-    { name: "Services", path: "/services-admin" },
-    { name: "Packages", path: "/packages-admin" },
-    { name: "Reviews", path: "/admin/reviews" }, 
+    { name: "Dashboard", path: "/receptionist/dashboard" },
+    { name: "Appointments", path: "/receptionist/appointments" },
+    { name: "Walk-In Appointment", path: "/receptionist/walkin" }, // ✅ New Link
+    { name: "Reviews", path: "/receptionist/reviews" },
   ];
 
   return (
@@ -66,30 +40,6 @@ useEffect(() => {
             <X />
           </button>
         </div>
-
-        {/* Profile */}
-        {admin && (
-          <Link
-            to="/admin/profile"
-            onClick={() => setSidebarOpen(false)}
-            className="flex flex-col items-center py-6 border-b border-white/10 hover:bg-white/5 transition"
-          >
-            <img
-              src={
-                admin.profilePic
-                  ? `${API_BASE_URL}${admin.profilePic}`
-                  : "/avatar.png"
-              }
-              alt="Admin"
-              className="w-16 h-16 rounded-full object-cover border mb-2"
-            />
-            <h4 className="font-semibold">{admin.name}</h4>
-            <span className="text-xs text-gray-400">{admin.role}</span>
-            <span className="text-xs text-[#BB8C4B] mt-1">
-              View Profile
-            </span>
-          </Link>
-        )}
 
         {/* Menu */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -122,14 +72,14 @@ useEffect(() => {
             {openGallery && (
               <div className="ml-4 mt-2 space-y-1">
                 <Link
-                  to="/gallery-admin"
+                  to="/receptionist/gallery"
                   onClick={() => setSidebarOpen(false)}
                   className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
                 >
                   All Images
                 </Link>
                 <Link
-                  to="/gallery-admin/add"
+                  to="/receptionist/gallery/add"
                   onClick={() => setSidebarOpen(false)}
                   className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
                 >
@@ -139,40 +89,31 @@ useEffect(() => {
             )}
           </div>
 
-          {/* Team Dropdown */}
+          {/* Services & Packages Dropdown */}
           <div>
             <button
-              onClick={() => setOpenTeam(!openTeam)}
-              className="w-full flex justify-between items-center px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
+              onClick={() => setOpenServices(!openServices)}
+              className="w-full flex justify-between px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
             >
-              <span>Team</span>
-              {openTeam ? <FaChevronUp /> : <FaChevronDown />}
+              <span>Services & Packages</span>
+              {openServices ? <FaChevronUp /> : <FaChevronDown />}
             </button>
 
-            {openTeam && (
+            {openServices && (
               <div className="ml-4 mt-2 space-y-1">
                 <Link
-                  to="/admin/team"
+                  to="/receptionist/services"
                   onClick={() => setSidebarOpen(false)}
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    location.pathname === "/admin/team"
-                      ? "bg-[#BB8C4B]"
-                      : "hover:bg-white/10"
-                  }`}
+                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
                 >
-                  All Members
+                  Services
                 </Link>
-
                 <Link
-                  to="/admin/team/add"
+                  to="/receptionist/packages"
                   onClick={() => setSidebarOpen(false)}
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    location.pathname === "/admin/team/add"
-                      ? "bg-[#BB8C4B]"
-                      : "hover:bg-white/10"
-                  }`}
+                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
                 >
-                  Add Member
+                  Packages
                 </Link>
               </div>
             )}

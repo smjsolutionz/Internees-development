@@ -24,14 +24,14 @@ const AllAppointmentsAdmin = () => {
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
-  // Fetch appointments from backend
+  // 🔹 Fetch appointments
   const fetchAppointments = async (pageToFetch = 1) => {
     setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) throw new Error("Login required");
 
-      const res = await axios.get(
+      const { data } = await axios.get(
         "http://localhost:5000/api/appointment/admin/appointments",
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -45,24 +45,19 @@ const AllAppointmentsAdmin = () => {
         }
       );
 
-      const data = res.data.appointments || [];
-      const totalItems = res.data.total || data.length;
+      const appts = data.appointments || [];
 
-      // Backend currentPage and totalPages are now numbers
-      const currentPage = Number(res.data.currentPage) || pageToFetch;
-      const totalPagesFromBackend = Number(res.data.totalPages) || Math.ceil(totalItems / limit);
+      setAppointments(appts);
+      setPage(Number(data.currentPage) || pageToFetch);
+      setTotalPages(Number(data.totalPages) || 1);
 
-      setAppointments(data);
-      setPage(currentPage);
-      setTotalPages(totalPagesFromBackend);
-
-      // Update stats from current page data
+      // 🔹 Stats (total backend se, baki page se)
       setStats({
-        total: totalItems,
-        pending: data.filter(a => a.status === "pending").length,
-        confirmed: data.filter(a => a.status === "confirmed").length,
-        completed: data.filter(a => a.status === "completed").length,
-        cancelled: data.filter(a => a.status === "cancelled").length,
+        total: data.total || appts.length,
+        pending: appts.filter(a => a.status === "pending").length,
+        confirmed: appts.filter(a => a.status === "confirmed").length,
+        completed: appts.filter(a => a.status === "completed").length,
+        cancelled: appts.filter(a => a.status === "cancelled").length,
       });
     } catch (err) {
       console.error(err);
@@ -75,15 +70,13 @@ const AllAppointmentsAdmin = () => {
     }
   };
 
-  // Fetch page 1 whenever filters change
   useEffect(() => {
     fetchAppointments(1);
   }, [filters]);
 
-  // Handle pagination clicks
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
-    setPage(newPage); // immediately update page
+    setPage(newPage);
     fetchAppointments(newPage);
   };
 
@@ -105,6 +98,10 @@ const AllAppointmentsAdmin = () => {
     return `${hour12}:${m} ${ampm}`;
   };
 
+  // 🔹 Common helper (service / package)
+  const getItem = (appt) =>
+    appt.package || appt.service || {};
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -116,27 +113,37 @@ const AllAppointmentsAdmin = () => {
   if (error) return <div className="text-center text-red-600">{error}</div>;
 
   return (
-    <div className="max-w-7xl bg-white   mx-auto p-6">
-      <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">All Appointments</h1>
+    <div className="max-w-7xl mx-auto p-6 bg-white">
+      <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">
+        All Appointments
+      </h1>
 
-      {/* Filters */}
+      {/* 🔹 Filters */}
       <div className="bg-white p-4 rounded shadow grid md:grid-cols-3 gap-4 mb-6">
         <input
           type="text"
           placeholder="Search name or email"
           value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          onChange={(e) =>
+            setFilters({ ...filters, search: e.target.value })
+          }
           className="border p-2 rounded"
         />
+
         <input
           type="date"
           value={filters.date}
-          onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+          onChange={(e) =>
+            setFilters({ ...filters, date: e.target.value })
+          }
           className="border p-2 rounded"
         />
+
         <select
           value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          onChange={(e) =>
+            setFilters({ ...filters, status: e.target.value })
+          }
           className="border p-2 rounded"
         >
           <option value="">All Status</option>
@@ -147,7 +154,7 @@ const AllAppointmentsAdmin = () => {
         </select>
       </div>
 
-      {/* Stats */}
+      {/* 🔹 Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         {Object.entries(stats).map(([key, val]) => (
           <div key={key} className="bg-white p-4 rounded shadow text-center">
@@ -157,7 +164,7 @@ const AllAppointmentsAdmin = () => {
         ))}
       </div>
 
-      {/* Table */}
+      {/* 🔹 Table */}
       {appointments.length === 0 ? (
         <div className="text-center text-gray-500 bg-white p-10 rounded shadow">
           No appointments found
@@ -169,51 +176,73 @@ const AllAppointmentsAdmin = () => {
               <thead className="bg-[#BB8C4B] text-white">
                 <tr>
                   <th className="px-6 py-3 text-left">Customer</th>
+                  <th className="px-6 py-3 text-left">Item</th>
+                  <th className="px-6 py-3 text-left">Duration</th>
                   <th className="px-6 py-3 text-left">Price</th>
-                  <th className="px-6 py-3 text-left">Service</th>
                   <th className="px-6 py-3 text-left">Date</th>
                   <th className="px-6 py-3 text-left">Status</th>
                 </tr>
               </thead>
+
               <tbody className="divide-y">
-                {appointments.map((appt) => (
-                  <tr key={appt._id}>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">
-                        {appt.CUSTOMER?.name || appt.customerName || "N/A"}
-                      </p>
-                      <p className="text-sm text-gray-500">{appt.customerEmail || "N/A"}</p>
-                      <p className="text-sm text-gray-500">{appt.customerPhone || "N/A"}</p>
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-800">{appt.service?.pricing || 0}</td>
-                    <td className="px-6 py-4">{appt.service?.name || "N/A"}</td>
-                    <td className="px-6 py-4">
-                      <p>{formatDate(appt.appointmentDate)}</p>
-                      <p>{formatTime(appt.appointmentTime)}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-semibold ${
-                          appt.status === "pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : appt.status === "confirmed"
-                            ? "bg-green-100 text-green-800"
-                            : appt.status === "completed"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {appt.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {appointments.map((appt) => {
+                  const item = getItem(appt);
+
+                  return (
+                    <tr key={appt._id}>
+                      <td className="px-6 py-4">
+                        <p className="font-medium">
+                          {appt.CUSTOMER?.name || appt.customerName || "N/A"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {appt.CUSTOMER?.email || appt.customerEmail || "N/A"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {appt.CUSTOMER?.phone || appt.customerPhone || "N/A"}
+                        </p>
+                      </td>
+
+                      <td className="px-6 py-4 font-medium">
+                        {item.name || appt.serviceName || appt.packageName || "N/A"}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        {appt.duration || item.totalDuration || item.duration || "N/A"}
+                      </td>
+
+                      <td className="px-6 py-4 font-semibold">
+                        {appt.price || item.price || item.pricing || 0}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <p>{formatDate(appt.appointmentDate)}</p>
+                        <p>{formatTime(appt.appointmentTime)}</p>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-semibold ${
+                            appt.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : appt.status === "confirmed"
+                              ? "bg-green-100 text-green-800"
+                              : appt.status === "completed"
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {appt.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-2 mt-6">
+          {/* 🔹 Pagination */}
+          <div className="flex justify-center gap-2 mt-6">
             <button
               onClick={() => handlePageChange(page - 1)}
               disabled={page === 1}
@@ -226,7 +255,11 @@ const AllAppointmentsAdmin = () => {
               <button
                 key={i}
                 onClick={() => handlePageChange(i + 1)}
-                className={`px-3 py-1 rounded ${page === i + 1 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}
+                className={`px-3 py-1 rounded ${
+                  page === i + 1
+                    ? "bg-[#BB8C4B] text-white"
+                    : "bg-gray-200"
+                }`}
               >
                 {i + 1}
               </button>

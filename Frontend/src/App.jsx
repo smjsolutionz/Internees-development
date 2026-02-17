@@ -54,14 +54,17 @@ import Reception from "./pages/receptionist/reception";
 import Inventory from "./pages/inventory/inventory";
 import Manager from "./pages/manager/manager";
 import Staff from "./pages/staff/staff";
+import ReceptionDashboard from "./components/receptionist/Dashboardreceptionist";
 
 // Users
 import CreateUser from "./pages/admin/CreateUser";
 import UpdateUser from "./pages/admin/UpdateUser";
+import ReceptionistAppointments from "./pages/receptionist/Appointmentreceptionist";
 
 // Appointments
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
+import WalkInAppointmentForm from "./pages/receptionist/Walkinappointment";
 
 const isAuth = () => !!localStorage.getItem("accessToken");
 
@@ -141,7 +144,13 @@ export default function App() {
        <Route path="/inventory" element={<Inventory />} />
        <Route path="/manager" element={<Manager />} />
        <Route path="/staff" element={<Staff />} />
+         <Route path="/receptionist/dashboard" element={<ReceptionDashboard />} />
+   <Route
+          path="/receptionist/appointments"
+          element={<ReceptionistAppointments />}
+        />
 
+          <Route path="/receptionist/walkin" element={<WalkInAppointmentForm />} />
          <Route
   path="/admin/profile"
   element={
