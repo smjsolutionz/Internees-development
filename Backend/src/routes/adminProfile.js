@@ -3,19 +3,18 @@ const router = express.Router();
 
 const { adminRequireAuth } = require("../middleware/adminAuth.middleware");
 const upload = require("../middleware/upload.middleware");
-
 const {
   getAdminProfile,
   updateAdminProfile,
 } = require("../controllers/adminProfileController");
 
 /* =========================
-   GET PROFILE
+   GET PROFILE (ROLE-BASED)
 ========================= */
 router.get("/profile", adminRequireAuth, getAdminProfile);
 
 /* =========================
-   UPDATE PROFILE
+   UPDATE PROFILE (ONLY SELF)
 ========================= */
 router.put(
   "/profile",

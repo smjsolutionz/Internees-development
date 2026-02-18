@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ReceptionistSidebar  from  "../../components/receptionist/receptionistsidebar.jsx";
+import ReceptionistSidebar  from  "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
 
 export default function Reception() {
