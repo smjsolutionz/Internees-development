@@ -24,6 +24,7 @@ exports.getAllAppointments = async (req, res, next) => {
 
     const appointments = await Appointment.find(query)
       .populate("service", "name description pricing duration")
+         .populate("package", "name price totalDuration")
       .populate("CUSTOMER", "name email phone")
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(limit * 1)

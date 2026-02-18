@@ -22,7 +22,7 @@ const adminProtect = async (req, res, next) => {
     const user = await AdminUser.findById(decoded.id);
     if (!user) return res.status(401).json({ message: "User not found" });
 
-    if (!["ADMIN", "MANAGER"].includes(user.role)) {
+    if (!["ADMIN"].includes(user.role)) {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
 
@@ -30,7 +30,7 @@ const adminProtect = async (req, res, next) => {
       return res.status(403).json({ message: "Account inactive" });
     }
 
-    // 4️⃣ Attach user info
+    
     req.user = user;
     next();
   } catch (err) {

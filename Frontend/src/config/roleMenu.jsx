@@ -34,8 +34,9 @@ export const roleMenus = {
   ],
 
   receptionist: [
-    { name: "Dashboard", path: "/reception/dashboard" },
-    { name: "Appointments", path: "/reception/appointments" },
+    { name: "Dashboard", path: "/receptionist/dashboard" },
+    { name: "Appointments", path: "/receptionist/appointments" },
+    { name: "WalkIn Appointments", path: "/receptionist/walkin" },
   ],
 
   staff: [
