@@ -1,27 +1,65 @@
 const AdminUser = require("../models/adminUser.model");
 
 /* =========================
-   GET ADMIN PROFILE
+   GET PROFILE BASED ON ROLE
 ========================= */
+
 exports.getAdminProfile = async (req, res) => {
   try {
-    const admin = await AdminUser.findById(req.user.id).select(
-      "name username email phone bio profilePic role status createdAt"
-    );
+    const user = await AdminUser.findById(req.user.id);
 
-    if (!admin) {
-      return res.status(404).json({ message: "Admin not found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    let profileData = {};
+
+    switch (req.user.role) {
+      case "ADMIN":
+        profileData = {
+          name: user.name,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          bio: user.bio,
+          profilePic: user.profilePic,
+          role: user.role,
+          status: user.status,
+          createdAt: user.createdAt,
+        };
+        break;
+
+      case "MANAGER":
+      case "INVENTORY_MANAGER":
+      case "STAFF":
+      case "RECEPTIONIST":
+        profileData = {
+          name: user.name,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          status: user.status,
+        };
+        break;
+
+      case "CUSTOMER":
+      default:
+        profileData = {
+          name: user.name,
+          username: user.username,
+        };
+        break;
     }
 
-    res.json({ success: true, admin });
+    res.json({ success: true, user: profileData });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+
 /* =========================
-   UPDATE ADMIN PROFILE
+   UPDATE PROFILE
 ========================= */
 exports.updateAdminProfile = async (req, res) => {
   try {
@@ -32,24 +70,17 @@ exports.updateAdminProfile = async (req, res) => {
       bio: req.body.bio,
     };
 
-    // ❌ EMAIL SHOULD NOT BE UPDATED
-    // so we don't include email here
-
-    // 🖼️ Upload new profile pic
     if (req.file) {
       updates.profilePic = `/uploads/profile/${req.file.filename}`;
     }
 
-    // 🗑️ DELETE PROFILE PIC
     if (req.body.removeProfilePic === "true") {
       updates.profilePic = null;
     }
 
-    const admin = await AdminUser.findByIdAndUpdate(
-      req.user.id,
-      updates,
-      { new: true }
-    );
+    const admin = await AdminUser.findByIdAndUpdate(req.user.id, updates, {
+      new: true,
+    });
 
     res.json({ success: true, admin });
   } catch (err) {

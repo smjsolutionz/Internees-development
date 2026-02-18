@@ -1,7 +1,7 @@
-// src/middleware/adminAuth.middleware.js
 const jwt = require("jsonwebtoken");
 const AdminUser = require("../models/adminUser.model.js");
 
+// Auth middleware to verify JWT and attach user to req
 const adminRequireAuth = async (req, res, next) => {
   try {
     const header = req.headers.authorization || "";
@@ -14,8 +14,10 @@ const adminRequireAuth = async (req, res, next) => {
     const user = await AdminUser.findById(decoded.id);
 
     if (!user) return res.status(401).json({ message: "Unauthorized" });
-    if (user.status !== "ACTIVE") return res.status(403).json({ message: "Account inactive" });
+    if (user.status !== "ACTIVE")
+      return res.status(403).json({ message: "Account inactive" });
 
+    // Attach user info to request
     req.user = { id: user._id.toString(), role: user.role };
     next();
   } catch (err) {
@@ -24,6 +26,7 @@ const adminRequireAuth = async (req, res, next) => {
   }
 };
 
+// Optional: only allow ADMIN role for certain routes
 const adminOnly = (req, res, next) => {
   if (!req.user || req.user.role !== "ADMIN") {
     return res.status(403).json({ message: "Admin access required" });
@@ -31,5 +34,4 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
-// ✅ Export both as named exports
 module.exports = { adminRequireAuth, adminOnly };

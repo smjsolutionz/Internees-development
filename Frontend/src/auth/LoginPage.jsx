@@ -3,20 +3,35 @@ import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react";
 
 /* ================= ROLE → ROUTE ================= */
 const getRedirectPathByRole = (user) => {
-  if (!user || !user.role) return "/";
+  if (!user?.role) return "/";
 
   const role = user.role.toLowerCase();
 
-  if (role === "customer" || role === "user") return "/";
-  if (role === "super_admin" || role === "superadmin") return "/";
-  if (role === "admin") return "/dashboard";
-  if (role === "receptionist") return "/reception";
-  if (role === "inventory_manager") return "/inventory";
-  if (role === "manager") return "/manager";
-  if (role === "staff") return "/staff";
+  switch (role) {
+    case "admin":
+      return "/dashboard";
 
-  return "/";
+    case "receptionist":
+      return "/reception";
+
+    case "inventory_manager":
+      return "/inventory";
+
+    case "manager":
+      return "/manager";
+
+    case "staff":
+      return "/staff";
+
+    case "customer":
+    case "user":
+      return "/";
+
+    default:
+      return "/";
+  }
 };
+
 
 
 const LoginPage = () => {
@@ -48,7 +63,8 @@ const LoginPage = () => {
 
       setSuccessMessage("Login successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = getRedirectPathByRole(user);
+        window.location.replace(getRedirectPathByRole(user));
+
       }, 1000);
     }
 
