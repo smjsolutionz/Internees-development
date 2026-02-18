@@ -1,5 +1,6 @@
 const Appointment = require("../../models/Appointment");
 const sendEmail = require("../../utils/sendEmail");
+const User = require("../../models/adminUser.model");
 
 /* ===============================
    RECEPTIONIST: GET ALL APPOINTMENTS
@@ -40,6 +41,7 @@ exports.getAllAppointmentsReceptionist = async (req, res, next) => {
     const appointments = await Appointment.find(query)
       .populate("service", "name duration pricing")
       .populate("package", "name price totalDuration")
+      .populate("staff", "_id name role email")
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
@@ -220,3 +222,69 @@ exports.deleteAppointment = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+exports.getAllStaffForReceptionist = async (req, res, next) => {
+  try {
+    // Fetch only users with STAFF, MANAGER, or RECEPTIONIST roles
+    const staff = await User.find({ role: { $in: ["STAFF", "MANAGER", "RECEPTIONIST"] } })
+      .select("_id name email role");
+
+    res.json({ success: true, staff });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.assignStaffToAppointment = async (req, res, next) => {
+  try {
+    const { staffId } = req.body;
+    if (!staffId)
+      return res.status(400).json({ success: false, message: "Staff ID is required" });
+
+    // Validate staff exists and role
+    const staff = await User.findById(staffId);
+    if (!staff || !["STAFF", "MANAGER"].includes(staff.role)) {
+      return res.status(404).json({ success: false, message: "Staff not found" });
+    }
+
+    // Update appointment
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      { staff: staffId },  // must match schema
+      { new: true }
+    )
+      .populate("service", "name duration pricing")
+      .populate("package", "name price totalDuration")
+     .populate("staff", "_id name  role email")
+
+    if (!appointment)
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    // Optional email
+    if (staff.email) {
+      const html = `
+        <h2>New Appointment Assigned</h2>
+        <p>Hi ${staff.name},</p>
+        <p>You have been assigned to an appointment for <b>${
+          appointment.package?.name || appointment.service?.name || "Service"
+        }</b></p>
+        <p>Date: <b>${new Date(appointment.appointmentDate).toDateString()}</b></p>
+        <p>Time: <b>${appointment.appointmentTime}</b></p>
+        <br/>
+        <p>Thanks,<br/>Salon Team</p>
+      `;
+      await sendEmail({ to: staff.email, subject: "New Appointment Assigned", html });
+    }
+
+    res.json({
+      success: true,
+      message: "Staff assigned successfully",
+      appointment,
+    });
+  } catch (error) {
+    console.error("Assign staff error:", error);
+    next(error);
+  }
+};
+

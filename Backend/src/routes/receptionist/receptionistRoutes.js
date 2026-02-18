@@ -23,11 +23,21 @@ router.patch(
   authorize("RECEPTIONIST"),
   receptionistController.cancelAppointment
 );
+
 router.delete(
   "/:id",
   protect,
   authorize("RECEPTIONIST"),
   receptionistController.deleteAppointment
 );
-
+router.patch(
+  "/:id/assign-staff",
+  protect,
+  authorize("RECEPTIONIST"),
+  receptionistController.assignStaffToAppointment
+);
+router.get(
+  "/staff",
+  receptionistController.getAllStaffForReceptionist
+);
 module.exports = router;
