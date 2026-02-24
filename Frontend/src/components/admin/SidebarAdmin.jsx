@@ -1,51 +1,67 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { X } from "lucide-react";
-import logo from "../../assets/images/logo.png";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import axios from "axios";
+import logo from "../../assets/images/logo.png";
+import { roleMenus } from "../../config/roleMenu";
+import { getProfileRoute } from "../../utils/getProfileRoutes";
+
+
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const location = useLocation();
-  const [openGallery, setOpenGallery] = useState(false);
-  const [openTeam, setOpenTeam] = useState(false);
-  const [admin, setAdmin] = useState(null);
+  const [user, setUser] = useState(null); // profile data
+  const [dropdownState, setDropdownState] = useState({}); 
 
-useEffect(() => {
-  const fetchAdmin = async () => {
+  // Get role from localStorage
+  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+  const role = (storedUser.role || "guest").toLowerCase();
+
+ useEffect(() => {
+  const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const role = storedUser?.role?.toLowerCase();
+
+      let endpoint = "";
+
+      if (role === "customer") {
+        endpoint = "/api/customer/profile";
+      } else {
+        endpoint = "/api/admin/profile";
+      }
+
+      const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setAdmin(res.data.admin); // ← Use admin directly
+      setUser(res.data.user || res.data.admin);
     } catch (err) {
       console.error("Sidebar profile load failed", err);
+      setUser(null);
     }
   };
 
-  fetchAdmin();
+  fetchProfile();
 }, []);
 
 
 
-  // 🔹 SIDEBAR MENU
-  const menu = [
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Appointments", path: "/appointments" },
-    { name: "Services", path: "/services-admin" },
-    { name: "Packages", path: "/packages-admin" },
-    { name: "Reviews", path: "/admin/reviews" }, 
-  ];
+  const menu = roleMenus[role] || [];
+
+  const toggleDropdown = (name) => {
+    setDropdownState((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
 
   return (
     <>
-      {/* Overlay (mobile) */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/60 z-40 md:hidden"
@@ -53,7 +69,6 @@ useEffect(() => {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed md:relative top-0 left-0 bottom-0 z-50 w-64 bg-black text-white border-r border-white/10 transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -68,115 +83,62 @@ useEffect(() => {
         </div>
 
         {/* Profile */}
-        {admin && (
-          <Link
-            to="/admin/profile"
+        {user && (
+          <Link to={getProfileRoute()}
             onClick={() => setSidebarOpen(false)}
             className="flex flex-col items-center py-6 border-b border-white/10 hover:bg-white/5 transition"
           >
             <img
-              src={
-                admin.profilePic
-                  ? `${API_BASE_URL}${admin.profilePic}`
-                  : "/avatar.png"
-              }
-              alt="Admin"
+              src={user.profilePic ? `${API_BASE_URL}${user.profilePic}` : "/avatar.png"}
+              alt={user.name || "User"}
               className="w-16 h-16 rounded-full object-cover border mb-2"
             />
-            <h4 className="font-semibold">{admin.name}</h4>
-            <span className="text-xs text-gray-400">{admin.role}</span>
-            <span className="text-xs text-[#BB8C4B] mt-1">
-              View Profile
-            </span>
+            <h4 className="font-semibold">{user.name || "User"}</h4>
+            <span className="text-xs text-gray-400">{role}</span>
+            <span className="text-xs text-[#BB8C4B] mt-1">View Profile</span>
           </Link>
         )}
 
         {/* Menu */}
         <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {/* Main Links */}
-          {menu.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              onClick={() => setSidebarOpen(false)}
-              className={`block px-4 py-2 rounded-md text-sm font-medium ${
-                location.pathname === item.path
-                  ? "bg-[#BB8C4B]"
-                  : "hover:bg-white/10"
-              }`}
-            >
-              {item.name}
-            </Link>
-          ))}
-
-          {/* Gallery Dropdown */}
-          <div>
-            <button
-              onClick={() => setOpenGallery(!openGallery)}
-              className="w-full flex justify-between px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
-            >
-              <span>Gallery</span>
-              {openGallery ? <FaChevronUp /> : <FaChevronDown />}
-            </button>
-
-            {openGallery && (
-              <div className="ml-4 mt-2 space-y-1">
-                <Link
-                  to="/gallery-admin"
-                  onClick={() => setSidebarOpen(false)}
-                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
+          {menu.map((item) =>
+            item.dropdown ? (
+              <div key={item.name}>
+                <button
+                  onClick={() => toggleDropdown(item.name)}
+                  className="w-full flex justify-between items-center px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
                 >
-                  All Images
-                </Link>
-                <Link
-                  to="/gallery-admin/add"
-                  onClick={() => setSidebarOpen(false)}
-                  className="block px-4 py-2 text-sm hover:bg-white/10 rounded-md"
-                >
-                  Add New Image
-                </Link>
+                  <span>{item.name}</span>
+                  {dropdownState[item.name] ? <FaChevronUp /> : <FaChevronDown />}
+                </button>
+
+                {dropdownState[item.name] &&
+                  item.dropdown.map((sub) => (
+                    <Link
+                      key={sub.name}
+                      to={sub.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`block px-4 py-2 text-sm rounded-md ml-4 ${
+                        location.pathname === sub.path ? "bg-[#BB8C4B]" : "hover:bg-white/10"
+                      }`}
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
               </div>
-            )}
-          </div>
-
-          {/* Team Dropdown */}
-          <div>
-            <button
-              onClick={() => setOpenTeam(!openTeam)}
-              className="w-full flex justify-between items-center px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
-            >
-              <span>Team</span>
-              {openTeam ? <FaChevronUp /> : <FaChevronDown />}
-            </button>
-
-            {openTeam && (
-              <div className="ml-4 mt-2 space-y-1">
-                <Link
-                  to="/admin/team"
-                  onClick={() => setSidebarOpen(false)}
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    location.pathname === "/admin/team"
-                      ? "bg-[#BB8C4B]"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  All Members
-                </Link>
-
-                <Link
-                  to="/admin/team/add"
-                  onClick={() => setSidebarOpen(false)}
-                  className={`block px-4 py-2 text-sm rounded-md ${
-                    location.pathname === "/admin/team/add"
-                      ? "bg-[#BB8C4B]"
-                      : "hover:bg-white/10"
-                  }`}
-                >
-                  Add Member
-                </Link>
-              </div>
-            )}
-          </div>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                className={`block px-4 py-2 rounded-md text-sm font-medium ${
+                  location.pathname === item.path ? "bg-[#BB8C4B]" : "hover:bg-white/10"
+                }`}
+              >
+                {item.name}
+              </Link>
+            )
+          )}
         </nav>
       </aside>
     </>

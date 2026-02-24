@@ -12,7 +12,7 @@ const {
   getMyAppointments,
 
   cancelAppointment,
-  rescheduleAppointment, // optional, if you use it
+   // optional, if you use it
 } = require("../controllers/appointmentController");
 
 // =======================
@@ -44,7 +44,6 @@ router.get("/my-appointments", getMyAppointments);
 // Cancel an appointment
 router.put("/:id/cancel", cancelAppointment);
 
-// Optional: Reschedule an appointment
-router.put("/:id/reschedule", rescheduleAppointment);
+
 
 module.exports = router;

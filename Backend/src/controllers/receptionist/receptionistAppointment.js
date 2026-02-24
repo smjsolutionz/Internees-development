@@ -1,6 +1,6 @@
 const Appointment = require("../../models/Appointment");
 const sendEmail = require("../../utils/sendEmail");
-const User = require("../../models/adminUser.model");
+const TeamMember = require("../../models/TeamMember");
 
 /* ===============================
    RECEPTIONIST: GET ALL APPOINTMENTS
@@ -11,12 +11,10 @@ exports.getAllAppointmentsReceptionist = async (req, res, next) => {
 
     const query = {};
 
-    // ✅ Status Filter
-    if (status) {
-      query.status = status;
-    }
+    // Status Filter
+    if (status) query.status = status;
 
-    // ✅ Date Filter (FIXED - RANGE BASED)
+    // Date Filter (Range Based)
     if (date) {
       const start = new Date(date);
       start.setHours(0, 0, 0, 0);
@@ -24,13 +22,10 @@ exports.getAllAppointmentsReceptionist = async (req, res, next) => {
       const end = new Date(date);
       end.setHours(23, 59, 59, 999);
 
-      query.appointmentDate = {
-        $gte: start,
-        $lte: end,
-      };
+      query.appointmentDate = { $gte: start, $lte: end };
     }
 
-    // ✅ Search Filter
+    // Search Filter
     if (search) {
       query.$or = [
         { customerName: { $regex: search, $options: "i" } },
@@ -41,7 +36,7 @@ exports.getAllAppointmentsReceptionist = async (req, res, next) => {
     const appointments = await Appointment.find(query)
       .populate("service", "name duration pricing")
       .populate("package", "name price totalDuration")
-      .populate("staff", "_id name role email")
+      .populate("staff", "_id name role email specialty profileImage") // populated from TeamMember
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
@@ -76,7 +71,6 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       });
     }
 
-    // ✅ Direct Update (Cleaner & Reliable)
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.id,
       { status },
@@ -92,21 +86,17 @@ exports.updateAppointmentStatus = async (req, res, next) => {
       });
     }
 
-    /* ===== OPTIONAL EMAIL ===== */
+    // Optional email
     if (appointment.customerEmail) {
       try {
         const serviceName =
-          appointment.package?.name ||
-          appointment.service?.name ||
-          "Service";
+          appointment.package?.name || appointment.service?.name || "Service";
 
         const html = `
           <h2>Appointment Status Updated</h2>
           <p>Hi ${appointment.customerName},</p>
           <p>Your appointment for <b>${serviceName}</b></p>
-          <p>Date: <b>${new Date(
-            appointment.appointmentDate
-          ).toDateString()}</b></p>
+          <p>Date: <b>${new Date(appointment.appointmentDate).toDateString()}</b></p>
           <p>Time: <b>${appointment.appointmentTime}</b></p>
           <p>New Status: <b>${status.toUpperCase()}</b></p>
           <br/>
@@ -158,17 +148,13 @@ exports.cancelAppointment = async (req, res, next) => {
     if (appointment.customerEmail) {
       try {
         const serviceName =
-          appointment.package?.name ||
-          appointment.service?.name ||
-          "Service";
+          appointment.package?.name || appointment.service?.name || "Service";
 
         const html = `
           <h2>Appointment Cancelled</h2>
           <p>Hi ${appointment.customerName},</p>
           <p>Your appointment for <b>${serviceName}</b></p>
-          <p>Date: <b>${new Date(
-            appointment.appointmentDate
-          ).toDateString()}</b></p>
+          <p>Date: <b>${new Date(appointment.appointmentDate).toDateString()}</b></p>
           <p>Time: <b>${appointment.appointmentTime}</b></p>
           <p>Status: <b>CANCELLED</b></p>
           <br/>
@@ -203,9 +189,7 @@ exports.cancelAppointment = async (req, res, next) => {
 =============================== */
 exports.deleteAppointment = async (req, res, next) => {
   try {
-    const appointment = await Appointment.findByIdAndDelete(
-      req.params.id
-    );
+    const appointment = await Appointment.findByIdAndDelete(req.params.id);
 
     if (!appointment) {
       return res.status(404).json({
@@ -223,56 +207,71 @@ exports.deleteAppointment = async (req, res, next) => {
   }
 };
 
-
-
+/* ===============================
+   RECEPTIONIST: GET ALL STAFF (TEAMMEMBER)
+=============================== */
 exports.getAllStaffForReceptionist = async (req, res, next) => {
   try {
-    // Fetch only users with STAFF, MANAGER, or RECEPTIONIST roles
-    const staff = await User.find({ role: { $in: ["STAFF", "MANAGER", "RECEPTIONIST"] } })
-      .select("_id name email role");
+    // Only active STAFF role
+    const staff = await TeamMember.find({ role: "STAFF", status: "Active" })
+      .select("_id name email role specialty profileImage");
 
     res.json({ success: true, staff });
   } catch (error) {
     next(error);
   }
 };
+
+/* ===============================
+   RECEPTIONIST: ASSIGN STAFF TO APPOINTMENT
+=============================== */
 exports.assignStaffToAppointment = async (req, res, next) => {
   try {
     const { staffId } = req.body;
+    const appointmentId = req.params.id;
+
     if (!staffId)
       return res.status(400).json({ success: false, message: "Staff ID is required" });
 
-    // Validate staff exists and role
-    const staff = await User.findById(staffId);
-    if (!staff || !["STAFF", "MANAGER"].includes(staff.role)) {
+    const staff = await TeamMember.findById(staffId);
+    if (!staff || staff.role !== "STAFF")
       return res.status(404).json({ success: false, message: "Staff not found" });
-    }
 
-    // Update appointment
-    const appointment = await Appointment.findByIdAndUpdate(
-      req.params.id,
-      { staff: staffId },  // must match schema
-      { new: true }
-    )
-      .populate("service", "name duration pricing")
-      .populate("package", "name price totalDuration")
-     .populate("staff", "_id name  role email")
-
+    const appointment = await Appointment.findById(appointmentId);
     if (!appointment)
       return res.status(404).json({ success: false, message: "Appointment not found" });
+
+    // ✅ Staff availability check
+    const conflict = await Appointment.findOne({
+      staff: staffId,
+      appointmentDate: appointment.appointmentDate,
+      appointmentTime: appointment.appointmentTime,
+      status: { $nin: ["cancelled"] },
+      _id: { $ne: appointmentId }, // ignore current appointment
+    });
+
+    if (conflict) {
+      return res.status(400).json({
+        success: false,
+        message: `${staff.name} is already assigned at this time and date`,
+      });
+    }
+
+    // Assign staff
+    appointment.staff = staffId;
+    await appointment.save();
+    await appointment.populate("service package staff");
 
     // Optional email
     if (staff.email) {
       const html = `
         <h2>New Appointment Assigned</h2>
         <p>Hi ${staff.name},</p>
-        <p>You have been assigned to an appointment for <b>${
-          appointment.package?.name || appointment.service?.name || "Service"
-        }</b></p>
-        <p>Date: <b>${new Date(appointment.appointmentDate).toDateString()}</b></p>
+        <p>You have been assigned to <b>${appointment.package?.name || appointment.service?.name || "Service"}</b></p>
+        <p>Date: <b>${appointment.appointmentDate.toDateString()}</b></p>
         <p>Time: <b>${appointment.appointmentTime}</b></p>
-        <br/>
-        <p>Thanks,<br/>Salon Team</p>
+        <p>Specialty: <b>${staff.specialty || "N/A"}</b></p>
+        <br/><p>Thanks,<br/>Salon Team</p>
       `;
       await sendEmail({ to: staff.email, subject: "New Appointment Assigned", html });
     }
@@ -287,4 +286,3 @@ exports.assignStaffToAppointment = async (req, res, next) => {
     next(error);
   }
 };
-

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ReceptionistSidebar  from  "../../components/receptionist/receptionistsidebar.jsx";
+import ReceptionistSidebar  from  "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
 
 export default function Reception() {
@@ -9,8 +9,7 @@ export default function Reception() {
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <ReceptionistSidebar 
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+       sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
       />
 
       {/* Main Content */}

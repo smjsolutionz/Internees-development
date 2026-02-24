@@ -7,6 +7,7 @@ export default function ReceptionistAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState(null);
 
   const [filters, setFilters] = useState({ email: "", status: "", date: "" });
   const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, completed: 0, cancelled: 0 });
@@ -141,7 +142,6 @@ export default function ReceptionistAppointments() {
     }
   };
 
-  // ✅ Corrected assignStaff to ensure UI updates immediately
   const assignStaff = async (appointmentId, staffId) => {
     try {
       const { data } = await axios.patch(
@@ -150,7 +150,6 @@ export default function ReceptionistAppointments() {
         getAuthConfig()
       );
 
-      // Make sure staff object exists
       const assignedStaff = data.appointment.staff || staffList.find(s => s._id === staffId);
 
       setAppointments(prev =>
@@ -160,11 +159,22 @@ export default function ReceptionistAppointments() {
             : appt
         )
       );
+
+      setMessage({ type: "success", text: data.message });
     } catch (err) {
       console.error(err);
-      alert("Failed to assign staff");
+      const errorMsg = err.response?.data?.message || "Failed to assign staff";
+      setMessage({ type: "error", text: errorMsg });
     }
   };
+
+  // ================== Auto-hide Message ==================
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   // ================== Render ==================
   if (loading)
@@ -179,6 +189,17 @@ export default function ReceptionistAppointments() {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white">
       <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">Receptionist Appointments</h1>
+
+      {/* ================== Global Message ================== */}
+      {message && (
+        <div
+          className={`mb-4 p-2 rounded text-center ${
+            message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
@@ -242,7 +263,7 @@ export default function ReceptionistAppointments() {
                 <p>Time: {formatTime(appt.appointmentTime)}</p>
                 <p>Price: {price}</p>
                 {appt.staff && (
-                  <p>Assigned Staff: {appt.staff.name} {appt.staff.speciality ? `(${appt.staff.speciality})` : ""}</p>
+                  <p>Assigned Staff: {appt.staff.name} {appt.staff.specialty ? `(${appt.staff.specialty})` : ""}</p>
                 )}
               </div>
 
@@ -276,7 +297,7 @@ export default function ReceptionistAppointments() {
                   <option value="">Assign Staff</option>
                   {staffList.map((staff) => (
                     <option key={staff._id} value={staff._id}>
-                      {staff.name} {staff.speciality ? `(${staff.speciality})` : ""}
+                      {staff.name} {staff.specialty ? `(${staff.specialty})` : ""}
                     </option>
                   ))}
                 </select>
