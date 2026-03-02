@@ -14,6 +14,9 @@ export default function ReceptionistAppointments() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [staffList, setStaffList] = useState([]);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [rescheduleData, setRescheduleData] = useState({ id: null, date: "", time: "", availableSlots: [] });
+
   const limit = 10;
 
   const getAuthConfig = () => {
@@ -168,6 +171,56 @@ export default function ReceptionistAppointments() {
     }
   };
 
+  // ================== Reschedule ==================
+  const openRescheduleModal = async (appt) => {
+    const apptDate = new Date(appt.appointmentDate).toISOString().slice(0, 10);
+    setRescheduleData({ id: appt._id, date: apptDate, time: appt.appointmentTime, availableSlots: [] });
+
+    try {
+      // GET available slots
+      const { data } = await axios.get(
+        `${API_BASE_URL}/api/appointment/receptionist/${appt._id}/available-slots`,
+        {
+          ...getAuthConfig(),
+          params: { date: apptDate }
+        }
+      );
+
+      setRescheduleData(prev => ({
+        ...prev,
+        availableSlots: data.availableSlots || []
+      }));
+
+      setShowRescheduleModal(true);
+    } catch (err) {
+      console.error("Failed to fetch slots", err);
+      setMessage({ type: "error", text: "Failed to fetch available slots" });
+    }
+  };
+
+  const rescheduleAppointment = async () => {
+    if (!rescheduleData.date || !rescheduleData.time) {
+      setMessage({ type: "error", text: "Please select date and time" });
+      return;
+    }
+
+    try {
+      await axios.patch(
+        `${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/reschedule`,
+        { appointmentDate: rescheduleData.date, appointmentTime: rescheduleData.time },
+        getAuthConfig()
+      );
+
+      setMessage({ type: "success", text: "Appointment rescheduled successfully" });
+      setShowRescheduleModal(false);
+      fetchAppointments(page);
+    } catch (err) {
+      console.error(err);
+      const errMsg = err.response?.data?.message || "Failed to reschedule";
+      setMessage({ type: "error", text: errMsg });
+    }
+  };
+
   // ================== Auto-hide Message ==================
   useEffect(() => {
     if (message) {
@@ -190,13 +243,9 @@ export default function ReceptionistAppointments() {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 bg-white">
       <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">Receptionist Appointments</h1>
 
-      {/* ================== Global Message ================== */}
+      {/* Global Message */}
       {message && (
-        <div
-          className={`mb-4 p-2 rounded text-center ${
-            message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-          }`}
-        >
+        <div className={`mb-4 p-2 rounded text-center ${message.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
           {message.text}
         </div>
       )}
@@ -239,7 +288,7 @@ export default function ReceptionistAppointments() {
         </select>
       </div>
 
-      {/* Appointment Cards */}
+      {/* Appointments */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {appointments.map((appt) => {
           const item = getItem(appt);
@@ -250,9 +299,7 @@ export default function ReceptionistAppointments() {
             <div key={appt._id} className="bg-white shadow rounded-xl p-4 border">
               <div className="flex justify-between items-center">
                 <h2 className="font-semibold">{appt.customerName}</h2>
-                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(appt.status)}`}>
-                  {appt.status}
-                </span>
+                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(appt.status)}`}>{appt.status}</span>
               </div>
 
               <div className="mt-2 text-sm space-y-1">
@@ -262,9 +309,7 @@ export default function ReceptionistAppointments() {
                 <p>Date: {new Date(appt.appointmentDate).toLocaleDateString()}</p>
                 <p>Time: {formatTime(appt.appointmentTime)}</p>
                 <p>Price: {price}</p>
-                {appt.staff && (
-                  <p>Assigned Staff: {appt.staff.name} {appt.staff.specialty ? `(${appt.staff.specialty})` : ""}</p>
-                )}
+                {appt.staff && <p>Assigned Staff: {appt.staff.name} {appt.staff.specialty ? `(${appt.staff.specialty})` : ""}</p>}
               </div>
 
               {/* Actions */}
@@ -280,15 +325,9 @@ export default function ReceptionistAppointments() {
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
-                  <button
-                    onClick={() => cancelAppointment(appt._id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    Cancel
-                  </button>
+                  <button onClick={() => cancelAppointment(appt._id)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
                 </div>
 
-                {/* Assign Staff Dropdown */}
                 <select
                   value={appt.staff?._id || ""}
                   onChange={(e) => assignStaff(appt._id, e.target.value)}
@@ -296,11 +335,11 @@ export default function ReceptionistAppointments() {
                 >
                   <option value="">Assign Staff</option>
                   {staffList.map((staff) => (
-                    <option key={staff._id} value={staff._id}>
-                      {staff.name} {staff.specialty ? `(${staff.specialty})` : ""}
-                    </option>
+                    <option key={staff._id} value={staff._id}>{staff.name} {staff.specialty ? `(${staff.specialty})` : ""}</option>
                   ))}
                 </select>
+
+                <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded">Reschedule</button>
               </div>
             </div>
           );
@@ -309,30 +348,63 @@ export default function ReceptionistAppointments() {
 
       {/* Pagination */}
       <div className="flex justify-center gap-2 mt-6 flex-wrap">
-        <button
-          onClick={() => handlePageChange(page - 1)}
-          disabled={page === 1}
-          className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400"
-        >
-          Prev
-        </button>
+        <button onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400">Prev</button>
         {[...Array(totalPages)].map((_, i) => (
-          <button
-            key={i}
-            onClick={() => handlePageChange(i + 1)}
-            className={`px-3 py-1 rounded ${page === i + 1 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}
-          >
-            {i + 1}
-          </button>
+          <button key={i} onClick={() => handlePageChange(i + 1)} className={`px-3 py-1 rounded ${page === i + 1 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}>{i + 1}</button>
         ))}
-        <button
-          onClick={() => handlePageChange(page + 1)}
-          disabled={page === totalPages}
-          className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400"
-        >
-          Next
-        </button>
+        <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400">Next</button>
       </div>
+
+      {/* ================== Reschedule Modal ================== */}
+      {showRescheduleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl w-96">
+            <h2 className="text-xl font-bold mb-4">Reschedule Appointment</h2>
+
+            <label className="block mb-2">Select Date:</label>
+            <input
+              type="date"
+              value={rescheduleData.date}
+              onChange={async (e) => {
+                const newDate = e.target.value;
+                setRescheduleData(prev => ({ ...prev, date: newDate }));
+
+                try {
+                  const { data } = await axios.get(
+                    `${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/available-slots`,
+                    {
+                      ...getAuthConfig(),
+                      params: { date: newDate }
+                    }
+                  );
+                  setRescheduleData(prev => ({ ...prev, availableSlots: data.availableSlots || [] }));
+                } catch (err) {
+                  console.error(err);
+                  setMessage({ type: "error", text: "Failed to fetch available slots" });
+                }
+              }}
+              className="border px-2 py-1 rounded w-full mb-4"
+            />
+
+            <label className="block mb-2">Select Time Slot:</label>
+            <select
+              value={rescheduleData.time}
+              onChange={(e) => setRescheduleData(prev => ({ ...prev, time: e.target.value }))}
+              className="border px-2 py-1 rounded w-full mb-4"
+            >
+              <option value="">Select Slot</option>
+              {rescheduleData.availableSlots.map(slot => (
+                <option key={slot} value={slot}>{formatTime(slot)}</option>
+              ))}
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <button className="px-3 py-1 rounded bg-gray-300" onClick={() => setShowRescheduleModal(false)}>Cancel</button>
+              <button className="px-3 py-1 rounded bg-[#BB8C4B] text-white" onClick={rescheduleAppointment}>Reschedule</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -286,3 +286,163 @@ exports.assignStaffToAppointment = async (req, res, next) => {
     next(error);
   }
 };
+/* ===============================
+   RECEPTIONIST: RESCHEDULE APPOINTMENT
+=============================== */
+/* ===============================
+   RECEPTIONIST: RESCHEDULE APPOINTMENT WITH SLOTS CHECK
+=============================== */
+exports.rescheduleAppointment = async (req, res, next) => {
+  try {
+    const { appointmentDate, appointmentTime } = req.body;
+    const appointmentId = req.params.id;
+
+    if (!appointmentDate || !appointmentTime) {
+      return res.status(400).json({
+        success: false,
+        message: "New date and time required",
+      });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    const selectedDate = new Date(appointmentDate);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    // 🔹 Generate all possible slots (09:00 - 21:00 every 30min)
+    const allSlots = [];
+    for (let hour = 9; hour < 21; hour++) {
+      for (let min of [0, 30]) {
+        allSlots.push(
+          `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`
+        );
+      }
+    }
+
+    // 🔹 Find booked slots for the service/package on that date
+    const filterForSlots = {
+      appointmentDate: { $gte: selectedDate, $lt: nextDate },
+      status: { $nin: ["cancelled"] },
+      _id: { $ne: appointmentId }, // exclude current appointment
+    };
+    if (appointment.service) filterForSlots.service = appointment.service;
+    if (appointment.package) filterForSlots.package = appointment.package;
+
+    const bookedAppointments = await Appointment.find(filterForSlots);
+    const bookedSlots = bookedAppointments.map(a => a.appointmentTime);
+
+    // 🔹 Check if selected time is available
+    if (bookedSlots.includes(appointmentTime)) {
+      return res.status(400).json({
+        success: false,
+        message: "This slot is already booked for this service/package",
+        allSlots,
+        bookedSlots,
+      });
+    }
+
+    // 🔹 STAFF CONFLICT CHECK (if assigned)
+    if (appointment.staff) {
+      const staffConflict = await Appointment.findOne({
+        _id: { $ne: appointmentId },
+        staff: appointment.staff,
+        appointmentDate: { $gte: selectedDate, $lt: nextDate },
+        appointmentTime,
+        status: { $nin: ["cancelled"] },
+      });
+
+      if (staffConflict) {
+        return res.status(400).json({
+          success: false,
+          message: "Assigned staff is not available at this time",
+          allSlots,
+          bookedSlots,
+        });
+      }
+    }
+
+    // 🔹 UPDATE APPOINTMENT
+    appointment.appointmentDate = selectedDate;
+    appointment.appointmentTime = appointmentTime;
+
+    await appointment.save();
+    await appointment.populate("service package staff");
+
+    res.json({
+      success: true,
+      message: "Appointment rescheduled successfully",
+      appointment,
+      allSlots,
+      bookedSlots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+/* ===============================
+   RECEPTIONIST: GET AVAILABLE SLOTS FOR APPOINTMENT
+=============================== */
+exports.getAvailableSlotsForAppointment = async (req, res, next) => {
+  try {
+    const appointmentId = req.params.id;
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ success: false, message: "Date is required" });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+
+    // 🔹 Generate all possible slots (09:00 - 21:00 every 30min)
+    const allSlots = [];
+    for (let hour = 9; hour < 21; hour++) {
+      for (let min of [0, 30]) {
+        allSlots.push(`${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`);
+      }
+    }
+
+    // 🔹 Find booked slots for the service/package on that date
+    const filterForSlots = {
+      appointmentDate: { $gte: selectedDate, $lt: nextDate },
+      status: { $nin: ["cancelled"] },
+      _id: { $ne: appointmentId }, // exclude current appointment
+    };
+    if (appointment.service) filterForSlots.service = appointment.service;
+    if (appointment.package) filterForSlots.package = appointment.package;
+
+    const bookedAppointments = await Appointment.find(filterForSlots);
+    const bookedSlots = bookedAppointments.map(a => a.appointmentTime);
+
+    // 🔹 Filter available slots
+    const availableSlots = allSlots.filter(slot => !bookedSlots.includes(slot));
+
+    res.json({
+      success: true,
+      allSlots,
+      bookedSlots,
+      availableSlots,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

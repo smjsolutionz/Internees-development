@@ -36,6 +36,18 @@ router.patch(
   authorize("RECEPTIONIST"),
   receptionistController.assignStaffToAppointment
 );
+router.patch(
+  "/:id/reschedule",
+  protect,
+  authorize("RECEPTIONIST"),
+  receptionistController.rescheduleAppointment
+);
+router.get(
+  "/:id/available-slots",
+  protect,
+  authorize("RECEPTIONIST"),
+  receptionistController.getAvailableSlotsForAppointment
+);
 router.get(
   "/staff",
   receptionistController.getAllStaffForReceptionist
