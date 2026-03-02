@@ -7,7 +7,6 @@ export default function WalkInAppointmentForm() {
   const [slots, setSlots] = useState([]);
   const [formData, setFormData] = useState({
     customerName: "",
-    customerEmail: "",
     customerPhone: "",
     serviceId: "",
     packageId: "",
@@ -47,37 +46,43 @@ export default function WalkInAppointmentForm() {
   /* ===============================
      FETCH AVAILABLE SLOTS
   =============================== */
-  useEffect(() => {
-    const fetchSlots = async () => {
-      if (
-        (!formData.serviceId && !formData.packageId) ||
-        !formData.appointmentDate
-      ) {
-        setSlots([]);
-        return;
-      }
+useEffect(() => {
+  const fetchSlots = async () => {
+    if (
+      (!formData.serviceId && !formData.packageId) ||
+      !formData.appointmentDate
+    ) {
+      setSlots([]);
+      return;
+    }
 
-      try {
-        const res = await axios.get(
-          `${BACKEND_URL}/api/receptionist/walkin/slots/${formData.appointmentDate}`
-        );
+    try {
+      const res = await axios.get(
+        `${BACKEND_URL}/api/receptionist/walkin/slots/${formData.appointmentDate}`,
+        {
+          params: {
+            serviceId: formData.serviceId || undefined,
+            packageId: formData.packageId || undefined,
+          },
+        }
+      );
 
-        const { allSlots = [], bookedSlots = [] } = res.data;
+      const { allSlots = [], bookedSlots = [] } = res.data;
 
-        const mappedSlots = allSlots.map((slot) => ({
-          time: slot,
-          booked: bookedSlots.includes(slot),
-        }));
+      const mappedSlots = allSlots.map((slot) => ({
+        time: slot,
+        booked: bookedSlots.includes(slot),
+      }));
 
-        setSlots(mappedSlots);
-      } catch (err) {
-        console.error("Failed to fetch slots:", err);
-        setSlots([]);
-      }
-    };
+      setSlots(mappedSlots);
+    } catch (err) {
+      console.error("Failed to fetch slots:", err);
+      setSlots([]);
+    }
+  };
 
-    fetchSlots();
-  }, [formData.serviceId, formData.packageId, formData.appointmentDate]);
+  fetchSlots();
+}, [formData.serviceId, formData.packageId, formData.appointmentDate]);
 
   /* ===============================
      HANDLE INPUT CHANGE
@@ -102,24 +107,19 @@ export default function WalkInAppointmentForm() {
     setMessage("");
 
     try {
-      await axios.post(
-        `${BACKEND_URL}/api/receptionist/walkin/appointments`,
-        {
-          customerName: formData.customerName,
-          customerEmail: formData.customerEmail,
-          customerPhone: formData.customerPhone,
-          serviceId: formData.serviceId || null,
-          packageId: formData.packageId || null,
-          appointmentDate: formData.appointmentDate,
-          appointmentTime: formData.appointmentTime,
-        }
-      );
+      await axios.post(`${BACKEND_URL}/api/receptionist/walkin/appointments`, {
+        customerName: formData.customerName,
+        customerPhone: formData.customerPhone,
+        serviceId: formData.serviceId || null,
+        packageId: formData.packageId || null,
+        appointmentDate: formData.appointmentDate,
+        appointmentTime: formData.appointmentTime,
+      });
 
       setMessage("✅ Walk-in appointment created successfully!");
 
       setFormData({
         customerName: "",
-        customerEmail: "",
         customerPhone: "",
         serviceId: "",
         packageId: "",
@@ -132,14 +132,10 @@ export default function WalkInAppointmentForm() {
       console.error(err);
 
       if (err.response?.data?.errors) {
-        const errorMessages = Object.values(
-          err.response.data.errors
-        ).join(", ");
+        const errorMessages = Object.values(err.response.data.errors).join(", ");
         setMessage("❌ " + errorMessages);
       } else {
-        setMessage(
-          err.response?.data?.message || "❌ Something went wrong"
-        );
+        setMessage(err.response?.data?.message || "❌ Something went wrong");
       }
     } finally {
       setLoading(false);
@@ -180,23 +176,15 @@ export default function WalkInAppointmentForm() {
               />
 
               <input
-                type="email"
-                name="customerEmail"
-                value={formData.customerEmail}
+                type="text"
+                name="customerPhone"
+                value={formData.customerPhone}
                 onChange={handleChange}
-                placeholder="Customer Email"
+                placeholder="Customer Phone"
                 className="border p-2 rounded w-full focus:ring-2 focus:ring-[#BB8C4B] outline-none"
+                required
               />
             </div>
-
-            <input
-              type="text"
-              name="customerPhone"
-              value={formData.customerPhone}
-              onChange={handleChange}
-              placeholder="Customer Phone"
-              className="border p-2 rounded w-full focus:ring-2 focus:ring-[#BB8C4B] outline-none"
-            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <select

@@ -1,7 +1,6 @@
 const Appointment = require("../../models/Appointment");
 const Service = require("../../models/Service.model");
 const Package = require("../../models/Package");
-const sendEmail = require("../../utils/sendEmail");
 
 /* ===============================
    GET ALL SERVICES & PACKAGES
@@ -14,7 +13,7 @@ exports.getAllServices = async (req, res, next) => {
     res.json({
       success: true,
       services,
-      packages
+      packages,
     });
   } catch (error) {
     next(error);
@@ -22,75 +21,96 @@ exports.getAllServices = async (req, res, next) => {
 };
 
 /* ===============================
-   GET ALL SLOTS (Receptionist View)
-   Returns: allSlots + bookedSlots
+   GET AVAILABLE SLOTS (SERVICE/PACKAGE BASED)
 =============================== */
 exports.getAvailableSlots = async (req, res, next) => {
   try {
     const { date } = req.params;
+    const { serviceId, packageId } = req.query;
 
     if (!date)
-      return res.status(400).json({ success: false, message: "Date is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Date is required" });
+
+    if (!serviceId && !packageId)
+      return res.status(400).json({
+        success: false,
+        message: "Service or Package is required",
+      });
 
     const selectedDate = new Date(date);
     selectedDate.setHours(0, 0, 0, 0);
 
-    // Use date range to avoid timezone issues
     const nextDate = new Date(selectedDate);
     nextDate.setDate(nextDate.getDate() + 1);
 
-    // Get all booked appointments for that date
-    const appointments = await Appointment.find({
+    /* 🔹 Filter by Service OR Package */
+    const filter = {
       appointmentDate: { $gte: selectedDate, $lt: nextDate },
-      status: { $nin: ["cancelled"] }
-    });
+      status: { $nin: ["cancelled"] },
+    };
 
-    // Generate all slots (09:00 - 21:00, 30 mins)
+    if (serviceId) filter.service = serviceId;
+    if (packageId) filter.package = packageId;
+
+    const appointments = await Appointment.find(filter);
+
+    /* 🔹 Generate All Slots (09:00 - 21:00) */
     const allSlots = [];
     for (let hour = 9; hour < 21; hour++) {
       for (let min of [0, 30]) {
         allSlots.push(
-          `${hour.toString().padStart(2, "0")}:${min.toString().padStart(2, "0")}`
+          `${hour.toString().padStart(2, "0")}:${min
+            .toString()
+            .padStart(2, "0")}`
         );
       }
     }
 
-    // Only starting slot is blocked
-    const bookedSlots = appointments.map(a => a.appointmentTime);
+    const bookedSlots = appointments.map((a) => a.appointmentTime);
 
     res.json({
       success: true,
       date,
       allSlots,
-      bookedSlots
+      bookedSlots,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
 /* ===============================
-   CREATE WALK-IN APPOINTMENT
+   CREATE WALK-IN APPOINTMENT (SERVICE/PACKAGE BASED)
 =============================== */
 exports.createWalkInAppointment = async (req, res, next) => {
   try {
     const {
       customerName,
-      customerEmail,
       customerPhone,
       serviceId,
       packageId,
       appointmentDate,
       appointmentTime,
-      notes
+      notes,
     } = req.body;
 
     /* ========= VALIDATION ========= */
     const errors = {};
-    if (!customerName?.trim()) errors.customerName = "Customer name required";
-    if (!appointmentDate) errors.appointmentDate = "Date required";
-    if (!appointmentTime) errors.appointmentTime = "Time required";
+
+    if (!customerName?.trim())
+      errors.customerName = "Customer name required";
+
+    if (!customerPhone?.trim())
+      errors.customerPhone = "Phone number required";
+
+    if (!appointmentDate)
+      errors.appointmentDate = "Date required";
+
+    if (!appointmentTime)
+      errors.appointmentTime = "Time required";
+
     if (!serviceId && !packageId)
       errors.serviceOrPackage = "Service or Package is required";
 
@@ -101,37 +121,50 @@ exports.createWalkInAppointment = async (req, res, next) => {
     const pkg = packageId ? await Package.findById(packageId) : null;
 
     if (serviceId && !service)
-      return res.status(404).json({ success: false, message: "Service not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Service not found" });
 
     if (packageId && !pkg)
-      return res.status(404).json({ success: false, message: "Package not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Package not found" });
 
     const selectedDate = new Date(appointmentDate);
     selectedDate.setHours(0, 0, 0, 0);
 
-    // Prevent past booking
+    /* 🔹 Prevent Past Booking */
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (selectedDate < today)
-      return res.status(400).json({ success: false, message: "Cannot book past date" });
 
-    /* ========= SLOT DOUBLE BOOK CHECK ========= */
+    if (selectedDate < today)
+      return res.status(400).json({
+        success: false,
+        message: "Cannot book past date",
+      });
+
     const nextDate = new Date(selectedDate);
     nextDate.setDate(nextDate.getDate() + 1);
 
-    const existing = await Appointment.findOne({
+    /* 🔹 Service/Package Specific Slot Check */
+    const filter = {
       appointmentDate: { $gte: selectedDate, $lt: nextDate },
       appointmentTime,
-      status: { $nin: ["cancelled"] }
-    });
+      status: { $nin: ["cancelled"] },
+    };
+
+    if (serviceId) filter.service = serviceId;
+    if (packageId) filter.package = packageId;
+
+    const existing = await Appointment.findOne(filter);
 
     if (existing)
       return res.status(400).json({
         success: false,
-        message: "This slot is already booked"
+        message: "This slot is already booked for this service/package",
       });
 
-    /* ========= CREATE APPOINTMENT ========= */
+    /* 🔹 Create Appointment */
     const appointment = await Appointment.create({
       service: service?._id || null,
       package: pkg?._id || null,
@@ -142,44 +175,17 @@ exports.createWalkInAppointment = async (req, res, next) => {
       notes: notes?.trim() || "",
       status: "confirmed",
       customerName: customerName.trim(),
-      customerEmail: customerEmail?.trim()?.toLowerCase() || null,
-      customerPhone: customerPhone?.trim() || null,
-      paymentStatus: "pending"
+      customerPhone: customerPhone.trim(),
+      paymentStatus: "pending",
     });
 
     await appointment.populate("service package");
 
-    /* ========= SEND EMAIL ========= */
-    if (customerEmail) {
-      try {
-        const names = [];
-        if (service) names.push(service.name);
-        if (pkg) names.push(pkg.name);
-
-        const html = `
-          <h2>Walk-in Appointment Confirmed</h2>
-          <p>Hi ${customerName},</p>
-          <p>Your appointment for <b>${names.join(", ")}</b> is confirmed.</p>
-          <p><b>Date:</b> ${selectedDate.toDateString()}</p>
-          <p><b>Time:</b> ${appointmentTime}</p>
-        `;
-
-        await sendEmail({
-          to: customerEmail,
-          subject: "Appointment Confirmation",
-          html
-        });
-      } catch (err) {
-        console.error("Email sending failed:", err.message);
-      }
-    }
-
     res.status(201).json({
       success: true,
       message: "Walk-in appointment booked successfully",
-      appointment
+      appointment,
     });
-
   } catch (error) {
     next(error);
   }
