@@ -1,6 +1,6 @@
 import { FiEye, FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -15,6 +15,16 @@ export default function PackagesTableAdmin({ packages }) {
   const [deletePackageId, setDeletePackageId] = useState(null);
   const [deletePackageName, setDeletePackageName] = useState("");
 
+  /* ===============================
+     LOGIN PROTECTION (LIKE GALLERY)
+  =============================== */
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
   /* ===============================
      TOGGLE STATUS
   =============================== */

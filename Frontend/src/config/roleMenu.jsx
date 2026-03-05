@@ -1,10 +1,10 @@
 // src/config/roleMenus.js
 export const roleMenus = {
   admin: [
-    { name: "Dashboard", path: "/admin/dashboard" },
-    { name: "Appointments", path: "/admin/appointments" },
-    { name: "Services", path: "/admin/services-admin" },
-    { name: "Packages", path: "/admin/packages-admin" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "Appointments", path: "/appointments" },
+    { name: "Services", path: "/services-admin" },
+    { name: "Packages", path: "/packages-admin" },
     { name: "Reviews", path: "/admin/reviews" },
     {
       name: "Gallery",

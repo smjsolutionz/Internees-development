@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/users", adminRequireAuth, adminOnly, adminCreateUser);
 router.get("/users", adminRequireAuth, adminOnly, adminListUsers);
-router.patch("/users/:id", adminRequireAuth, adminOnly, adminUpdateUser);
+router.patch("/users/:id", adminRequireAuth, adminUpdateUser);
 router.delete("/users/:id", adminRequireAuth, adminOnly, adminDeleteUser);
 router.get("/users/:id", adminRequireAuth, adminOnly, adminGetUser);
 

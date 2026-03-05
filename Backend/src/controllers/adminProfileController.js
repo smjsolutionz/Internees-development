@@ -3,12 +3,13 @@ const AdminUser = require("../models/adminUser.model");
 /* =========================
    GET PROFILE BASED ON ROLE
 ========================= */
-
 exports.getAdminProfile = async (req, res) => {
   try {
     const user = await AdminUser.findById(req.user.id);
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     let profileData = {};
 
@@ -36,8 +37,10 @@ exports.getAdminProfile = async (req, res) => {
           username: user.username,
           email: user.email,
           phone: user.phone,
+          profilePic: user.profilePic,   // ✅ FIX ADDED
           role: user.role,
           status: user.status,
+          createdAt: user.createdAt,
         };
         break;
 
@@ -46,11 +49,17 @@ exports.getAdminProfile = async (req, res) => {
         profileData = {
           name: user.name,
           username: user.username,
+          profilePic: user.profilePic,  // ✅ FIX ADDED
+          role: user.role,
         };
         break;
     }
 
-    res.json({ success: true, user: profileData });
+    res.json({
+      success: true,
+      user: profileData,
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -78,11 +87,17 @@ exports.updateAdminProfile = async (req, res) => {
       updates.profilePic = null;
     }
 
-    const admin = await AdminUser.findByIdAndUpdate(req.user.id, updates, {
-      new: true,
+    const admin = await AdminUser.findByIdAndUpdate(
+      req.user.id,
+      updates,
+      { new: true }
+    );
+
+    res.json({
+      success: true,
+      admin,
     });
 
-    res.json({ success: true, admin });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Profile update failed" });
