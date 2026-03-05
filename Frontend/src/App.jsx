@@ -119,7 +119,7 @@ export default function App() {
         <Route path="/package-details/:id" element={<PackageDetails />} />
 
         {/* Appointments */}
-        <Route path="/appointments" element={<AllAppointmentsAdmin />} />
+        <Route path="/admin/appointments" element={<AllAppointmentsAdmin />} />
         <Route path="/my-appointments" element={<EnhancedMyAppointments />} />
 
         {/* Gallery */}

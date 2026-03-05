@@ -6,8 +6,10 @@ const AdminReviews = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 10;
 
-  // 🔹 Fetch Reviews
+  // Fetch Reviews
   const fetchReviews = async () => {
     try {
       setLoading(true);
@@ -32,7 +34,7 @@ const AdminReviews = () => {
     }
   };
 
-  // 🔹 Delete Review
+  // Delete Review
   const deleteReview = async (id) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
 
@@ -51,26 +53,29 @@ const AdminReviews = () => {
     }
   };
 
+  // Reset page on filter change
   useEffect(() => {
+    setCurrentPage(1);
     fetchReviews();
   }, [type]);
 
-  if (loading) return <p style={{ padding: 20 }}>Loading reviews...</p>;
+  if (loading) return <p className="p-5">Loading reviews...</p>;
+
+  // Pagination
+  const indexOfLastReview = currentPage * reviewsPerPage;
+  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+  const currentReviews = reviews.slice(indexOfFirstReview, indexOfLastReview);
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={{ marginBottom: 20 }}>⭐ Customer Reviews</h2>
+    <div className="p-5">
+      <h2 className="text-2xl font-semibold mb-5">⭐ Customer Reviews</h2>
 
       {/* Filter Dropdown */}
       <select
         value={type}
         onChange={(e) => setType(e.target.value)}
-        style={{
-          padding: "8px 12px",
-          marginBottom: 20,
-          borderRadius: 6,
-          border: "1px solid #ccc",
-        }}
+        className="px-3 py-2 mb-5 border border-gray-300 rounded-md"
       >
         <option value="">All</option>
         <option value="Package">Package</option>
@@ -80,88 +85,86 @@ const AdminReviews = () => {
       {reviews.length === 0 ? (
         <p>No reviews found</p>
       ) : (
-        <div
-          style={{
-            overflowX: "auto",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-          }}
-        >
-          <table
-            style={{
-              width: "100%",
-              minWidth: 600, // ensures table looks okay on desktop
-              borderCollapse: "collapse",
-              tableLayout: "fixed",
-              background: "#fff",
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f3f4f6" }}>
-                <th style={{ ...th, textAlign: "left" }}>Customer</th>
-                <th style={{ ...th, textAlign: "left" }}>Email</th>
-                <th style={{ ...th, textAlign: "center" }}>Rating</th>
-                <th style={{ ...th, textAlign: "left" }}>Comment</th>
-                <th style={{ ...th, textAlign: "center" }}>Type</th>
-                <th style={{ ...th, textAlign: "center" }}>Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {reviews.map((review) => (
-                <tr key={review._id}>
-                  <td style={{ ...td, textAlign: "left" }}>
-                    {review.CUSTOMER?.name || "-"}
-                  </td>
-                  <td style={{ ...td, textAlign: "left" }}>
-                    {review.CUSTOMER?.email || "-"}
-                  </td>
-                  <td style={{ ...td, textAlign: "center" }}>
-                    {review.rating} ⭐
-                  </td>
-                  <td style={{ ...td, textAlign: "left" }}>
-                    {review.message || "-"}
-                  </td>
-                  <td style={{ ...td, textAlign: "center" }}>
-                    {review.targetType || "-"}
-                  </td>
-                  <td style={{ ...td, textAlign: "center" }}>
-                    <button
-                      onClick={() => deleteReview(review._id)}
-                      style={{
-                        padding: "6px 12px",
-                        background: "#dc2626",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 4,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden lg:block overflow-x-auto rounded-lg border border-gray-200 bg-white">
+            <table className="w-full min-w-[600px] border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-3 text-left border-b border-gray-200">Customer</th>
+                  <th className="p-3 text-left border-b border-gray-200">Email</th>
+                  <th className="p-3 text-center border-b border-gray-200">Rating</th>
+                  <th className="p-3 text-left border-b border-gray-200">Comment</th>
+                  <th className="p-3 text-center border-b border-gray-200">Type</th>
+                  <th className="p-3 text-center border-b border-gray-200">Date</th>
+                  <th className="p-3 text-center border-b border-gray-200">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {currentReviews.map((review) => (
+                  <tr key={review._id}>
+                    <td className="p-3 text-left border-b border-gray-100">{review.CUSTOMER?.name || "-"}</td>
+                    <td className="p-3 text-left border-b border-gray-100">{review.CUSTOMER?.email || "-"}</td>
+                    <td className="p-3 text-center border-b border-gray-100">{review.rating} ⭐</td>
+                    <td className="p-3 text-left border-b border-gray-100">{review.message || "-"}</td>
+                    <td className="p-3 text-center border-b border-gray-100">{review.targetType || "-"}</td>
+                    <td className="p-3 text-center border-b border-gray-100">{new Date(review.createdAt).toLocaleDateString()}</td>
+                    <td className="p-3 text-center border-b border-gray-100">
+                      <button
+                        onClick={() => deleteReview(review._id)}
+                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="grid grid-cols-1 gap-4 lg:hidden">
+            {currentReviews.map((review) => (
+              <div key={review._id} className="p-4 border border-gray-200 rounded-lg bg-white flex flex-col gap-2">
+                <p><strong>Customer:</strong> {review.CUSTOMER?.name || "-"}</p>
+                <p><strong>Email:</strong> {review.CUSTOMER?.email || "-"}</p>
+                <p><strong>Rating:</strong> {review.rating} ⭐</p>
+                <p><strong>Comment:</strong> {review.message || "-"}</p>
+                <p><strong>Type:</strong> {review.targetType || "-"}</p>
+                <p><strong>Date:</strong> {new Date(review.createdAt).toLocaleDateString()}</p>
+                <button
+                  onClick={() => deleteReview(review._id)}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 mt-2"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="mt-5 flex justify-center items-center gap-4">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => prev - 1)}
+              className="px-3 py-1 rounded border border-gray-300 bg-gray-100 disabled:opacity-50"
+            >
+              Prev
+            </button>
+            <span>Page {currentPage} of {totalPages}</span>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((prev) => prev + 1)}
+              className="px-3 py-1 rounded border border-gray-300 bg-gray-100 disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
-};
-
-// Table header styles
-const th = {
-  padding: "12px",
-  borderBottom: "1px solid #ddd",
-};
-
-// Table data cell styles
-const td = {
-  padding: "12px",
-  borderBottom: "1px solid #eee",
-  verticalAlign: "middle",
-  wordBreak: "break-word", // ensures long text wraps on small screens
 };
 
 export default AdminReviews;

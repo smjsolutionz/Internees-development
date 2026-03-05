@@ -10,11 +10,6 @@ const MyAppointments = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Reschedule state
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
-  const [reschedulingId, setReschedulingId] = useState(null);
-
   const limit = 10; // appointments per page
 
   const fetchAppointments = async (pageToFetch = page) => {
@@ -86,31 +81,6 @@ const MyAppointments = () => {
     }
   };
 
-  // Reschedule appointment
-  const handleReschedule = async (id) => {
-    if (!rescheduleDate || !rescheduleTime) return toast.error("Please select date and time");
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      const { data } = await axios.put(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointments/${id}/reschedule`,
-        { appointmentDate: rescheduleDate, appointmentTime: rescheduleTime },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (data?.success) {
-        toast.success("Appointment rescheduled");
-        setReschedulingId(null);
-        setRescheduleDate("");
-        setRescheduleTime("");
-        fetchAppointments(page);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Failed to reschedule appointment");
-    }
-  };
-
   const getStatusBadge = (status) => {
     const colors = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -135,7 +105,7 @@ const MyAppointments = () => {
   if (loading) return <div className="text-center py-20">Loading appointments...</div>;
 
   const Pagination = () => (
-    <div className="flex justify-center items-center gap-2 mt-6">
+    <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
       <button onClick={() => setPage(prev => Math.max(prev - 1, 1))} disabled={page === 1} className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400">Prev</button>
       {[...Array(totalPages)].map((_, i) => (
         <button key={i} onClick={() => setPage(i + 1)} className={`px-3 py-1 rounded ${page === i + 1 ? "bg-[#BB8C4B] text-white" : "bg-gray-200"}`}>{i + 1}</button>
@@ -146,14 +116,14 @@ const MyAppointments = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-[120px]">
-      <div className="mb-8">
+      <div className="mb-8 text-center sm:text-left">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">My Appointments</h1>
         <p className="mt-2 text-gray-600">View and manage your upcoming and past appointments</p>
       </div>
 
       {/* Filters */}
       <div className="mb-6 border-b border-gray-200">
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-2 sm:gap-4 justify-center sm:justify-start">
           {["all", "pending", "confirmed", "completed", "cancelled"].map((f) => (
             <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 font-medium capitalize transition-all ${filter === f ? "border-b-2 border-[#BB8C4B] text-[#BB8C4B]" : "text-gray-600 hover:text-gray-900"}`}>{f}</button>
           ))}
@@ -169,48 +139,36 @@ const MyAppointments = () => {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {appointments.map((a) => (
-              <div key={a._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+              <div key={a._id} className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] p-4 text-white flex justify-between flex-col">
-                  <h3 className="font-bold text-lg">  {  a.package?.name || a.service?.name ||  a.serviceName || a.packageName}</h3>
-                  <p className="text-sm text-gray-200 mt-1">{a.CUSTOMER?.email || a.customerEmail} <br /> {a.CUSTOMER?.phone || a.customerPhone}</p>
+                <div className="bg-gradient-to-r from-[#BB8C4B] to-[#D79A4A] p-4 text-white flex flex-col gap-2">
+                  <h3 className="font-bold text-lg truncate">{a.package?.name || a.service?.name || a.serviceName || a.packageName}</h3>
+                  <p className="text-sm text-gray-200 break-words">{a.CUSTOMER?.email || a.customerEmail} <br /> {a.CUSTOMER?.phone || a.customerPhone}</p>
                   <div className="mt-2">{getStatusBadge(a.status)}</div>
                 </div>
 
                 {/* Body */}
-                <div className="p-4 space-y-3">
+                <div className="p-4 space-y-3 flex-1">
                   <div className="flex items-center gap-3 text-gray-700"><FaCalendarAlt className="text-[#BB8C4B]" /><span>{formatDate(a.appointmentDate)}</span></div>
                   <div className="flex items-center gap-3 text-gray-700"><FaClock className="text-[#BB8C4B]" /><span>{formatTime(a.appointmentTime)}</span></div>
-                  <div className="flex items-center gap-3 text-gray-700"><FaTag className="text-[#BB8C4B]" /><span>{a.duration ||  a.package?.totalDuration || a.service?.duration || 0}</span></div>
+                  <div className="flex items-center gap-3 text-gray-700"><FaTag className="text-[#BB8C4B]" /><span>{a.duration || a.package?.totalDuration || a.service?.duration || 0}</span></div>
                   <div className="flex items-center gap-3 text-gray-700"><FaDollarSign className="text-[#BB8C4B]" /><span>{a.price || a.service?.pricing || a.package?.price || 0}</span></div>
-                  {a.notes && <p className="text-sm text-gray-600 pt-2 border-t"><b>Notes:</b> {a.notes}</p>}
+                  {a.notes && <p className="text-sm text-gray-600 pt-2 border-t break-words"><b>Notes:</b> {a.notes}</p>}
                 </div>
 
                 {/* Footer */}
                 {a.status !== "cancelled" && a.status !== "completed" && (
-                  <div className="px-4 pb-4 space-y-2">
+                  <div className="px-4 pb-4 pt-2">
                     <button onClick={() => handleCancel(a._id, a.appointmentDate)} className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition text-sm font-medium">Cancel</button>
-                    {reschedulingId !== a._id ? (
-                      <button onClick={() => setReschedulingId(a._id)} className="w-full bg-yellow-500 text-white py-2 rounded hover:bg-yellow-600 transition text-sm font-medium">Reschedule</button>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} className="border px-2 py-1 rounded"/>
-                        <input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="border px-2 py-1 rounded"/>
-                        <div className="flex gap-2">
-                          <button onClick={() => handleReschedule(a._id)} className="flex-1 bg-green-500 text-white py-2 rounded hover:bg-green-600 transition text-sm font-medium">Confirm</button>
-                          <button onClick={() => setReschedulingId(null)} className="flex-1 bg-gray-300 text-gray-800 py-2 rounded hover:bg-gray-400 transition text-sm font-medium">Cancel</button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Pagination - bottom only */}
+          {/* Pagination */}
           <Pagination />
         </>
       )}

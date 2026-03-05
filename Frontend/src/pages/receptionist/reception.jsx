@@ -9,8 +9,7 @@ export default function Reception() {
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
       <ReceptionistSidebar 
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+       sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen}
       />
 
       {/* Main Content */}

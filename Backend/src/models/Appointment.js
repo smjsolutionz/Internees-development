@@ -26,7 +26,7 @@ package: {
 
     staff: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "TeamMember"
     },
     appointmentDate: {
       type: Date,
