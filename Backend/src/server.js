@@ -30,6 +30,8 @@ const receptionistRoutes = require("./routes/receptionist/receptionistRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
 const  adminappointment =require("./routes/adminAppointmentRoutes")
 const reviewAdminRoutes=require("./routes/reviewAdminRoutes")
+const staffAppointmentRoutes = require("./routes/staff/staffAppointmentRoutes");
+
 const app = express();
 
 // 🔹 Connect DB
@@ -103,6 +105,8 @@ app.use("/customer", customerTeamRoutes);
 app.use("/api/appointment/receptionist", receptionistRoutes);
 // Prefix all walk-in routes under /api/receptionist/walkin
 app.use("/api/receptionist/walkin", walkInRoutes);
+app.use("/api/staff/appointments", staffAppointmentRoutes);
+
 
 
 // 🔹 Global Error Handler

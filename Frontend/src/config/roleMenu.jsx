@@ -41,6 +41,6 @@ export const roleMenus = {
 
   staff: [
     { name: "Dashboard", path: "/staff/dashboard" },
-    { name: "Tasks", path: "/staff/tasks" },
+    { name: "Shifts", path: "/staff/tasks" },
   ],
 };

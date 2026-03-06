@@ -39,6 +39,7 @@ const Services = () => {
   return (
     <section className="bg-gray-100 py-24 mt-10 px-4 sm:px-6 lg:px-20">
       <div className="max-w-7xl mx-auto">
+        
 
         {/* Heading */}
         <div className="text-center mb-20">

@@ -65,7 +65,7 @@ import ReceptionistAppointments from "./pages/receptionist/Appointmentreceptioni
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
 import WalkInAppointmentForm from "./pages/receptionist/Walkinappointment";
-
+import StaffShiftPage from "./pages/staff/StaffShiftPage";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -104,7 +104,7 @@ export default function App() {
         <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
 
         {/* Services Admin */}
-        <Route path="/services-admin" element={<ServicesAdmin />} />
+        <Route path="/admin/services-admin" element={<ServicesAdmin />} />
         <Route path="/create-service" element={<CreateService />} />
         <Route path="/update-service/:id" element={<UpdateService />} />
         <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
@@ -113,7 +113,7 @@ export default function App() {
         <Route path="/packages/:id" element={<PackageDetailPage />} />
 
         {/* Packages Admin */}
-        <Route path="/packages-admin" element={<AllPackagesAdmin />} />
+        <Route path="/admin/packages-admin" element={<AllPackagesAdmin />} />
         <Route path="/create-package" element={<CreatePackage />} />
         <Route path="/update-package/:id" element={<UpdatePackage />} />
         <Route path="/package-details/:id" element={<PackageDetails />} />
@@ -173,7 +173,8 @@ export default function App() {
 
         {/* Reviews */}
         <Route path="/admin/reviews" element={<AdminReviews />} />
-
+          <Route path="/staff/tasks" element={<StaffShiftPage />} />
+          
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
