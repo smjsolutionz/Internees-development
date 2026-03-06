@@ -38,13 +38,17 @@ const Packages = () => {
       category === "All" ? true : pkg.category === category
     );
 
-  // SCROLL HANDLERS
-  const scrollLeft = () => {
-    scrollRef.current.scrollBy({ left: -350, behavior: "smooth" });
-  };
+  // SMART SCROLL
+  const scrollByCard = (dir = 1) => {
+    if (!scrollRef.current) return;
 
-  const scrollRight = () => {
-    scrollRef.current.scrollBy({ left: 350, behavior: "smooth" });
+    const cardWidth =
+      scrollRef.current.firstChild?.offsetWidth || 380;
+
+    scrollRef.current.scrollBy({
+      left: dir * (cardWidth + 32),
+      behavior: "smooth",
+    });
   };
 
   if (loading) {
@@ -56,31 +60,32 @@ const Packages = () => {
   }
 
   return (
-    <section  id="packages" className="bg-[#faf7f2] mt-20">
+    <section id="packages" className="mt-20">
       <div className="max-w-7xl mx-auto px-4 relative">
 
         <h2 className="text-4xl font-serif text-center mb-10">
           Our Premium Packages
         </h2>
 
-        {/* SCROLL BUTTONS */}
+        {/* LEFT BUTTON */}
         <button
-  onClick={scrollLeft}
-  className="absolute left-4 top-1/2 -translate-y-1/2 z-20
-  bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
->
-  ❮
-</button>
+          onClick={() => scrollByCard(-1)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20
+          w-10 h-10 flex items-center justify-center
+          bg-white shadow-lg rounded-full hover:bg-[#c0954d] hover:text-white transition"
+        >
+          ❮
+        </button>
 
-
+        {/* RIGHT BUTTON */}
         <button
-  onClick={scrollRight}
-  className="absolute right-4 top-1/2 -translate-y-1/2 z-20
-  bg-white shadow-lg p-3 rounded-full hover:bg-gray-100"
->
-  ❯
-</button>
-
+          onClick={() => scrollByCard(1)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20
+          w-10 h-10 flex items-center justify-center
+          bg-white shadow-lg rounded-full hover:bg-[#c0954d] hover:text-white transition"
+        >
+          ❯
+        </button>
 
         {/* HORIZONTAL SCROLL */}
         {filteredPackages.length === 0 ? (
@@ -91,12 +96,12 @@ const Packages = () => {
           <div
             ref={scrollRef}
             className="flex gap-8 overflow-x-auto scroll-smooth
-            scrollbar-hide px-6"
+            snap-x snap-mandatory scrollbar-hide px-6"
           >
             {filteredPackages.map((pkg) => (
               <div
                 key={pkg._id}
-                className="min-w-[380px] max-w-[380px]"
+                className="min-w-[380px] max-w-[380px] snap-start"
               >
                 <PackageCard pkg={pkg} />
               </div>

@@ -12,11 +12,11 @@ const PackageCard = ({ pkg }) => {
 
       <h3 className="text-xl font-serif uppercase">{pkg.name}</h3>
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-gray-500 pt-3">
         {pkg.totalDuration}
       </p>
 
-      <p className="text-2xl font-bold text-[#c0954d] mt-2">
+      <p className="text-2xl font-bold text-[#c0954d] mt-2 pb-3">
         {pkg.price}/-
       </p>
 
