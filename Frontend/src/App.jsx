@@ -106,7 +106,7 @@ export default function App() {
         <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
 
         {/* Services Admin */}
-        <Route path="/admin/services-admin" element={<ServicesAdmin />} />
+        <Route path="services-admin" element={<ServicesAdmin />} />
         <Route path="/create-service" element={<CreateService />} />
         <Route path="/update-service/:id" element={<UpdateService />} />
         <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
@@ -115,13 +115,13 @@ export default function App() {
         <Route path="/packages/:id" element={<PackageDetailPage />} />
 
         {/* Packages Admin */}
-        <Route path="/admin/packages-admin" element={<AllPackagesAdmin />} />
+        <Route path="/packages-admin" element={<AllPackagesAdmin />} />
         <Route path="/create-package" element={<CreatePackage />} />
         <Route path="/update-package/:id" element={<UpdatePackage />} />
         <Route path="/package-details/:id" element={<PackageDetails />} />
 
         {/* Appointments */}
-        <Route path="/admin/appointments" element={<AllAppointmentsAdmin />} />
+        <Route path="appointments" element={<AllAppointmentsAdmin />} />
         <Route path="/my-appointments" element={<EnhancedMyAppointments />} />
 
         {/* Gallery */}
