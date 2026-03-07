@@ -1,7 +1,8 @@
 import { useState } from "react";
 import ReceptionistSidebar from "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
-
+import AttendanceOverview from "../../components/attendance/AttendanceOverview";
+import AttendanceActions from "../../components/attendance/AttendanceActions";
 
 export default function ReceptionDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,7 +22,16 @@ export default function ReceptionDashboard() {
             Receptionist Dashboard
           </h1>
 
-       
+          {/* Mark Own Attendance */}
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <AttendanceActions />
+          </div>
+
+          {/* Staff Attendance Overview */}
+          <div>
+            <h2 className="text-lg font-medium mb-3">Staff Attendance Overview (Today)</h2>
+            <AttendanceOverview />
+          </div>
         </section>
       </main>
     </div>

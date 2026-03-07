@@ -2,6 +2,7 @@ import Sidebar from "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
+import AttendanceOverview from "../../components/attendance/AttendanceOverview";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -68,6 +69,12 @@ export default function Dashboard() {
 
         <section className="p-4 sm:p-6">
           <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
+
+          {/* Attendance Overview */}
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-3">Attendance Overview (Today)</h2>
+            <AttendanceOverview />
+          </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
