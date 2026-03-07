@@ -25,6 +25,8 @@ const customerProfileRoutes = require("./routes/customerProfile");
 const reviewCustomerRoutes=require("./routes/reviewCustomerRoutes")
 
 const receptionistRoutes = require("./routes/receptionist/receptionistRoutes");
+const billRoutes = require("./routes/receptionist/billRoutes");
+
 
 
 const appointmentRoutes = require("./routes/appointmentRoutes");
@@ -106,6 +108,8 @@ app.use("/api/appointment/receptionist", receptionistRoutes);
 // Prefix all walk-in routes under /api/receptionist/walkin
 app.use("/api/receptionist/walkin", walkInRoutes);
 app.use("/api/staff/appointments", staffAppointmentRoutes);
+
+app.use("/api/bill", billRoutes);
 
 
 

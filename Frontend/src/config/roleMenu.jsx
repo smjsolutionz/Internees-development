@@ -37,6 +37,7 @@ export const roleMenus = {
     { name: "Dashboard", path: "/receptionist/dashboard" },
     { name: "Appointments", path: "/receptionist/appointments" },
     { name: "WalkIn Appointments", path: "/receptionist/walkin" },
+    { name: "Bills", path: "/receptionist/bills" }, 
   ],
 
   staff: [

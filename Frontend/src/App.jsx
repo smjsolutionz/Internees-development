@@ -65,6 +65,8 @@ import ReceptionistAppointments from "./pages/receptionist/Appointmentreceptioni
 import AllAppointmentsAdmin from "./pages/admin/AllAppointmentsAdmin";
 import EnhancedMyAppointments from "./components/MyAppointments";
 import WalkInAppointmentForm from "./pages/receptionist/Walkinappointment";
+import ReceptionistBills from "./pages/receptionist/ReceptionistBills";
+
 import StaffShiftPage from "./pages/staff/StaffShiftPage";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
@@ -158,6 +160,12 @@ export default function App() {
       ? <ProfilePage />
       : <Navigate to="/login" replace />
   }
+/>
+
+
+<Route
+  path="/receptionist/bills"
+  element={<ReceptionistBills />}
 />
 
 
