@@ -68,6 +68,8 @@ import WalkInAppointmentForm from "./pages/receptionist/Walkinappointment";
 import ReceptionistBills from "./pages/receptionist/ReceptionistBills";
 
 import StaffShiftPage from "./pages/staff/StaffShiftPage";
+import AttendancePage from "./pages/attendance/AttendancePage";
+import MyAttendancePage from "./pages/attendance/MyAttendancePage";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -183,6 +185,16 @@ export default function App() {
         <Route path="/admin/reviews" element={<AdminReviews />} />
           <Route path="/staff/tasks" element={<StaffShiftPage />} />
           
+          
+        {/* Attendance */}
+        <Route
+          path="/attendance"
+          element={isAuth() ? <AttendancePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/attendance/my"
+          element={isAuth() ? <MyAttendancePage /> : <Navigate to="/login" replace />}
+        />
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

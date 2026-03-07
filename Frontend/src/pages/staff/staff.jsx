@@ -1,26 +1,26 @@
 import { useState } from "react";
 import Sidebar from "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
+import AttendanceActions from "../../components/attendance/AttendanceActions";
 
-export default function Reception() {
+export default function Staff() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
-      />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col">
         <Topbar setSidebarOpen={setSidebarOpen} />
 
-        {/* Page Content */}
-        <div className="p-6">
-          <h1 className="text-2xl font-semibold">Staff Dashboard</h1>
-        </div>
+        <section className="p-4 sm:p-6">
+          <h1 className="text-2xl font-semibold mb-6">Staff Dashboard</h1>
+
+          {/* Today's Attendance - Check In, Check Out, Leave */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <AttendanceActions />
+          </div>
+        </section>
       </main>
     </div>
   );
