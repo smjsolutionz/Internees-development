@@ -215,21 +215,29 @@ export default function ReceptionistAppointments() {
   };
 
   /* ================= BILL ================= */
-  const generateBill = async (appointment) => {
-    try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/api/bill/generate`,
-        { appointmentId: appointment._id },
-        getAuthConfig()
-      );
-      setBillData(data.bill);
-      setShowBillModal(true);
-      setMessage({ type: "success", text: "Bill generated successfully" });
-    } catch (err) {
-      const errMsg = err.response?.data?.message || "Bill generation failed";
-      setMessage({ type: "error", text: errMsg });
-    }
-  };
+ const generateBill = async (appointment, force = false) => {
+  try {
+    const { data } = await axios.post(
+      `${API_BASE_URL}/api/bill/generate`,
+      { appointmentId: appointment._id, force },
+      getAuthConfig()
+    );
+    setBillData(data.bill);
+    setShowBillModal(true);
+    setMessage({ type: "success", text: "Bill generated successfully" });
+
+    // Update appointment locally so button text updates
+    setAppointments(prev =>
+      prev.map(appt =>
+        appt._id === appointment._id ? { ...appt, bill: data.bill } : appt
+      )
+    );
+
+  } catch (err) {
+    const errMsg = err.response?.data?.message || "Bill generation failed";
+    setMessage({ type: "error", text: errMsg });
+  }
+};
 
   const confirmPayment = async () => {
     if (!paidAmount) {
@@ -356,12 +364,18 @@ export default function ReceptionistAppointments() {
                   {staffList.map(staff => <option key={staff._id} value={staff._id}>{staff.name} {staff.specialty ? `(${staff.specialty})` : ""}</option>)}
                 </select>
 
-                <div className="flex gap-2">
-                  <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">Reschedule</button>
-                  <button onClick={() => generateBill(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1">
-                    <FileText size={16}/> Generate Bill
-                  </button>
-                </div>
+              <div className="flex gap-2">
+  <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">
+    Reschedule
+  </button>
+ <button
+  onClick={() => generateBill(appt, true)} // pass `true` to force regeneration
+  className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1"
+>
+  <FileText size={16} />
+  {appt.bill && appt.bill.paidAmount === 0 ? "Regenerate Bill" : "Generate Bill"}
+</button>
+</div>
               </div>
             </div>
           );

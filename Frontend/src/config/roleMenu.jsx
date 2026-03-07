@@ -6,6 +6,7 @@ export const roleMenus = {
     { name: "Services", path: "/services-admin" },
     { name: "Packages", path: "/packages-admin" },
     { name: "Reviews", path: "/admin/reviews" },
+    { name: "Bills", path: "/receptionist/bills" }, 
     {
       name: "Gallery",
       dropdown: [

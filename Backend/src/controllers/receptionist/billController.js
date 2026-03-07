@@ -2,73 +2,73 @@ const Bill = require("../../models/Bill");
 const Appointment = require("../../models/Appointment");
 const generateBillNumber = require("../../utils/generateBillNumber");
 
-
 // ================= GENERATE BILL =================
-
 exports.generateBill = async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
 
-try {
+    const appointment = await Appointment.findById(appointmentId)
+      .populate("service")
+      .populate("package");
 
-  const { appointmentId } = req.body;
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
 
-  const appointment = await Appointment.findById(appointmentId)
-    .populate("service")
-    .populate("package");
+    const item = appointment.package || appointment.service;
 
-  if (!appointment) {
-    return res.status(404).json({
+    if (!item) {
+      return res.status(400).json({
+        success: false,
+        message: "No service or package found",
+      });
+    }
+
+    // ✅ Check existing bill
+    let existingBill = await Bill.findOne({ appointmentId });
+
+    if (existingBill) {
+      // Allow regeneration if unpaid
+      if (existingBill.paidAmount > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Bill already exists and is paid",
+        });
+      } else {
+        // Delete unpaid bill to generate new one
+        await existingBill.deleteOne();
+      }
+    }
+
+    // Remove everything except digits and dot, then convert to number
+    const rawPrice = item.price || item.pricing || 0;
+    const totalAmount = Number(String(rawPrice).replace(/[^0-9.]/g, ""));
+
+    const bill = await Bill.create({
+      billNumber: generateBillNumber(),
+      appointmentId,
+      customerName: appointment.customerName,
+      serviceName: item.name,
+      totalAmount,
+      paidAmount: 0,
+      paymentStatus: "Unpaid",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Bill generated successfully",
+      bill,
+    });
+  } catch (error) {
+    console.error("Generate Bill Error:", error);
+    res.status(500).json({
       success: false,
-      message: "Appointment not found",
+      message: error.message,
     });
   }
-
-  const existingBill = await Bill.findOne({ appointmentId });
-
-  if (existingBill) {
-    return res.status(400).json({
-      success: false,
-      message: "Bill already exists for this appointment",
-    });
-  }
-
-  const item = appointment.package || appointment.service;
-
-  if (!item) {
-    return res.status(400).json({
-      success: false,
-      message: "No service or package found",
-    });
-  }
-
-  // Remove everything except digits and dot, then convert to number
-const rawPrice = item.price || item.pricing || 0;
-const totalAmount = Number(String(rawPrice).replace(/[^0-9.]/g, ""));
-
-  const bill = await Bill.create({
-    billNumber: generateBillNumber(),
-    appointmentId,
-    customerName: appointment.customerName,
-    serviceName: item.name,
-    totalAmount
-  });
-
-  res.status(201).json({
-    success: true,
-    message: "Bill generated successfully",
-    bill
-  });
-
-} catch (error) {
-
-  console.error("Generate Bill Error:", error);
-
-  res.status(500).json({
-    success: false,
-    message: error.message
-  });
-
-}
-
 };
 
 // ================= CONFIRM PAYMENT =================
