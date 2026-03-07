@@ -432,6 +432,15 @@ export default function ReceptionistAppointments() {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96">
             <h2 className="text-xl font-bold mb-4">Bill Details</h2>
+            {message && (
+  <div className={`mb-3 p-2 rounded text-center ${
+    message.type === "success"
+      ? "bg-green-100 text-green-800"
+      : "bg-red-100 text-red-800"
+  }`}>
+    {message.text}
+  </div>
+)}
 
             <p>Bill Number: {billData.billNumber}</p>
             <p>Customer: {billData.customerName}</p>
