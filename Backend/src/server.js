@@ -33,7 +33,7 @@ const appointmentRoutes = require("./routes/appointmentRoutes");
 const  adminappointment =require("./routes/adminAppointmentRoutes")
 const reviewAdminRoutes=require("./routes/reviewAdminRoutes")
 const staffAppointmentRoutes = require("./routes/staff/staffAppointmentRoutes");
-
+const AttendanceRoutes = require("./routes/attendanceRoutes");
 const app = express();
 
 // 🔹 Connect DB
@@ -80,6 +80,7 @@ app.use("/api/packages", packageRoutes); // ✅ Packages (Admin)
 app.use("/api/admin/auth", adminAuthRoutes); // Admin login
 app.use("/api/admin", adminUsersRoutes); // Admin users CRUD
 app.use("/api/appointment/admin",adminappointment)
+app.use("/api/attendance",AttendanceRoutes)
 
 /* =========================
    🔹 CUSTOMER ROUTES
