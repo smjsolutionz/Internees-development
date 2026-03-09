@@ -1,4 +1,4 @@
-const Attendance = require("../models/Attendance.model");
+const Attendance = require("../models/Attendence.model");
 const AdminUser = require("../models/adminUser.model");
 
 // Shift end time for Late Checkout (5:00 PM)
