@@ -17,9 +17,9 @@ const Profile = () => {
     }
 
     const user = JSON.parse(storedUser);
+    const role = user.role?.toLowerCase();
 
-    // ✅ CUSTOMER / USER
-    if (user.role === "customer" || user.role === "user") {
+    if (role === "customer" || role === "user") {
       axios
         .get("http://localhost:5000/api/customer/profile", {
           headers: { Authorization: `Bearer ${token}` },
@@ -28,12 +28,12 @@ const Profile = () => {
           setProfile(res.data);
           setLoading(false);
         })
-        .catch(() => navigate("/login"));
-    }
-
-    // ✅ ADMIN / STAFF / RECEPTIONIST
-    else {
-      setProfile(user); // coming from localStorage
+        .catch((err) => {
+          console.error(err);
+          navigate("/login");
+        });
+    } else {
+      setProfile(user);
       setLoading(false);
     }
   }, []);
@@ -43,17 +43,21 @@ const Profile = () => {
   };
 
   const handleUpdate = () => {
-    // Only customers can update profile via this endpoint
-    if (profile.role === "customer" || profile.role === "user") {
-      axios
-        .put("http://localhost:5000/api/customer/profile", profile, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => alert(res.data.message))
-        .catch((err) => console.error(err));
-    } else {
-      alert("Profile update for admin will be added later");
-    }
+    const updateData = {
+      name: profile.name,
+      username: profile.username,
+      phone: profile.phone,
+    };
+
+    axios
+      .put("http://localhost:5000/api/customer/profile", updateData, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => alert(res.data.message))
+      .catch((err) => {
+        console.error(err.response?.data || err);
+        alert("Failed to update profile");
+      });
   };
 
   const handleLogout = () => {
@@ -75,9 +79,7 @@ const Profile = () => {
             alt="Profile"
             className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
           />
-          <p className="mt-2 text-sm text-gray-500 capitalize">
-            {profile.role}
-          </p>
+          <p className="mt-2 text-sm text-gray-500 capitalize">{profile.role}</p>
         </div>
 
         <div className="mb-3">
@@ -108,9 +110,8 @@ const Profile = () => {
             type="email"
             name="email"
             value={profile.email || ""}
-            onChange={handleChange}
-            className="border p-2 w-full rounded-md"
             disabled
+            className="border p-2 w-full rounded-md"
           />
         </div>
 
@@ -126,16 +127,10 @@ const Profile = () => {
         </div>
 
         <div className="flex gap-4 justify-center">
-          <button
-            onClick={handleUpdate}
-            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-          >
+          <button onClick={handleUpdate} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
             Save
           </button>
-          <button
-            onClick={handleLogout}
-            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-          >
+          <button onClick={handleLogout} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
             Logout
           </button>
         </div>
