@@ -12,47 +12,62 @@ const Profile = () => {
 
   useEffect(() => {
     if (!token || !storedUser) {
-      navigate("/login");
+      navigate("/login", { replace: true });
       return;
     }
 
     const user = JSON.parse(storedUser);
+    const role = user.role?.toLowerCase(); // normalize
 
-    // ✅ CUSTOMER / USER
-    if (user.role === "customer" || user.role === "user") {
-      axios
-        .get("http://localhost:5000/api/customer/profile", {
+    const fetchCustomerProfile = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/customer/profile", {
           headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-          setProfile(res.data);
-          setLoading(false);
-        })
-        .catch(() => navigate("/login"));
-    }
+        });
+        // Update both state and localStorage
+        setProfile(res.data);
+        localStorage.setItem("user", JSON.stringify(res.data));
+      } catch (err) {
+        console.error(err);
+        navigate("/login", { replace: true });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // ✅ ADMIN / STAFF / RECEPTIONIST
-    else {
-      setProfile(user); // coming from localStorage
+    if (role === "customer" || role === "user") {
+      fetchCustomerProfile();
+    } else {
+      // For admin or other roles, use stored info
+      setProfile(user);
       setLoading(false);
     }
-  }, []);
+  }, [navigate, token, storedUser]);
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleUpdate = () => {
-    // Only customers can update profile via this endpoint
-    if (profile.role === "customer" || profile.role === "user") {
-      axios
-        .put("http://localhost:5000/api/customer/profile", profile, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => alert(res.data.message))
-        .catch((err) => console.error(err));
-    } else {
-      alert("Profile update for admin will be added later");
+  const handleUpdate = async () => {
+    const updateData = {
+      name: profile.name,
+      username: profile.username,
+      phone: profile.phone,
+    };
+
+    try {
+      const res = await axios.put(
+        "http://localhost:5000/api/customer/profile",
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(res.data.message || "Profile updated successfully");
+      localStorage.setItem("user", JSON.stringify(res.data.user || res.data));
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert("Failed to update profile");
     }
   };
 
@@ -75,9 +90,7 @@ const Profile = () => {
             alt="Profile"
             className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
           />
-          <p className="mt-2 text-sm text-gray-500 capitalize">
-            {profile.role}
-          </p>
+          <p className="mt-2 text-sm text-gray-500 capitalize">{profile.role}</p>
         </div>
 
         <div className="mb-3">
@@ -108,9 +121,8 @@ const Profile = () => {
             type="email"
             name="email"
             value={profile.email || ""}
-            onChange={handleChange}
-            className="border p-2 w-full rounded-md"
             disabled
+            className="border p-2 w-full rounded-md"
           />
         </div>
 
@@ -126,16 +138,10 @@ const Profile = () => {
         </div>
 
         <div className="flex gap-4 justify-center">
-          <button
-            onClick={handleUpdate}
-            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-          >
+          <button onClick={handleUpdate} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
             Save
           </button>
-          <button
-            onClick={handleLogout}
-            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
-          >
+          <button onClick={handleLogout} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
             Logout
           </button>
         </div>
