@@ -422,9 +422,9 @@ const PackageDetail = () => {
           </div>
             
           {/* RIGHT: Reviews List with Pagination */}
-          <div className="lg:w-3/4">
+          <div className="lg:w-3/4 mb-6">
             {reviews.length === 0 ? (
-              <div className="text-center py-10 border rounded-lg">
+              <div className="text-center  py-10 border rounded-lg">
                 <p className="text-gray-500">No reviews yet. Be the first to review this package!</p>
                 {loggedIn && !showReviewForm && (
                   <button
