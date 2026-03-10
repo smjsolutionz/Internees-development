@@ -12,52 +12,63 @@ const Profile = () => {
 
   useEffect(() => {
     if (!token || !storedUser) {
-      navigate("/login");
+      navigate("/login", { replace: true });
       return;
     }
 
     const user = JSON.parse(storedUser);
-    const role = user.role?.toLowerCase();
+    const role = user.role?.toLowerCase(); // normalize
+
+    const fetchCustomerProfile = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/customer/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        // Update both state and localStorage
+        setProfile(res.data);
+        localStorage.setItem("user", JSON.stringify(res.data));
+      } catch (err) {
+        console.error(err);
+        navigate("/login", { replace: true });
+      } finally {
+        setLoading(false);
+      }
+    };
 
     if (role === "customer" || role === "user") {
-      axios
-        .get("http://localhost:5000/api/customer/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-          setProfile(res.data);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error(err);
-          navigate("/login");
-        });
+      fetchCustomerProfile();
     } else {
+      // For admin or other roles, use stored info
       setProfile(user);
       setLoading(false);
     }
-  }, []);
+  }, [navigate, token, storedUser]);
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     const updateData = {
       name: profile.name,
       username: profile.username,
       phone: profile.phone,
     };
 
-    axios
-      .put("http://localhost:5000/api/customer/profile", updateData, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => alert(res.data.message))
-      .catch((err) => {
-        console.error(err.response?.data || err);
-        alert("Failed to update profile");
-      });
+    try {
+      const res = await axios.put(
+        "http://localhost:5000/api/customer/profile",
+        updateData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(res.data.message || "Profile updated successfully");
+      localStorage.setItem("user", JSON.stringify(res.data.user || res.data));
+      navigate("/", { replace: true });
+    } catch (err) {
+      console.error(err.response?.data || err);
+      alert("Failed to update profile");
+    }
   };
 
   const handleLogout = () => {
