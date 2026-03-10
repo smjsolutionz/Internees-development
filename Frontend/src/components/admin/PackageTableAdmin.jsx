@@ -111,7 +111,7 @@ export default function PackagesTableAdmin({ packages }) {
         <h2 className="text-lg font-semibold">Packages</h2>
         <button
           onClick={() => navigate("/create-package")}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          className="flex items-center gap-2 bg-[#BB8C4B] hover:bg-[#a3733f] text-white px-4 py-2 rounded  transition"
         >
           <FiPlus /> Create Package
         </button>
