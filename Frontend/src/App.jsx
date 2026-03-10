@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-
+import ProtectedRoute from "./components/ProtectedRoutes";
 // Auth
 import LoginPage from "./auth/LoginPage";
 import RegisterPage from "./auth/RegisterPage";
@@ -70,6 +70,8 @@ import ReceptionistBills from "./pages/receptionist/ReceptionistBills";
 import StaffShiftPage from "./pages/staff/StaffShiftPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import MyAttendancePage from "./pages/attendance/MyAttendancePage";
+import UpdateServiceAdmin from "./components/admin/UpdateServiceAdmin";
+import AddGalleryImage from "./components/admin/AddGalleryImage";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -98,103 +100,333 @@ export default function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Dashboard */}
-        <Route
-          path="/dashboard"
-          element={isAuth() ? <Dashboard /> : <Navigate to="/login" replace />}
-        />
+       <Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Services (User) */}
-        <Route path="/services" element={<ServicePage />} />
-        <Route path="/servicedetail/:id" element={<ServicesDetailPage />} />
+        <Route
+  path="/services"
+  element={
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
+      <ServicePage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/servicedetail/:id"
+  element={
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
+      <ServicesDetailPage />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Services Admin */}
-        <Route path="services-admin" element={<ServicesAdmin />} />
-        <Route path="/create-service" element={<CreateService />} />
-        <Route path="/update-service/:id" element={<UpdateService />} />
-        <Route path="/service-details/:id" element={<ServiceDetailsAdmin />} />
+        <Route
+  path="/services-admin"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <ServicesAdmin />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/create-service"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <CreateService />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/update-service/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <UpdateService />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/service-details/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <ServiceDetailsAdmin />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Packages */}
-        <Route path="/packages/:id" element={<PackageDetailPage />} />
+        <Route
+  path="/packages/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <PackageDetailPage />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Packages Admin */}
-        <Route path="/packages-admin" element={<AllPackagesAdmin />} />
-        <Route path="/create-package" element={<CreatePackage />} />
-        <Route path="/update-package/:id" element={<UpdatePackage />} />
-        <Route path="/package-details/:id" element={<PackageDetails />} />
+        <Route
+  path="/create-package"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <CreatePackage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/packages-admin"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AllPackagesAdmin />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/update-package/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <UpdatePackage />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/package-details/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <PackageDetails />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Appointments */}
-        <Route path="appointments" element={<AllAppointmentsAdmin />} />
-        <Route path="/my-appointments" element={<EnhancedMyAppointments />} />
+        <Route
+  path="/appointments"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AllAppointmentsAdmin />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/my-appointments"
+  element={
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
+      <EnhancedMyAppointments />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Gallery */}
-        <Route path="/gallery-admin/add" element={<Addgalleryimage />} />
-        <Route path="/gallery-admin" element={<AllGalleryimageAdmin />} />
-        <Route path="/gallery/edit/:id" element={<UpdateGalleryAdmin />} />
-        <Route path="/cutomergallery" element={<CustomerGallerypage />} />
+        <Route
+  path="/gallery-admin/add"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <Addgalleryimage />
+    </ProtectedRoute>
+  }
+/><Route
+  path="/gallery-admin"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AllGalleryimageAdmin />
+    </ProtectedRoute>
+  }
+/><Route
+  path="/gallery/edit/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <UpdateGalleryAdmin />
+    </ProtectedRoute>
+  }
+/><Route
+  path="/customergallery"
+  element={
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
+      <CustomerGallerypage />
+    </ProtectedRoute>
+  }
+/>
 
         {/* Team */}
-        <Route path="/admin/team" element={<AllTeam />} />
-        <Route path="/admin/team/add" element={<AddTeam />} />
-        <Route path="/admin/team/edit/:id" element={<EditTeam />} />
-
-        {/* Users */}
-        <Route path="/create-user" element={<CreateUser />} />
-        <Route path="/edit-user/:id" element={<UpdateUser />} />
-
-
-        
-        {/* Profiles */}
-         <Route path="/reception" element={<Reception />} />
-       <Route path="/inventory" element={<Inventory />} />
-       <Route path="/manager" element={<Manager />} />
-       <Route path="/staff" element={<Staff />} />
-         <Route path="/receptionist/dashboard" element={<ReceptionDashboard />} />
-   <Route
-          path="/receptionist/appointments"
-          element={<ReceptionistAppointments />}
-        />
-
-          <Route path="/receptionist/walkin" element={<WalkInAppointmentForm />} />
-         <Route
-  path="/admin/profile"
+        <Route
+  path="/admin/team"
   element={
-    isAuth()
-      ? <ProfilePage />
-      : <Navigate to="/login" replace />
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AllTeam />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/team/add"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AddTeam />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/team/edit/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <EditTeam />
+    </ProtectedRoute>
+  }
+/>
+
+{/* Users */}
+<Route
+  path="/create-user"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <CreateUser />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/edit-user/:id"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <UpdateUser />
+    </ProtectedRoute>
   }
 />
 
 
+      <Route
+  path="/inventory"
+  element={
+    <ProtectedRoute allowedRoles={["inventory_manager"]}>
+      <Inventory />
+    </ProtectedRoute>
+  }
+/>
+       <Route
+  path="/manager"
+  element={
+    <ProtectedRoute allowedRoles={["manager"]}>
+      <Manager />
+    </ProtectedRoute>
+  }
+/>
+      <Route
+  path="/staff"
+  element={
+    <ProtectedRoute allowedRoles={["staff"]}>
+      <Staff />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/staff/tasks"
+  element={
+    <ProtectedRoute allowedRoles={["staff"]}>
+      <StaffShiftPage />
+    </ProtectedRoute>
+  }
+/>
+        <Route
+  path="/reception"
+  element={
+    <ProtectedRoute allowedRoles={["receptionist"]}>
+      <Reception />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/receptionist/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={["receptionist"]}>
+      <ReceptionDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/receptionist/appointments"
+  element={
+    <ProtectedRoute allowedRoles={["receptionist"]}>
+      <ReceptionistAppointments />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/receptionist/walkin"
+  element={
+    <ProtectedRoute allowedRoles={["receptionist"]}>
+      <WalkInAppointmentForm />
+    </ProtectedRoute>
+  }
+/>
+
 <Route
   path="/receptionist/bills"
-  element={<ReceptionistBills />}
+  element={
+    <ProtectedRoute allowedRoles={["receptionist", "admin"]}>
+      <ReceptionistBills />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/admin/profile"
+  element={
+    <ProtectedRoute allowedRoles={["admin", "receptionist"]}>
+      <ProfilePage />
+    </ProtectedRoute>
+  }
 />
 
 
         {/* Customer Profile */}
-   <Route
+<Route
   path="/customer/profile"
   element={
-    isAuth()
-      ? <Profile />   // ← Use the correct imported component
-      : <Navigate to="/login" replace />
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
+      <Profile />
+    </ProtectedRoute>
   }
 />
 
-        {/* Reviews */}
-        <Route path="/admin/reviews" element={<AdminReviews />} />
-          <Route path="/staff/tasks" element={<StaffShiftPage />} />
+<Route
+  path="/admin/reviews"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <AdminReviews />
+    </ProtectedRoute>
+  }
+/>
           
           
         {/* Attendance */}
-        <Route
-          path="/attendance"
-          element={isAuth() ? <AttendancePage /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/attendance/my"
-          element={isAuth() ? <MyAttendancePage /> : <Navigate to="/login" replace />}
-        />
+       <Route
+  path="/attendance"
+  element={
+    <ProtectedRoute allowedRoles={["admin", "receptionist"]}>
+      <AttendancePage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/attendance/my"
+  element={
+    <ProtectedRoute allowedRoles={["staff", "manager", "receptionist", "inventory_manager"]}>
+      <MyAttendancePage />
+    </ProtectedRoute>
+  }
+/>
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
