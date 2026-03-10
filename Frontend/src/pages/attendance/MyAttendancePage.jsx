@@ -75,24 +75,26 @@ export default function MyAttendancePage() {
           <h1 className="text-2xl font-semibold mb-6">My Attendance</h1>
 
           {/* Date Filters */}
-          <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-end">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#BB8C4B]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#BB8C4B]"
-              />
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#BB8C4B]"
+                />
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#BB8C4B]"
+                />
+              </div>
             </div>
           </div>
 
@@ -103,47 +105,85 @@ export default function MyAttendancePage() {
             ) : attendance.length === 0 ? (
               <div className="p-8 text-center text-gray-500">No attendance records found</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check In</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check Out</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {attendance.map((r) => (
-                      <tr key={r._id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">{formatDate(r.date)}</td>
-                        <td className="px-4 py-3 text-sm">{formatTime(r.checkInTime)}</td>
-                        <td className="px-4 py-3 text-sm">{formatTime(r.checkOutTime)}</td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`px-2 py-1 text-xs rounded ${
-                              r.status === "Present"
-                                ? "bg-green-100 text-green-800"
-                                : r.status === "Leave"
-                                ? "bg-blue-100 text-blue-800"
-                                : r.status === "Absent"
-                                ? "bg-red-100 text-red-800"
-                                : r.status === "Missed Checkout"
-                                ? "bg-amber-100 text-amber-800"
-                                : r.status === "Late Checkout"
-                                ? "bg-purple-100 text-purple-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
+              <>
+                {/* Mobile cards */}
+                <div className="p-4 space-y-3 md:hidden">
+                  {attendance.map((r) => {
+                    const statusClass =
+                      r.status === "Present"
+                        ? "bg-green-100 text-green-800"
+                        : r.status === "Leave"
+                        ? "bg-blue-100 text-blue-800"
+                        : r.status === "Absent"
+                        ? "bg-red-100 text-red-800"
+                        : r.status === "Missed Checkout"
+                        ? "bg-amber-100 text-amber-800"
+                        : r.status === "Late Checkout"
+                        ? "bg-purple-100 text-purple-800"
+                        : "bg-gray-100 text-gray-800";
+
+                    return (
+                      <div key={r._id} className="border rounded-lg p-4 bg-white shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-gray-900">{formatDate(r.date)}</p>
+                            <p className="text-xs text-gray-500">
+                              In: {formatTime(r.checkInTime)} · Out: {formatTime(r.checkOutTime)}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded ${statusClass}`}>
                             {r.status}
                             {r.leaveType ? ` (${r.leaveType})` : ""}
                           </span>
-                        </td>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check In</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Check Out</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {attendance.map((r) => (
+                        <tr key={r._id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm">{formatDate(r.date)}</td>
+                          <td className="px-4 py-3 text-sm">{formatTime(r.checkInTime)}</td>
+                          <td className="px-4 py-3 text-sm">{formatTime(r.checkOutTime)}</td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`px-2 py-1 text-xs rounded ${
+                                r.status === "Present"
+                                  ? "bg-green-100 text-green-800"
+                                  : r.status === "Leave"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : r.status === "Absent"
+                                  ? "bg-red-100 text-red-800"
+                                  : r.status === "Missed Checkout"
+                                  ? "bg-amber-100 text-amber-800"
+                                  : r.status === "Late Checkout"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {r.status}
+                              {r.leaveType ? ` (${r.leaveType})` : ""}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </section>

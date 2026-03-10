@@ -1,6 +1,6 @@
 // Attendance cron jobs - run at 12:00 AM daily
 const cron = require("node-cron");
-const Attendance = require("../models/Attendance.model");
+const Attendance = require("../models/Attendence.model");
 const AdminUser = require("../models/adminUser.model");
 
 // Run at 12:00 AM every day
@@ -19,7 +19,7 @@ cron.schedule("0 0 * * *", async () => {
         date: { $gte: yesterday, $lte: endOfYesterday },
         checkInTime: { $ne: null },
         checkOutTime: null,
-        status: "Present",
+        status: { $ne: "Leave" },
       },
       { $set: { status: "Missed Checkout" } }
     );
@@ -48,7 +48,9 @@ cron.schedule("0 0 * * *", async () => {
       }
     }
 
-    console.log(`Attendance cron: Missed checkout updated for ${missedCheckout.modifiedCount} records`);
+    console.log(
+      `Attendance cron: Missed checkout updated for ${missedCheckout.modifiedCount} records`
+    );
   } catch (error) {
     console.error("Attendance cron job failed:", error);
   }
