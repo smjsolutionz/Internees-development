@@ -168,7 +168,7 @@ export default function App() {
         <Route
   path="/packages/:id"
   element={
-    <ProtectedRoute allowedRoles={["admin"]}>
+    <ProtectedRoute allowedRoles={["customer", "user"]}>
       <PackageDetailPage />
     </ProtectedRoute>
   }
@@ -382,7 +382,7 @@ export default function App() {
 <Route
   path="/admin/profile"
   element={
-    <ProtectedRoute allowedRoles={["admin", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["admin", "staff", "manager", "receptionist", "inventory_manager"]}>
       <ProfilePage />
     </ProtectedRoute>
   }
@@ -413,7 +413,7 @@ export default function App() {
        <Route
   path="/attendance"
   element={
-    <ProtectedRoute allowedRoles={["admin", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["admin", "receptionist", "manager"]}>
       <AttendancePage />
     </ProtectedRoute>
   }
