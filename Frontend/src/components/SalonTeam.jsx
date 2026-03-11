@@ -46,7 +46,7 @@ export default function TeamSection() {
   }, [teamMembers]);
 
   return (
-    <section className="mt-20 py-12 lg:py-16 px-4 sm:px-6 lg:px-8 bg-[#faf7f2]">
+    <section className=" py-12 lg:py-16 px-4 sm:px-6 lg:px-8 bg-[#faf7f2]">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

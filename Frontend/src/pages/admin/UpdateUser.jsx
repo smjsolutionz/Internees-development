@@ -112,7 +112,7 @@ export default function EditUser() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -124,7 +124,7 @@ export default function EditUser() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -136,7 +136,7 @@ export default function EditUser() {
                   type="email"
                   value={email}
                   readOnly
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded bg-gray-100"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded bg-gray-100 focus:ring-[#a3733f]"
                 />
               </div>
 
@@ -146,7 +146,7 @@ export default function EditUser() {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f] "
                   required
                 >
                   <option value="ADMIN">ADMIN</option>
@@ -164,7 +164,7 @@ export default function EditUser() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 >
                   <option value="ACTIVE">ACTIVE</option>
@@ -177,7 +177,7 @@ export default function EditUser() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700 transition"
+                  className="w-full sm:w-auto bg-[#BB8C4B] hover:bg-[#a3733f]  text-white px-6 py-3 roundedtransition"
                 >
                   {loading ? "Updating..." : "Update User"}
                 </button>

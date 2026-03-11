@@ -98,7 +98,7 @@ export default function CreateUser() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -112,7 +112,7 @@ export default function CreateUser() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -126,7 +126,7 @@ export default function CreateUser() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -137,7 +137,7 @@ export default function CreateUser() {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                 >
                   <option value="ADMIN">ADMIN</option>
                   <option value="MANAGER">MANAGER</option>
@@ -157,7 +157,7 @@ export default function CreateUser() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -171,7 +171,7 @@ export default function CreateUser() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                   required
                 />
               </div>
@@ -181,7 +181,7 @@ export default function CreateUser() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
+                  className="w-full sm:w-auto bg-[#BB8C4B] hover:bg-[#a3733f] text-white px-6 py-3 roundedtransition"
                 >
                   {loading ? "Creating..." : "Create User"}
                 </button>
