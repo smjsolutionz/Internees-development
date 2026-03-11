@@ -83,7 +83,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
         <h2 className="text-lg font-semibold">Users</h2>
         <button
           onClick={() => navigate("/create-user")}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-fit"
+          className="flex items-center gap-2 bg-[#BB8C4B] hover:bg-[#a3733f] text-white px-4 py-2 rounded w-fit"
         >
           <FiPlus size={16} />
           Create User
@@ -98,7 +98,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
             onClick={() => handleRoleClick(role)}
             className={`px-3 py-1.5 rounded text-sm border transition ${
               activeRole === role
-                ? "bg-blue-600 text-white border-blue-600"
+                ? "bg-[#BB8C4B] text-white border-[#BB8C4B]"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             }`}
           >

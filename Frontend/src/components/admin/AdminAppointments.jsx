@@ -197,7 +197,7 @@ const AllAppointmentsAdmin = () => {
                               ? "bg-green-100 text-green-800"
                               : appt.status === "completed"
                               ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                              : "bg-red-100 text-red-600"
                           }`}
                         >
                           {appt.status}

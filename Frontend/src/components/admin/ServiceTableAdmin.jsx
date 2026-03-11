@@ -46,7 +46,7 @@ export default function ServicesTableAdmin({ services }) {
         <h2 className="text-lg font-semibold">Services</h2>
         <button
           onClick={() => navigate("/create-service")}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          className="flex items-center gap-2  text-white px-4 py-2 rounded bg-[#BB8C4B] hover:bg-[#a3733f]"
         >
           <FiPlus size={16} />
           Create New Service
