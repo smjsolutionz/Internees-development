@@ -107,7 +107,7 @@ export default function CreateServiceAdmin() {
                 name="name"
                 value={service.name}
                 onChange={handleChange}
-                className="w-full border p-2 rounded"
+                className="w-full border p-2 rounded "
                 required
               />
             </div>

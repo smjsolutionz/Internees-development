@@ -1,8 +1,8 @@
 const Attendance = require("../models/Attendence.model");
 const AdminUser = require("../models/adminUser.model");
 
-// Shift end time for Late Checkout (5:00 PM)
-const SHIFT_END_HOUR = 17;
+// Shift end time for Late Checkout (10:00 PM)
+const SHIFT_END_HOUR = 22;
 const SHIFT_END_MINUTE = 0;
 
 /* =========================
@@ -322,8 +322,6 @@ exports.getAttendanceOverview = async (req, res) => {
     const userRole = req.user.role;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
 
     let roleFilter = {};
     if (userRole === "ADMIN") {
@@ -338,12 +336,13 @@ exports.getAttendanceOverview = async (req, res) => {
 
     const todayFilter = { ...roleFilter, date: today };
 
-    const [present, leave, absent, missedCheckout, lateCheckout] = await Promise.all([
+    const [present, leave, absentRecords, missedCheckout, lateCheckout, totalRecords] = await Promise.all([
       Attendance.countDocuments({ ...todayFilter, status: "Present" }),
       Attendance.countDocuments({ ...todayFilter, status: "Leave" }),
       Attendance.countDocuments({ ...todayFilter, status: "Absent" }),
       Attendance.countDocuments({ ...todayFilter, status: "Missed Checkout" }),
       Attendance.countDocuments({ ...todayFilter, status: "Late Checkout" }),
+      Attendance.countDocuments({ ...todayFilter }),
     ]);
 
     // Total employees in scope (for absent we need: no record or status Absent)
@@ -353,16 +352,18 @@ exports.getAttendanceOverview = async (req, res) => {
       status: "ACTIVE",
     });
 
-    const totalWithRecord = present + leave + missedCheckout + lateCheckout;
-    const absentCount = Math.max(absent, employeesInScope - totalWithRecord);
+    // Absent can be explicit (status=Absent) or implicit (no record created yet for today).
+    const implicitAbsent = Math.max(0, employeesInScope - totalRecords);
+    const absent = absentRecords + implicitAbsent;
 
     res.status(200).json({
       success: true,
       overview: {
         present,
-        absent: absentCount,
+        absent,
         leave,
         missedCheckout,
+        lateCheckout,
       },
     });
   } catch (err) {

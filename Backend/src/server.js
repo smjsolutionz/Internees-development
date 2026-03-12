@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
 require("./utils/cleanupJobs"); // Import cleanup jobs
+require("./utils/attendanceCron"); // Attendance auto-marking jobs
 const connectDB = require("./config/db");
 
 // 🔹 IMPORT ROUTES

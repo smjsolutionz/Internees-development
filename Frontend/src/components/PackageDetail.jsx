@@ -237,7 +237,7 @@ const PackageDetail = () => {
   if (!pkg) return <p className="text-center mt-20 text-gray-500">Package not found</p>;
 
   return (
-    <div className="max-w-7xl mx-auto pt-28 px-4">
+    <div className="max-w-7xl container mx-auto pt-28 px-4">
       {/* ===== PACKAGE UI ===== */}
       <div className="flex flex-col md:flex-row gap-10">
         <div className="md:w-1/2 h-[400px] rounded-2xl overflow-hidden">
