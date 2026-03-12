@@ -191,14 +191,14 @@ const MyAppointments = () => {
                   {a.notes && <p className="text-sm text-gray-600 pt-2 border-t break-words"><b>Notes:</b> {a.notes}</p>}
                 </div>
                   {/* Show receipt button if appointment completed */}
-{a.status === "completed" && (
+{a.status === "completed" && a.bill && (
   <div className="px-4 pb-4 pt-2">
     <button
-  onClick={() => handlePrint(a)}
-  className="w-full bg-[#BB8C4B] text-white py-2 rounded hover:bg-[#A97C42] transition text-sm font-medium"
->
-  View Receipt
-</button>
+      onClick={() => handlePrint(a.bill)}
+      className="w-full bg-[#BB8C4B] text-white py-2 rounded"
+    >
+      View Receipt
+    </button>
   </div>
 )}
                 {/* Footer */}
