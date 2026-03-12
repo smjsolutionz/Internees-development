@@ -239,44 +239,114 @@ const PackageDetail = () => {
   return (
     <div className="max-w-7xl container mx-auto pt-28 px-4">
       {/* ===== PACKAGE UI ===== */}
-      <div className="flex flex-col md:flex-row gap-10">
-        <div className="md:w-1/2 h-[400px] rounded-2xl overflow-hidden">
-          <img
-            src={`http://localhost:5000/${pkg.image}`}
-            alt={pkg.name}
-            className="w-full h-full object-cover"
-          />
-        </div>
+      {/* ===== PACKAGE UI ===== */}
+<div className="grid lg:grid-cols-2 gap-12 mb-16">
 
-        <div className="md:w-1/2 flex flex-col gap-4">
-          <h1 className="text-4xl font-extrabold">{pkg.name}</h1>
+  {/* IMAGE */}
+  <div className="rounded-2xl overflow-hidden ">
+  <img
+    src={`http://localhost:5000/${pkg.image}`}
+    alt={pkg.name}
+    className="w-full h-64 sm:h-80 md:h-96 lg:h-[420px] object-cover"
+  />
+</div>
 
-          <div className="flex items-center gap-4">
-            <p className="text-gray-600">Duration: {pkg.totalDuration}</p>
-            <span className="text-3xl font-bold text-[#c0954d]">{pkg.price}/-</span>
-          </div>
+  {/* RIGHT SIDE DETAILS */}
+  <div className="flex flex-col gap-6">
 
+    {/* Title */}
+    <h1 className="text-4xl font-bold text-gray-800">
+      {pkg.name}
+    </h1>
 
-          <h3 className="text-xl font-semibold mt-6">Included Services</h3>
-          <ul className="mb-6 border rounded-lg p-4">
-            {pkg.services?.map((service) => (
-              <li key={service._id} className="flex justify-between py-2 border-b last:border-b-0">
-                <span className="font-medium">{service.name}</span>
-                {service.price && (
-                  <span className="text-[#c0954d]">{service.price}</span>
-                )}
-              </li>
-            ))}
-          </ul>
+    {/* Duration + Price */}
+<div className="w-full mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-          <button
-            onClick={() => setIsOpen(true)}
-            className="mt-6  max-h-12 max-w-60  px-6 py-3 bg-[#c0954d] text-white hover:bg-[#a87c3e] flex items-center gap-2 rounded-md"
-          >
-            Book This Package <FaArrowRight />
-          </button>
-        </div>
+  {/* Duration Card */}
+  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-sm hover:shadow-md transition w-full">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#c0954d]/10 text-[#c0954d] text-xl">
+        ⏱
       </div>
+      <div>
+        <p className="text-xs text-gray-500 uppercase tracking-wider">
+          Duration
+        </p>
+        <p className="text-lg font-semibold text-gray-800">
+          {pkg.totalDuration}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {/* Price Card */}
+  <div className="flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-4 py-4 shadow-sm hover:shadow-md transition w-full">
+    <div className="flex items-center gap-4">
+      <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-[#c0954d]/10 text-[#c0954d] text-xl">
+        💰
+      </div>
+      <div>
+        <p className="text-xs text-gray-500 uppercase tracking-wider">
+          Package Price
+        </p>
+        <p className="text-xl font-bold text-[#c0954d]">
+          {pkg.price}/-
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+    {/* SERVICES */}
+    <div className="border rounded-xl p-6 bg-white shadow-sm">
+
+      <h3 className="text-xl font-semibold mb-4">
+        Included Services
+      </h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {pkg.services?.map((service) => (
+          <div
+            key={service._id}
+            className="flex items-center justify-between border rounded-lg px-4 py-3 hover:shadow-sm transition"
+          >
+
+            <div className="flex items-center gap-3">
+
+              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-[#f3e8d5] text-[#c0954d] font-bold">
+                ✓
+              </div>
+
+              <span className="text-gray-700 font-medium">
+                {service.name}
+              </span>
+
+            </div>
+
+            {service.price && (
+              <span className="text-[#c0954d] font-semibold">
+                {service.price}
+              </span>
+            )}
+
+          </div>
+        ))}
+
+      </div>
+    </div>
+
+    {/* BOOK BUTTON */}
+    <button
+      onClick={() => setIsOpen(true)}
+      className="w-fit px-8 py-3 bg-[#c0954d] text-white rounded-lg hover:bg-[#a87c3e] flex items-center gap-2 shadow-md"
+    >
+      Book This Package <FaArrowRight />
+    </button>
+
+  </div>
+</div>
 
       {/* ===== REVIEWS SECTION ===== */}
       <div className="mt-10">
