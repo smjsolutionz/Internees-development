@@ -72,6 +72,8 @@ import AttendancePage from "./pages/attendance/AttendancePage";
 import MyAttendancePage from "./pages/attendance/MyAttendancePage";
 import UpdateServiceAdmin from "./components/admin/UpdateServiceAdmin";
 import AddGalleryImage from "./components/admin/AddGalleryImage";
+
+import RevenueReport from "./pages/admin/RevenueReport";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -424,6 +426,15 @@ export default function App() {
   element={
     <ProtectedRoute allowedRoles={["staff", "manager", "receptionist", "inventory_manager"]}>
       <MyAttendancePage />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/revenue"
+  element={
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <RevenueReport />
     </ProtectedRoute>
   }
 />

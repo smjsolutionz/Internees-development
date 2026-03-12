@@ -81,17 +81,17 @@ export default function ReceptionistBills() {
               <div className="overflow-x-auto bg-white shadow rounded-xl">
                 <table className="min-w-full text-sm text-left">
                   <thead className="bg-gray-100">
-                    <tr>
-                      <th className="p-3">Bill Number</th>
-                      <th className="p-3">Customer</th>
-                      <th className="p-3">Service</th>
-                      <th className="p-3">Total</th>
-                      <th className="p-3">Paid</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Date</th>
-                      <th className="p-3">Action</th> {/* New column */}
-                    </tr>
-                  </thead>
+  <tr>
+    <th className="p-3">Bill Number</th>
+    <th className="p-3">Customer</th>
+    <th className="p-3">Service</th>
+    <th className="p-3">Total</th>
+    <th className="p-3">Paid</th>
+    <th className="p-3">Status</th>
+    <th className="p-3">Date</th>
+    <th className="p-3">Action</th>
+  </tr>
+</thead>
                   <tbody>
                     {bills.map((bill) => (
                       <tr key={bill._id} className="border-t">

@@ -34,6 +34,8 @@ const  adminappointment =require("./routes/adminAppointmentRoutes")
 const reviewAdminRoutes=require("./routes/reviewAdminRoutes")
 const staffAppointmentRoutes = require("./routes/staff/staffAppointmentRoutes");
 const AttendanceRoutes = require("./routes/attendanceRoutes");
+const revenueRoutes = require("./routes/revenueRoutes");
+
 const app = express();
 
 // 🔹 Connect DB
@@ -111,7 +113,7 @@ app.use("/api/receptionist/walkin", walkInRoutes);
 app.use("/api/staff/appointments", staffAppointmentRoutes);
 
 app.use("/api/bill", billRoutes);
-
+app.use("/api/admin/revenue", revenueRoutes);
 
 
 // 🔹 Global Error Handler
