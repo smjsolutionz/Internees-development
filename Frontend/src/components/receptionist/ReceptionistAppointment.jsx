@@ -215,29 +215,28 @@ export default function ReceptionistAppointments() {
   };
 
   /* ================= BILL ================= */
- const generateBill = async (appointment, force = false) => {
-  try {
-    const { data } = await axios.post(
-      `${API_BASE_URL}/api/bill/generate`,
-      { appointmentId: appointment._id, force },
-      getAuthConfig()
-    );
-    setBillData(data.bill);
-    setShowBillModal(true);
-    setMessage({ type: "success", text: "Bill generated successfully" });
+  const generateBill = async (appointment, force = false) => {
+    try {
+      const { data } = await axios.post(
+        `${API_BASE_URL}/api/bill/generate`,
+        { appointmentId: appointment._id, force },
+        getAuthConfig()
+      );
+      setBillData(data.bill);
+      setPaidAmount(data.bill?.paidAmount || 0);
+      setShowBillModal(true);
+      setMessage({ type: "success", text: "Bill generated successfully" });
 
-    // Update appointment locally so button text updates
-    setAppointments(prev =>
-      prev.map(appt =>
-        appt._id === appointment._id ? { ...appt, bill: data.bill } : appt
-      )
-    );
-
-  } catch (err) {
-    const errMsg = err.response?.data?.message || "Bill generation failed";
-    setMessage({ type: "error", text: errMsg });
-  }
-};
+      setAppointments(prev =>
+        prev.map(appt =>
+          appt._id === appointment._id ? { ...appt, bill: data.bill } : appt
+        )
+      );
+    } catch (err) {
+      const errMsg = err.response?.data?.message || "Bill generation failed";
+      setMessage({ type: "error", text: errMsg });
+    }
+  };
 
   const confirmPayment = async () => {
     if (!paidAmount) {
@@ -251,9 +250,12 @@ export default function ReceptionistAppointments() {
         getAuthConfig()
       );
       setBillData(data.bill);
+      setPaidAmount(data.bill.paidAmount || 0);
       setMessage({ type: "success", text: "Payment successful" });
+      fetchAppointments(page);
     } catch (err) {
-      setMessage({ type: "error", text: "Payment failed" });
+      const errMsg = err.response?.data?.message || "Payment failed";
+      setMessage({ type: "error", text: errMsg });
     }
   };
 
@@ -264,6 +266,7 @@ export default function ReceptionistAppointments() {
       <p>Bill Number: ${billData.billNumber}</p>
       <p>Customer: ${billData.customerName}</p>
       <p>Service: ${billData.serviceName}</p>
+      <p>Package: ${billData.packageName?.name || "N/A"}</p>
       <p>Total Amount: ${billData.totalAmount}</p>
       <p>Paid Amount: ${billData.paidAmount}</p>
       <p>Date: ${new Date().toLocaleString()}</p>
@@ -280,7 +283,6 @@ export default function ReceptionistAppointments() {
     }
   }, [message]);
 
-  /* ================= LOADING/ERROR ================= */
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -364,18 +366,20 @@ export default function ReceptionistAppointments() {
                   {staffList.map(staff => <option key={staff._id} value={staff._id}>{staff.name} {staff.specialty ? `(${staff.specialty})` : ""}</option>)}
                 </select>
 
-              <div className="flex gap-2">
-  <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">
-    Reschedule
-  </button>
- <button
-  onClick={() => generateBill(appt, true)} // pass `true` to force regeneration
-  className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1"
->
-  <FileText size={16} />
-  {appt.bill && appt.bill.paidAmount === 0 ? "Regenerate Bill" : "Generate Bill"}
-</button>
-</div>
+                <div className="flex gap-2">
+                  <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">Reschedule</button>
+                  <button
+                    onClick={() => generateBill(appt, true)}
+                    className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1"
+                  >
+                    <FileText size={16} />
+                    {appt.bill
+                      ? appt.bill.paidAmount === 0
+                        ? "Regenerate Bill"
+                        : "Generate Bill"
+                      : "Generate Bill"}
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -391,12 +395,11 @@ export default function ReceptionistAppointments() {
         <button onClick={() => handlePageChange(page + 1)} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400">Next</button>
       </div>
 
-      {/* ================= RESCHEDULE MODAL ================= */}
+      {/* RESCHEDULE MODAL */}
       {showRescheduleModal && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96">
             <h2 className="text-xl font-bold mb-4">Reschedule Appointment</h2>
-
             <label className="block mb-2">Select Date:</label>
             <input type="date" value={rescheduleData.date} onChange={async e => {
               const newDate = e.target.value;
@@ -404,62 +407,54 @@ export default function ReceptionistAppointments() {
               try {
                 const { data } = await axios.get(`${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/available-slots`, {
                   ...getAuthConfig(),
-                  params: { date: newDate }
+                  params: { date: newDate },
                 });
                 setRescheduleData(prev => ({ ...prev, availableSlots: data.availableSlots || [] }));
               } catch (err) {
                 console.error(err);
-                setMessage({ type: "error", text: "Failed to fetch available slots" });
               }
-            }} className="border px-2 py-1 rounded w-full mb-4" />
+            }} className="border p-2 rounded w-full mb-4" />
 
-            <label className="block mb-2">Select Time Slot:</label>
-            <select value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({ ...prev, time: e.target.value }))} className="border px-2 py-1 rounded w-full mb-4">
+            <label className="block mb-2">Select Time:</label>
+            <select value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({ ...prev, time: e.target.value }))} className="border p-2 rounded w-full mb-4">
               <option value="">Select Slot</option>
-              {rescheduleData.availableSlots.map(slot => <option key={slot} value={slot}>{formatTime(slot)}</option>)}
+              {rescheduleData.availableSlots.map(slot => (
+                <option key={slot} value={slot}>{formatTime(slot)}</option>
+              ))}
             </select>
 
             <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300" onClick={() => setShowRescheduleModal(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded bg-[#BB8C4B] text-white" onClick={rescheduleAppointment}>Reschedule</button>
+              <button onClick={() => setShowRescheduleModal(false)} className="px-4 py-2 rounded border">Cancel</button>
+              <button onClick={rescheduleAppointment} className="px-4 py-2 rounded bg-[#BB8C4B] text-white">Reschedule</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ================= BILL MODAL ================= */}
+      {/* BILL MODAL */}
       {showBillModal && billData && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96">
-            <h2 className="text-xl font-bold mb-4">Bill Details</h2>
-            {message && (
-  <div className={`mb-3 p-2 rounded text-center ${
-    message.type === "success"
-      ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800"
-  }`}>
-    {message.text}
-  </div>
-)}
+            <h2 className="text-xl font-bold mb-4">Bill - {billData.billNumber}</h2>
 
-            <p>Bill Number: {billData.billNumber}</p>
             <p>Customer: {billData.customerName}</p>
             <p>Service: {billData.serviceName}</p>
+            <p>Package: {billData.packageName?.name || "N/A"}</p>
             <p>Total Amount: {billData.totalAmount}</p>
-            <p>Paid Amount: {billData.paidAmount || 0}</p>
+            <p>
+              Paid Amount:
+              <input type="number" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} className="border px-2 py-1 ml-2 w-24 rounded" />
+            </p>
+            <p>Balance: {billData.totalAmount - (paidAmount || 0)}</p>
 
-            <label className="block mb-2 mt-3">Enter Paid Amount:</label>
-            <input type="number" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} className="border px-2 py-1 rounded w-full mb-4" />
-
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300" onClick={() => setShowBillModal(false)}>Close</button>
-              <button className="px-3 py-1 rounded bg-green-500 text-white" onClick={confirmPayment}>Confirm Payment</button>
-              <button className="px-3 py-1 rounded bg-blue-500 text-white" onClick={printReceipt}>Print</button>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setShowBillModal(false)} className="px-4 py-2 rounded border">Close</button>
+              <button onClick={confirmPayment} className="px-4 py-2 rounded bg-[#BB8C4B] text-white">Confirm Payment</button>
+              <button onClick={printReceipt} className="px-4 py-2 rounded bg-blue-500 text-white">Print</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

@@ -1,180 +1,101 @@
+// controllers/billController.js
 const Bill = require("../../models/Bill");
 const Appointment = require("../../models/Appointment");
+const Package = require("../../models/Package");
 const generateBillNumber = require("../../utils/generateBillNumber");
 
-// ================= GENERATE BILL =================
+// ---------------- GENERATE BILL ----------------
 exports.generateBill = async (req, res) => {
   try {
-    const { appointmentId } = req.body;
+    const { appointmentId, force } = req.body;
 
     const appointment = await Appointment.findById(appointmentId)
       .populate("service")
       .populate("package");
 
-    if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
-    }
+    if (!appointment)
+      return res.status(404).json({ success: false, message: "Appointment not found" });
 
-    const item = appointment.package || appointment.service;
+    if (!appointment.service && !appointment.package)
+      return res.status(400).json({ success: false, message: "No service or package found" });
 
-    if (!item) {
-      return res.status(400).json({
-        success: false,
-        message: "No service or package found",
-      });
-    }
-
-    // ✅ Check existing bill
+    // Check existing bill
     let existingBill = await Bill.findOne({ appointmentId });
+    if (existingBill && !force && existingBill.paidAmount > 0)
+      return res.status(400).json({ success: false, message: "Bill already exists and is paid" });
 
-    if (existingBill) {
-      // Allow regeneration if unpaid
-      if (existingBill.paidAmount > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Bill already exists and is paid",
-        });
-      } else {
-        // Delete unpaid bill to generate new one
-        await existingBill.deleteOne();
-      }
-    }
+    if (existingBill) await existingBill.deleteOne();
 
-    // Remove everything except digits and dot, then convert to number
-    const rawPrice = item.price || item.pricing || 0;
-    const totalAmount = Number(String(rawPrice).replace(/[^0-9.]/g, ""));
+    // Combine service + package names
+    const serviceName = [
+      appointment.service ? appointment.service.name : null,
+      appointment.package ? appointment.package.name : null,
+    ].filter(Boolean).join(" + ");
+
+    // Total amount: sum service and package price if both exist
+    const totalAmount =
+      (appointment.service?.price || 0) + (appointment.package?.price || 0);
 
     const bill = await Bill.create({
       billNumber: generateBillNumber(),
       appointmentId,
       customerName: appointment.customerName,
-      serviceName: item.name,
+      serviceName, // combined name
+      packageName: appointment.package ? appointment.package._id : null,
       totalAmount,
-      paidAmount: 0,
-      paymentStatus: "Unpaid",
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Bill generated successfully",
-      bill,
-    });
+    appointment.bill = bill._id;
+    await appointment.save();
+
+    res.status(201).json({ success: true, message: "Bill generated successfully", bill });
   } catch (error) {
-    console.error("Generate Bill Error:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// ================= CONFIRM PAYMENT =================
-
+// ---------------- CONFIRM PAYMENT ----------------
 exports.confirmPayment = async (req, res) => {
+  try {
+    const { billId } = req.params;
+    const { paidAmount } = req.body;
 
-try {
+    const bill = await Bill.findById(billId);
+    if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
 
-  const { billId } = req.params;
-  const { paidAmount } = req.body;
+    bill.paidAmount = paidAmount;
+    bill.paymentStatus = paidAmount >= bill.totalAmount ? "Paid" : "Unpaid";
+    bill.paymentDate = new Date();
+    await bill.save();
 
-  const bill = await Bill.findById(billId);
-
-  if (!bill) {
-    return res.status(404).json({
-      success: false,
-      message: "Bill not found",
-    });
+    res.json({ success: true, message: "Payment updated", bill });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
-
-  if (paidAmount < bill.totalAmount) {
-    return res.status(400).json({
-      success: false,
-      message: "Paid amount must be equal or greater than total",
-    });
-  }
-
-  bill.paidAmount = paidAmount;
-  bill.paymentStatus = "Paid";
-  bill.paymentDate = new Date();
-
-  await bill.save();
-
-  res.json({
-    success: true,
-    message: "Payment confirmed",
-    bill,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
 };
 
-
-// ================= GET ALL BILLS =================
-
+// ---------------- GET ALL BILLS ----------------
 exports.getBills = async (req, res) => {
+  try {
+    const bills = await Bill.find()
+      .populate("appointmentId")
+      .sort({ createdAt: -1 });
 
-try {
-
-  const bills = await Bill.find()
-    .populate("appointmentId")
-    .sort({ createdAt: -1 });
-
-  res.json({
-    success: true,
-    bills,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
-};
-
-
-// ================= GET BILL BY ID =================
-
-exports.getBillById = async (req, res) => {
-
-try {
-
-  const bill = await Bill.findById(req.params.id)
-    .populate("appointmentId");
-
-  if (!bill) {
-    return res.status(404).json({
-      success: false,
-      message: "Bill not found",
-    });
+    res.json({ success: true, bills });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
   }
-
-  res.json({
-    success: true,
-    bill,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
 };
+
+// ---------------- GET BILL BY ID ----------------
+exports.getBillById = async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id).populate("appointmentId");
+    if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
+
+    res.json({ success: true, bill });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
