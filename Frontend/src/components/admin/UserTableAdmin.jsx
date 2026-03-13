@@ -114,7 +114,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
           value={search}
           onChange={handleSearch}
           placeholder="Search by name or email"
-          className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
         />
       </div>
 
@@ -155,11 +155,11 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
               <div className="flex flex-col md:block">
                 <span className="font-medium md:hidden">Verified:</span>
                 {user.isVerified ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-600">
                     ✓ Verified
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-600">
                     ⚠ Pending
                   </span>
                 )}

@@ -83,10 +83,10 @@ const MyAppointments = () => {
 
   const getStatusBadge = (status) => {
     const colors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-green-100 text-green-800",
-      completed: "bg-blue-100 text-blue-800",
-      cancelled: "bg-red-100 text-red-800",
+      pending: "bg-yellow-100 text-yellow-600",
+      confirmed: "bg-green-100 text-green-600",
+      completed: "bg-blue-100 text-blue-600",
+      cancelled: "bg-red-100 text-red-600",
     };
     return <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors[status] || "bg-gray-200"}`}>{status}</span>;
   };
@@ -191,14 +191,14 @@ const MyAppointments = () => {
                   {a.notes && <p className="text-sm text-gray-600 pt-2 border-t break-words"><b>Notes:</b> {a.notes}</p>}
                 </div>
                   {/* Show receipt button if appointment completed */}
-{a.status === "completed" && (
+{a.status === "completed" && a.bill && (
   <div className="px-4 pb-4 pt-2">
     <button
-  onClick={() => handlePrint(a)}
-  className="w-full bg-[#BB8C4B] text-white py-2 rounded hover:bg-[#A97C42] transition text-sm font-medium"
->
-  View Receipt
-</button>
+      onClick={() => handlePrint(a.bill)}
+      className="w-full bg-[#BB8C4B] text-white py-2 rounded"
+    >
+      View Receipt
+    </button>
   </div>
 )}
                 {/* Footer */}

@@ -34,7 +34,7 @@ export default function AttendanceOverview() {
   if (loading || !overview) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard title="Present Today" value={overview.present} color="bg-green-500" />
       <StatCard title="Absent Today" value={overview.absent} color="bg-red-500" />
       <StatCard title="On Leave" value={overview.leave} color="bg-blue-500" />
