@@ -9,23 +9,35 @@ export default function TopbarAdmin({ setSidebarOpen }) {
   const [profilePic, setProfilePic] = useState(null);
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+let storedUser = {};
+try {
+  storedUser = JSON.parse(localStorage.getItem("user")) || {};
+} catch {
+  storedUser = {};
+}
   const role = (storedUser.role || "guest").toLowerCase();
 
- useEffect(() => {
-  const token = localStorage.getItem("accessToken");
-  if (!token) return;
-
+useEffect(() => {
   const fetchProfile = async () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return setProfilePic(null);
+
     try {
       const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const user = res.data.user; // ✅ fixed: always user
-      setProfilePic(user.profilePic || null);
+      console.log("API response:", res.data);
+
+      // Directly use res.data as user
+      const user = res.data;
+
+      setProfilePic(user?.profilePic || null);
+      console.log("Profile loaded:", user);
+
     } catch (err) {
       console.error("Failed to load profile pic", err);
+      setProfilePic(null);
     }
   };
 

@@ -16,15 +16,22 @@ const Navbar = () => {
     document.body.style.overflow = isOpen ? "hidden" : "auto";
   }, [isOpen]);
 
-  useEffect(() => {
+ useEffect(() => {
   const storedUser = localStorage.getItem("user");
   const token = localStorage.getItem("accessToken");
 
-  if (!storedUser || !token) return;
+  if (!storedUser || !token) return; // agar storage empty hai to exit
 
-  const parsedUser = JSON.parse(storedUser);
+  let parsedUser = null;
+  try {
+    parsedUser = JSON.parse(storedUser);
+  } catch (err) {
+    console.error("Invalid JSON in storage:", err);
+    localStorage.removeItem("user"); // cleanup
+  }
 
-  // ✅ If CUSTOMER → fetch customer profile
+  if (!parsedUser) return;
+
   if (parsedUser.role === "customer" || parsedUser.role === "user") {
     axios
       .get("http://localhost:5000/api/customer/profile", {
@@ -36,14 +43,10 @@ const Navbar = () => {
         localStorage.removeItem("user");
         setUser(null);
       });
-  }
-
-  // ✅ If ADMIN → directly use stored user
-  else {
+  } else {
     setUser(parsedUser);
   }
 }, []);
-
 
   const handlePackagesClick = () => {
     navigate("/");

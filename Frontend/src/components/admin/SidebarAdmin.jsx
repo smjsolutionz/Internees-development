@@ -14,46 +14,48 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const [user, setUser] = useState(null);
   const [dropdownState, setDropdownState] = useState({});
 
+let storedUser = {};
+try {
+  storedUser = JSON.parse(localStorage.getItem("user")) || {};
+} catch {
+  storedUser = {};
+}
+const [role, setRole] = useState(() => {
   const storedUser = JSON.parse(localStorage.getItem("user")) || {};
-  const role = (storedUser.role || "guest").toLowerCase();
+  return (storedUser.role || "guest").toLowerCase();
+});
 
   /* ================= FETCH PROFILE ================= */
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) return;
+useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) return;
 
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const role = storedUser?.role?.toLowerCase();
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      const currentRole = storedUser?.role?.toLowerCase();
 
-        let endpoint = "";
+      let endpoint = currentRole === "customer" ? "/api/customer/profile" : "/api/admin/profile";
 
-        if (role === "customer") {
-          endpoint = "/api/customer/profile";
-        } else {
-          endpoint = "/api/admin/profile";
-        }
+      const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const profile = res.data.user || res.data.admin || res.data;
+      setUser(profile);
 
-        const profile = res.data.user || res.data.admin;
+      // Update localStorage and state role
+      localStorage.setItem("user", JSON.stringify(profile));
+      setRole(profile.role?.toLowerCase() || "guest"); // ✅ Now works
 
-        setUser(profile);
+    } catch (err) {
+      console.error("Sidebar profile load failed", err);
+      setUser(null);
+    }
+  };
 
-        /* update localStorage so sidebar stays updated */
-        localStorage.setItem("user", JSON.stringify(profile));
-
-      } catch (err) {
-        console.error("Sidebar profile load failed", err);
-        setUser(null);
-      }
-    };
-
-    fetchProfile();
-  }, []);
+  fetchProfile();
+}, []);
 
   const menu = roleMenus[role] || [];
 
