@@ -112,7 +112,7 @@ export default function GalleryEditAdmin() {
         </button>
         <button
           onClick={saveEdit}
-          className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          className="px-4 py-2 rounded bg-[#BB8C4B] hover:bg-[#a3733f]  text-white "
         >
           Save
         </button>

@@ -125,7 +125,7 @@ export default function AttendanceActions({ onUpdate }) {
           <button
             onClick={() => setLeaveModal(true)}
             disabled={loading}
-            className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
           >
             Mark Leave
           </button>
@@ -172,7 +172,7 @@ export default function AttendanceActions({ onUpdate }) {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
                 >
                   Mark Leave
                 </button>

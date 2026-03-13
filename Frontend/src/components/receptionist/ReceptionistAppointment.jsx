@@ -356,7 +356,7 @@ export default function ReceptionistAppointments() {
                     <option value="completed">Completed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
-                  <button onClick={() => cancelAppointment(appt._id)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
+                  <button onClick={() => cancelAppointment(appt._id)} className="bg-red-600 text-white px-3 py-1 rounded">Cancel</button>
                 </div>
 
                 <select value={appt.staff?._id || ""} onChange={e => assignStaff(appt._id, e.target.value)} className="border px-2 py-1 rounded">
@@ -453,8 +453,8 @@ export default function ReceptionistAppointments() {
 
             <div className="flex justify-end gap-2">
               <button className="px-3 py-1 rounded bg-gray-300" onClick={() => setShowBillModal(false)}>Close</button>
-              <button className="px-3 py-1 rounded bg-green-500 text-white" onClick={confirmPayment}>Confirm Payment</button>
-              <button className="px-3 py-1 rounded bg-blue-500 text-white" onClick={printReceipt}>Print</button>
+              <button className="px-3 py-1 rounded bg-green-600 text-white" onClick={confirmPayment}>Confirm Payment</button>
+              <button className="px-3 py-1 rounded bg-blue-600 text-white" onClick={printReceipt}>Print</button>
             </div>
           </div>
         </div>

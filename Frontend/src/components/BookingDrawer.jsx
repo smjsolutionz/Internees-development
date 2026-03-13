@@ -10,7 +10,7 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
     serviceId: "",
     packageId: "",
     date: "",
-    time: "",
+    time: ""
   });
 
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -22,27 +22,27 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const isLoggedIn = !!token && !!user?.email;
 
-  // Prefill user data
+  // Prefill user data if logged in
   useEffect(() => {
     if (isLoggedIn) {
       setFormData(prev => ({
         ...prev,
         name: user.name || "",
-        email: user.email,
+        email: user.email || "",
         phone: user.phone || "",
         serviceId: serviceId || "",
-        packageId: packageId || "",
+        packageId: packageId || ""
       }));
     } else {
       setFormData(prev => ({
         ...prev,
         serviceId: serviceId || "",
-        packageId: packageId || "",
+        packageId: packageId || ""
       }));
     }
   }, [serviceId, packageId, isLoggedIn]);
 
-  // Fetch slots (same logic as AppointmentSection)
+  // Fetch available slots
   const fetchAvailableSlots = async () => {
     if (!formData.date) return;
     setLoadingSlots(true);
@@ -78,8 +78,9 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
   const handleSubmit = async e => {
     e.preventDefault();
 
-    if (!isLoggedIn) {
-      toast.error("Please login first to book an appointment");
+    // Guest + user booking allowed
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error("Please fill all fields");
       return;
     }
 
@@ -94,6 +95,7 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
     }
 
     setSubmitting(true);
+
     try {
       const payload = {
         appointmentDate: formData.date,
@@ -101,19 +103,18 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
-        notes: "",
+        notes: ""
       };
-
       if (formData.serviceId) payload.serviceId = formData.serviceId;
       if (formData.packageId) payload.packageId = formData.packageId;
 
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const res = await fetch(`${API_URL}/appointments`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+        headers,
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -121,16 +122,13 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
 
       toast.success("Appointment booked successfully!");
 
-      // Reset only service/package/date/time, keep user info
       setFormData(prev => ({
         ...prev,
-        serviceId: "",
-        packageId: "",
         date: "",
-        time: "",
+        time: ""
       }));
 
-      fetchAvailableSlots(); // refresh slots
+      fetchAvailableSlots();
 
     } catch (err) {
       toast.error(err.message || "Failed to book appointment");
@@ -158,15 +156,17 @@ export default function BookingDrawer({ isOpen, onClose, service, serviceId, pac
         <div className="h-full overflow-y-auto">
           <div className="relative px-6 py-6 border-b text-center">
             <h3 className="text-2xl font-serif">Book An Appointment</h3>
-            <button onClick={onClose} className="absolute right-4 top-4"><IoClose className="text-2xl" /></button>
+            <button onClick={onClose} className="absolute right-4 top-4">
+              <IoClose className="text-2xl" />
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
             <p><b>Service/Package:</b> <span className="text-[#BB8C4B]">{service}</span></p>
             <p><b>Price:</b> <span className="text-[#BB8C4B]">Rs. {price}</span></p>
 
-            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="w-full border px-4 h-[48px]" disabled={submitting} />
-            <input type="email" name="email" value={formData.email} placeholder="Email" readOnly={isLoggedIn} className={`w-full border px-4 h-[48px] ${isLoggedIn ? "bg-gray-200 cursor-not-allowed" : ""}`} />
+            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Name" className="w-full border px-4 h-[48px]" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" className={`w-full border px-4 h-[48px] ${isLoggedIn ? "bg-gray-200 cursor-not-allowed" : ""}`} readOnly={isLoggedIn} />
             <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone" className="w-full border px-4 h-[48px]" />
 
             <div className="grid grid-cols-2 gap-4">

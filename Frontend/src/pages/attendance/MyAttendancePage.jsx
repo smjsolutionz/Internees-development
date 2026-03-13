@@ -111,16 +111,16 @@ export default function MyAttendancePage() {
                   {attendance.map((r) => {
                     const statusClass =
                       r.status === "Present"
-                        ? "bg-green-100 text-green-800"
+                        ? "bg-green-100 text-green-600"
                         : r.status === "Leave"
-                        ? "bg-blue-100 text-blue-800"
+                        ? "bg-blue-100 text-blue-600"
                         : r.status === "Absent"
-                        ? "bg-red-100 text-red-800"
+                        ? "bg-red-100 text-red-600"
                         : r.status === "Missed Checkout"
-                        ? "bg-amber-100 text-amber-800"
+                        ? "bg-amber-100 text-amber-600"
                         : r.status === "Late Checkout"
-                        ? "bg-purple-100 text-purple-800"
-                        : "bg-gray-100 text-gray-800";
+                        ? "bg-purple-100 text-purple-600"
+                        : "bg-gray-100 text-gray-600";
 
                     return (
                       <div key={r._id} className="border rounded-lg p-4 bg-white shadow-sm">
@@ -162,16 +162,16 @@ export default function MyAttendancePage() {
                             <span
                               className={`px-2 py-1 text-xs rounded ${
                                 r.status === "Present"
-                                  ? "bg-green-100 text-green-800"
+                                  ? "bg-green-100 text-green-600"
                                   : r.status === "Leave"
-                                  ? "bg-blue-100 text-blue-800"
+                                  ? "bg-blue-100 text-blue-600"
                                   : r.status === "Absent"
-                                  ? "bg-red-100 text-red-800"
+                                  ? "bg-red-100 text-red-600"
                                   : r.status === "Missed Checkout"
-                                  ? "bg-amber-100 text-amber-800"
+                                  ? "bg-amber-100 text-amber-600"
                                   : r.status === "Late Checkout"
-                                  ? "bg-purple-100 text-purple-800"
-                                  : "bg-gray-100 text-gray-800"
+                                  ? "bg-purple-100 text-purple-600"
+                                  : "bg-gray-100 text-gray-600"
                               }`}
                             >
                               {r.status}
