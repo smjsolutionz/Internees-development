@@ -3,6 +3,7 @@ import Sidebar from "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
 import AttendanceOverview from "../../components/attendance/AttendanceOverview";
 import AttendanceActions from "../../components/attendance/AttendanceActions";
+import StockAlertsOverview from "../../components/inventory/StockAlertsOverview";
 
 export default function Manager() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,6 +27,12 @@ export default function Manager() {
           <div>
             <h2 className="text-lg font-medium mb-3">Attendance Overview (Today)</h2>
             <AttendanceOverview />
+          </div>
+
+          {/* Inventory Stock Alerts */}
+          <div className="mt-6">
+            <h2 className="text-lg font-medium mb-3">Inventory Stock Alerts</h2>
+            <StockAlertsOverview />
           </div>
         </section>
       </main>

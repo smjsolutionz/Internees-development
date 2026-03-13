@@ -4,6 +4,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
 require("./utils/cleanupJobs"); // Import cleanup jobs
+require("./utils/attendanceCron"); // Attendance auto-marking jobs
 const connectDB = require("./config/db");
 
 // 🔹 IMPORT ROUTES
@@ -30,8 +31,9 @@ const billRoutes = require("./routes/receptionist/billRoutes");
 
 
 const appointmentRoutes = require("./routes/appointmentRoutes");
-const  adminappointment =require("./routes/adminAppointmentRoutes")
-const reviewAdminRoutes=require("./routes/reviewAdminRoutes")
+const adminappointment = require("./routes/adminAppointmentRoutes");
+const reviewAdminRoutes = require("./routes/reviewAdminRoutes");
+const inventoryRoutes = require("./routes/inventoryRoutes");
 const staffAppointmentRoutes = require("./routes/staff/staffAppointmentRoutes");
 const AttendanceRoutes = require("./routes/attendanceRoutes");
 const app = express();
@@ -81,6 +83,7 @@ app.use("/api/admin/auth", adminAuthRoutes); // Admin login
 app.use("/api/admin", adminUsersRoutes); // Admin users CRUD
 app.use("/api/appointment/admin",adminappointment)
 app.use("/api/attendance",AttendanceRoutes)
+app.use("/api/inventory", inventoryRoutes);
 
 /* =========================
    🔹 CUSTOMER ROUTES

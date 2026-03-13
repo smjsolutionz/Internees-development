@@ -3,6 +3,7 @@ import Topbar from "../../components/admin/TopbarAdmin";
 import StatCard from "../../components/admin/StatCardAdmin";
 import UsersTableAdmin from "../../components/admin/UserTableAdmin";
 import AttendanceOverview from "../../components/attendance/AttendanceOverview";
+import StockAlertsOverview from "../../components/inventory/StockAlertsOverview";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -74,6 +75,12 @@ export default function Dashboard() {
           <div className="mb-6">
             <h2 className="text-lg font-medium mb-3">Attendance Overview (Today)</h2>
             <AttendanceOverview />
+          </div>
+
+          {/* Inventory Stock Alerts */}
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-3">Inventory Stock Alerts</h2>
+            <StockAlertsOverview />
           </div>
 
           {/* Stats Cards */}
