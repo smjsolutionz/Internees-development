@@ -113,7 +113,40 @@ const MyAppointments = () => {
       <button onClick={() => setPage(prev => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="px-4 py-2 rounded bg-gray-200 disabled:bg-gray-400">Next</button>
     </div>
   );
-
+ const handlePrint = (bill) => {
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt - ${bill.billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { color: #BB8C4B; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            td, th { border: 1px solid #ccc; padding: 8px; text-align: left; }
+            .paid { color: green; font-weight: bold; }
+            .unpaid { color: red; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h2>Receipt</h2>
+          <p><strong>Bill Number:</strong> ${bill.billNumber}</p>
+          <p><strong>Customer:</strong> ${bill.customerName}</p>
+          <p><strong>Service:</strong> ${bill.serviceName}</p>
+          <p><strong>Total Amount:</strong> $${bill.totalAmount}</p>
+          <p><strong>Paid Amount:</strong> $${bill.paidAmount || 0}</p>
+          <p><strong>Status:</strong> ${bill.paymentStatus === "Paid" ? '<span class="paid">Paid</span>' : '<span class="unpaid">Unpaid</span>'}</p>
+          <p><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</p>
+          <br/>
+          <p>Thank you for your payment!</p>
+          <script>
+            window.print();
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-[120px]">
       <div className="mb-8 text-center sm:text-left">
@@ -157,7 +190,17 @@ const MyAppointments = () => {
                   <div className="flex items-center gap-3 text-gray-700"><FaDollarSign className="text-[#BB8C4B]" /><span>{a.price || a.service?.pricing || a.package?.price || 0}</span></div>
                   {a.notes && <p className="text-sm text-gray-600 pt-2 border-t break-words"><b>Notes:</b> {a.notes}</p>}
                 </div>
-
+                  {/* Show receipt button if appointment completed */}
+{a.status === "completed" && (
+  <div className="px-4 pb-4 pt-2">
+    <button
+  onClick={() => handlePrint(a)}
+  className="w-full bg-[#BB8C4B] text-white py-2 rounded hover:bg-[#A97C42] transition text-sm font-medium"
+>
+  View Receipt
+</button>
+  </div>
+)}
                 {/* Footer */}
                 {a.status !== "cancelled" && a.status !== "completed" && (
                   <div className="px-4 pb-4 pt-2">
