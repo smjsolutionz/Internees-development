@@ -9,41 +9,38 @@ export default function TopbarAdmin({ setSidebarOpen }) {
   const [profilePic, setProfilePic] = useState(null);
   const navigate = useNavigate();
 
-let storedUser = {};
-try {
-  storedUser = JSON.parse(localStorage.getItem("user")) || {};
-} catch {
-  storedUser = {};
-}
+  // Safe localStorage parsing
+  let storedUser = {};
+  try {
+    const userStr = localStorage.getItem("user");
+    storedUser = userStr ? JSON.parse(userStr) : {};
+  } catch (err) {
+    console.warn("Invalid user in localStorage, resetting.", err);
+    storedUser = {};
+  }
+
   const role = (storedUser.role || "guest").toLowerCase();
 
-useEffect(() => {
-  const fetchProfile = async () => {
+  useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (!token) return setProfilePic(null);
+    if (!token) return;
 
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/admin/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
-      console.log("API response:", res.data);
+        // Handle different response shapes safely
+        const user = res.data.user || res.data.admin || null;
+        setProfilePic(user?.profilePic || null);
+      } catch (err) {
+        console.error("Failed to load profile pic", err);
+      }
+    };
 
-      // Directly use res.data as user
-      const user = res.data;
-
-      setProfilePic(user?.profilePic || null);
-      console.log("Profile loaded:", user);
-
-    } catch (err) {
-      console.error("Failed to load profile pic", err);
-      setProfilePic(null);
-    }
-  };
-
-  fetchProfile();
-}, []);
-
+    fetchProfile();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
