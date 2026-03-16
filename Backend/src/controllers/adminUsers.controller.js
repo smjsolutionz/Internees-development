@@ -6,11 +6,14 @@ const AdminAuditLog = require("../models/adminAuditLog.model");
 /* =========================
    CREATE ADMIN USER
 ========================= */
+/* =========================
+   CREATE USER (ADMIN OR CUSTOMER)
+========================= */
+
 const adminCreateUser = async (req, res) => {
   try {
     const { name, username, email, password, role } = req.body;
 
-    // ✅ Check required fields
     if (!name || !username || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -18,25 +21,17 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    // ✅ Password strength validation
+    // password validation
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
     if (!passwordRegex.test(password)) {
       return res.status(400).json({
         success: false,
         message:
-          "Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, and 1 special character",
+          "Password must be at least 8 characters and include uppercase, lowercase and special character",
       });
     }
 
-    // ✅ Prevent duplicate "Super Admin"
-    if (name === "Super Admin") {
-      return res.status(403).json({
-        success: false,
-        message: "Super admin already exists",
-      });
-    }
-
-    // ✅ Check if email already exists
+    // check duplicate email
     const emailExistsInAdmin = await AdminUser.findOne({ email });
     const emailExistsInUser = await User.findOne({ email });
 
@@ -47,42 +42,44 @@ const adminCreateUser = async (req, res) => {
       });
     }
 
-    // ✅ Check if username already exists
-    const usernameExists = await AdminUser.findOne({ username });
-    if (usernameExists) {
-      return res.status(409).json({
-        success: false,
-        message: "Username already exists",
+    // ===============================
+    // CUSTOMER CREATION
+    // ===============================
+
+    if (role === "CUSTOMER") {
+
+      const customer = await User.create({
+        name,
+        username,
+        email,
+        password,
+        role: "CUSTOMER",
+        isVerified: true,
       });
+
+      return res.status(201).json({
+        success: true,
+        message: "Customer created successfully",
+        user: customer,
+      });
+
     }
 
-    // ✅ Hash the password
+    // ===============================
+    // ADMIN / STAFF CREATION
+    // ===============================
+
     const password_hash = await bcrypt.hash(password, 12);
 
-    // ✅ Create the new admin user
     const admin = await AdminUser.create({
       name,
       username,
       email,
       password_hash,
-      role: role || "ADMIN",
-      created_by_admin_id: req.user ? req.user.id : null,
-    });
-    await AdminAuditLog.create({
-      action: "ADMIN_CREATED_USER",
-      actor_admin_id: req.user.id, // the admin who created the user
-      target_user_id: admin._id, // the new user ID
-      metadata: {
-        name: admin.name,
-        username: admin.username,
-        email: admin.email,
-        role: admin.role,
-      },
-      ip_address: req.ip,
-      user_agent: req.headers["user-agent"],
+      role,
+      created_by_admin_id: req.user?.id,
     });
 
-    // ✅ Send response without password_hash
     const adminResponse = admin.toObject();
     delete adminResponse.password_hash;
 
@@ -91,6 +88,7 @@ const adminCreateUser = async (req, res) => {
       message: "Admin user created successfully",
       admin: adminResponse,
     });
+
   } catch (error) {
     console.error("adminCreateUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
