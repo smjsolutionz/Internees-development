@@ -14,36 +14,44 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const [user, setUser] = useState(null);
   const [dropdownState, setDropdownState] = useState({});
 
-  // Safe parsing of localStorage
+  // Safe parse localStorage
   let storedUser = {};
   try {
-    storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  } catch (err) {
+    storedUser = JSON.parse(localStorage.getItem("user")) || {};
+  } catch {
     storedUser = {};
   }
-
   const role = (storedUser.role || "guest").toLowerCase();
 
+  /* ================= FETCH PROFILE ================= */
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const endpoint = role === "customer" ? "/api/customer/profile" : "/api/admin/profile";
+        let storedUserSafe = {};
+        try {
+          storedUserSafe = JSON.parse(localStorage.getItem("user")) || {};
+        } catch {
+          storedUserSafe = {};
+        }
+
+        const userRole = storedUserSafe?.role?.toLowerCase() || "guest";
+
+        const endpoint =
+          userRole === "customer" ? "/api/customer/profile" : "/api/admin/profile";
+
         const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const profile = res.data.user || res.data.admin || res.data || null;
+        const profile = res.data.user || res.data.admin || res.data;
 
-        if (profile) {
-          setUser(profile);
+        setUser(profile);
 
-          // Keep role intact in localStorage
-          const updatedUser = { role, ...profile };
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-        }
+        // Update localStorage so Sidebar shows the latest info
+        localStorage.setItem("user", JSON.stringify(profile));
       } catch (err) {
         console.error("Sidebar profile load failed", err);
         setUser(null);
@@ -51,21 +59,23 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
     };
 
     fetchProfile();
-  }, [role]);
+  }, []);
 
   const menu = roleMenus[role] || [];
 
   const toggleDropdown = (name) => {
-    setDropdownState((prev) => ({ ...prev, [name]: !prev[name] }));
+    setDropdownState((prev) => ({
+      ...prev,
+      [name]: !prev[name],
+    }));
   };
 
-  const profilePicUrl = user?.profilePic
-    ? user.profilePic.startsWith("http")
-      ? user.profilePic
-      : `${API_BASE_URL}${user.profilePic.startsWith("/") ? "" : "/"}${user.profilePic}`
+  const profilePicUrl = user?.avatar
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `${API_BASE_URL}${user.avatar.startsWith("/") ? "" : "/"}${user.avatar}`
     : "/avatar.png";
 
-    
   return (
     <>
       {sidebarOpen && (
