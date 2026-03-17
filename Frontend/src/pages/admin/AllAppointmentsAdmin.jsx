@@ -1,0 +1,17 @@
+import Sidebar from "../../components/admin/SidebarAdmin";
+import Topbar from "../../components/admin/TopbarAdmin";
+import AdminAppointments from "../../components/admin/AdminAppointments";
+
+export default function AddGalleryImage() {
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      <Sidebar />
+      <main className="flex-1">
+        <Topbar />
+        <div className="p-6">
+          <AdminAppointments />
+        </div>
+      </main>
+    </div>
+  );
+}
