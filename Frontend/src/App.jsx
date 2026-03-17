@@ -115,17 +115,17 @@ export default function App() {
         <Route
   path="/services"
   element={
-    <ProtectedRoute allowedRoles={["customer", "user"]}>
+   
       <ServicePage />
-    </ProtectedRoute>
+    
   }
 />
 <Route
   path="/servicedetail/:id"
   element={
-    <ProtectedRoute allowedRoles={["customer", "user"]}>
+    
       <ServicesDetailPage />
-    </ProtectedRoute>
+  
   }
 />
 
@@ -170,9 +170,9 @@ export default function App() {
         <Route
   path="/packages/:id"
   element={
-    <ProtectedRoute allowedRoles={["customer", "user"]}>
+   
       <PackageDetailPage />
-    </ProtectedRoute>
+
   }
 />
 
@@ -222,9 +222,9 @@ export default function App() {
 <Route
   path="/my-appointments"
   element={
-    <ProtectedRoute allowedRoles={["customer", "user"]}>
+    
       <EnhancedMyAppointments />
-    </ProtectedRoute>
+   
   }
 />
 

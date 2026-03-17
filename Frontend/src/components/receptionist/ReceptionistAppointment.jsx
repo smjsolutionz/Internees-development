@@ -116,21 +116,30 @@ export default function ReceptionistAppointments() {
     }
   };
 
-  const getItem = (appt) => appt.package || appt.service || {};
+  // NEW: Multi-service helpers
+  const getServiceNames = (appt) => {
+    if (appt.services && appt.services.length > 0) return appt.services.map(s => s.name).join(", ");
+    if (appt.package) return appt.package.name;
+    return "N/A";
+  };
+
+  const getTotalPrice = (appt) => {
+    if (appt.services && appt.services.length > 0) return appt.services.reduce((sum, s) => sum + Number(s.pricing || s.price || 0), 0);
+    if (appt.package) return appt.package.price || 0;
+    return 0;
+  };
+
+  const getTotalDuration = (appt) => {
+    if (appt.services && appt.services.length > 0) return appt.services.reduce((sum, s) => sum + Number(s.duration || 0), 0);
+    if (appt.package) return appt.package.duration || "N/A";
+    return "N/A";
+  };
 
   /* ================= ACTIONS ================= */
   const updateStatus = async (id, newStatus) => {
     try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/api/appointment/receptionist/${id}/status`,
-        { status: newStatus },
-        getAuthConfig()
-      );
-      setAppointments(prev =>
-        prev.map(appt =>
-          appt._id === id ? { ...appt, status: data.appointment.status } : appt
-        )
-      );
+      const { data } = await axios.patch(`${API_BASE_URL}/api/appointment/receptionist/${id}/status`, { status: newStatus }, getAuthConfig());
+      setAppointments(prev => prev.map(appt => appt._id === id ? { ...appt, status: data.appointment.status } : appt));
     } catch (err) {
       alert("Failed to update status");
     }
@@ -138,16 +147,8 @@ export default function ReceptionistAppointments() {
 
   const cancelAppointment = async (id) => {
     try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/api/appointment/receptionist/${id}/cancel`,
-        {},
-        getAuthConfig()
-      );
-      setAppointments(prev =>
-        prev.map(appt =>
-          appt._id === id ? { ...appt, status: data.appointment.status } : appt
-        )
-      );
+      const { data } = await axios.patch(`${API_BASE_URL}/api/appointment/receptionist/${id}/cancel`, {}, getAuthConfig());
+      setAppointments(prev => prev.map(appt => appt._id === id ? { ...appt, status: data.appointment.status } : appt));
     } catch (err) {
       alert("Failed to cancel appointment");
     }
@@ -155,19 +156,9 @@ export default function ReceptionistAppointments() {
 
   const assignStaff = async (appointmentId, staffId) => {
     try {
-      const { data } = await axios.patch(
-        `${API_BASE_URL}/api/appointment/receptionist/${appointmentId}/assign-staff`,
-        { staffId },
-        getAuthConfig()
-      );
+      const { data } = await axios.patch(`${API_BASE_URL}/api/appointment/receptionist/${appointmentId}/assign-staff`, { staffId }, getAuthConfig());
       const assignedStaff = data.appointment.staff || staffList.find(s => s._id === staffId);
-      setAppointments(prev =>
-        prev.map(appt =>
-          appt._id === appointmentId
-            ? { ...appt, staff: assignedStaff }
-            : appt
-        )
-      );
+      setAppointments(prev => prev.map(appt => appt._id === appointmentId ? { ...appt, staff: assignedStaff } : appt));
       setMessage({ type: "success", text: data.message });
     } catch (err) {
       const errorMsg = err.response?.data?.message || "Failed to assign staff";
@@ -179,13 +170,8 @@ export default function ReceptionistAppointments() {
   const openRescheduleModal = async (appt) => {
     const apptDate = new Date(appt.appointmentDate).toISOString().slice(0, 10);
     setRescheduleData({ id: appt._id, date: apptDate, time: appt.appointmentTime, availableSlots: [] });
-
     try {
-      const { data } = await axios.get(
-        `${API_BASE_URL}/api/appointment/receptionist/${appt._id}/available-slots`,
-        { ...getAuthConfig(), params: { date: apptDate } }
-      );
-
+      const { data } = await axios.get(`${API_BASE_URL}/api/appointment/receptionist/${appt._id}/available-slots`, { ...getAuthConfig(), params: { date: apptDate } });
       setRescheduleData(prev => ({ ...prev, availableSlots: data.availableSlots || [] }));
       setShowRescheduleModal(true);
     } catch (err) {
@@ -200,11 +186,7 @@ export default function ReceptionistAppointments() {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/reschedule`,
-        { appointmentDate: rescheduleData.date, appointmentTime: rescheduleData.time },
-        getAuthConfig()
-      );
+      await axios.patch(`${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/reschedule`, { appointmentDate: rescheduleData.date, appointmentTime: rescheduleData.time }, getAuthConfig());
       setMessage({ type: "success", text: "Appointment rescheduled successfully" });
       setShowRescheduleModal(false);
       fetchAppointments(page);
@@ -217,21 +199,13 @@ export default function ReceptionistAppointments() {
   /* ================= BILL ================= */
   const generateBill = async (appointment, force = false) => {
     try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/api/bill/generate`,
-        { appointmentId: appointment._id, force },
-        getAuthConfig()
-      );
+      const { data } = await axios.post(`${API_BASE_URL}/api/bill/generate`, { appointmentId: appointment._id, force }, getAuthConfig());
       setBillData(data.bill);
       setPaidAmount(data.bill?.paidAmount || 0);
       setShowBillModal(true);
       setMessage({ type: "success", text: "Bill generated successfully" });
 
-      setAppointments(prev =>
-        prev.map(appt =>
-          appt._id === appointment._id ? { ...appt, bill: data.bill } : appt
-        )
-      );
+      setAppointments(prev => prev.map(appt => appt._id === appointment._id ? { ...appt, bill: data.bill } : appt));
     } catch (err) {
       const errMsg = err.response?.data?.message || "Bill generation failed";
       setMessage({ type: "error", text: errMsg });
@@ -244,11 +218,7 @@ export default function ReceptionistAppointments() {
       return;
     }
     try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/api/bill/confirm-payment/${billData._id}`,
-        { paidAmount },
-        getAuthConfig()
-      );
+      const { data } = await axios.post(`${API_BASE_URL}/api/bill/confirm-payment/${billData._id}`, { paidAmount }, getAuthConfig());
       setBillData(data.bill);
       setPaidAmount(data.bill.paidAmount || 0);
       setMessage({ type: "success", text: "Payment successful" });
@@ -265,7 +235,7 @@ export default function ReceptionistAppointments() {
       <h2>Diamond Trim Beauty Studio</h2>
       <p>Bill Number: ${billData.billNumber}</p>
       <p>Customer: ${billData.customerName}</p>
-      <p>Service: ${billData.serviceName}</p>
+      <p>Service: ${billData.serviceName || getServiceNames(billData)}</p>
       <p>Package: ${billData.packageName?.name || "N/A"}</p>
       <p>Total Amount: ${billData.totalAmount}</p>
       <p>Paid Amount: ${billData.paidAmount}</p>
@@ -328,62 +298,53 @@ export default function ReceptionistAppointments() {
 
       {/* Appointment Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {appointments.map(appt => {
-          const item = getItem(appt);
-          const price = item.price || item.pricing || 0;
-          const duration = item.duration || item.totalDuration || "N/A";
-          return (
-            <div key={appt._id} className="bg-white shadow rounded-xl p-4 border">
-              <div className="flex justify-between items-center">
-                <h2 className="font-semibold">{appt.customerName}</h2>
-                <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(appt.status)}`}>{appt.status}</span>
-              </div>
+        {appointments.map(appt => (
+          <div key={appt._id} className="bg-white shadow rounded-xl p-4 border">
+            <div className="flex justify-between items-center">
+              <h2 className="font-semibold">{appt.customerName}</h2>
+              <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(appt.status)}`}>{appt.status}</span>
+            </div>
 
-              <div className="mt-2 text-sm space-y-1">
-                <p>{appt.customerEmail} | {appt.customerPhone}</p>
-                <p>Service: {item.name || "N/A"}</p>
-                <p>Duration: {duration}</p>
-                <p>Date: {new Date(appt.appointmentDate).toLocaleDateString()}</p>
-                <p>Time: {formatTime(appt.appointmentTime)}</p>
-                <p>Price: {price}</p>
-                {appt.staff && <p>Assigned Staff: {appt.staff.name} {appt.staff.specialty ? `(${appt.staff.specialty})` : ""}</p>}
-              </div>
+            <div className="mt-2 text-sm space-y-1">
+              <p>{appt.customerEmail} | {appt.customerPhone}</p>
+              <p>Service: {getServiceNames(appt)}</p>
+              <p>Duration: {getTotalDuration(appt)}</p>
+              <p>Date: {new Date(appt.appointmentDate).toLocaleDateString()}</p>
+              <p>Time: {formatTime(appt.appointmentTime)}</p>
+              <p>Price: {getTotalPrice(appt)}</p>
+              {appt.staff && <p>Assigned Staff: {appt.staff.name} {appt.staff.specialty ? `(${appt.staff.specialty})` : ""}</p>}
+            </div>
 
-              {/* Actions */}
-              <div className="mt-3 flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <select value={appt.status} onChange={e => updateStatus(appt._id, e.target.value)} className="flex-1 border px-2 py-1 rounded">
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                  <button onClick={() => cancelAppointment(appt._id)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
-                </div>
-
-                <select value={appt.staff?._id || ""} onChange={e => assignStaff(appt._id, e.target.value)} className="border px-2 py-1 rounded">
-                  <option value="">Assign Staff</option>
-                  {staffList.map(staff => <option key={staff._id} value={staff._id}>{staff.name} {staff.specialty ? `(${staff.specialty})` : ""}</option>)}
+            {/* Actions */}
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="flex gap-2">
+                <select value={appt.status} onChange={e => updateStatus(appt._id, e.target.value)} className="flex-1 border px-2 py-1 rounded">
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
+                <button onClick={() => cancelAppointment(appt._id)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
+              </div>
 
-                <div className="flex gap-2">
-                  <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">Reschedule</button>
-                  <button
-                    onClick={() => generateBill(appt, true)}
-                    className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1"
-                  >
-                    <FileText size={16} />
-                    {appt.bill
-                      ? appt.bill.paidAmount === 0
-                        ? "Regenerate Bill"
-                        : "Generate Bill"
-                      : "Generate Bill"}
-                  </button>
-                </div>
+              <select value={appt.staff?._id || ""} onChange={e => assignStaff(appt._id, e.target.value)} className="border px-2 py-1 rounded">
+                <option value="">Assign Staff</option>
+                {staffList.map(staff => <option key={staff._id} value={staff._id}>{staff.name} {staff.specialty ? `(${staff.specialty})` : ""}</option>)}
+              </select>
+
+              <div className="flex gap-2">
+                <button onClick={() => openRescheduleModal(appt)} className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1">Reschedule</button>
+                <button
+                  onClick={() => generateBill(appt, true)}
+                  className="bg-[#BB8C4B] text-white px-3 py-1 rounded flex-1 flex items-center justify-center gap-1"
+                >
+                  <FileText size={16} />
+                  {appt.bill ? (appt.bill.paidAmount === 0 ? "Regenerate Bill" : "Generate Bill") : "Generate Bill"}
+                </button>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* Pagination */}
@@ -405,10 +366,7 @@ export default function ReceptionistAppointments() {
               const newDate = e.target.value;
               setRescheduleData(prev => ({ ...prev, date: newDate }));
               try {
-                const { data } = await axios.get(`${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/available-slots`, {
-                  ...getAuthConfig(),
-                  params: { date: newDate },
-                });
+                const { data } = await axios.get(`${API_BASE_URL}/api/appointment/receptionist/${rescheduleData.id}/available-slots`, { ...getAuthConfig(), params: { date: newDate } });
                 setRescheduleData(prev => ({ ...prev, availableSlots: data.availableSlots || [] }));
               } catch (err) {
                 console.error(err);
@@ -436,9 +394,8 @@ export default function ReceptionistAppointments() {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-96">
             <h2 className="text-xl font-bold mb-4">Bill - {billData.billNumber}</h2>
-
             <p>Customer: {billData.customerName}</p>
-            <p>Service: {billData.serviceName}</p>
+            <p>Service: {billData.serviceName || getServiceNames(billData)}</p>
             <p>Package: {billData.packageName?.name || "N/A"}</p>
             <p>Total Amount: {billData.totalAmount}</p>
             <p>

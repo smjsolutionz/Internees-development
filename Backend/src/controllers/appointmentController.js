@@ -9,191 +9,109 @@ const Bill = require("../models/Bill");
 =============================== */
 exports.getAllServices = async (req, res, next) => {
   try {
-    const services = await Service.find({})
-      .sort({ category: 1, name: 1 });
-
-    res.json({
-      success: true,
-      count: services.length,
-      services
-    });
+    const services = await Service.find({}).sort({ category: 1, name: 1 });
+    res.json({ success: true, count: services.length, services });
   } catch (error) {
     next(error);
   }
 };
 
-
 /* ===============================
-   GET AVAILABLE SLOTS
+   GET AVAILABLE SLOTS FOR MULTI-SERVICES
 =============================== */
 exports.getAvailableSlots = async (req, res, next) => {
   try {
     const { date } = req.params;
-    const { serviceId, packageId } = req.query;
+    const { serviceIds } = req.query;
 
-    if (!serviceId && !packageId) {
-      return res.status(400).json({
-        success: false,
-        message: "serviceId or packageId is required"
-      });
-    }
+    if (!serviceIds)
+      return res.status(400).json({ success: false, message: "serviceIds required" });
 
-    const service = serviceId ? await Service.findById(serviceId) : null;
-    const pkg = packageId ? await Package.findById(packageId) : null;
-
-    if (serviceId && !service)
-      return res.status(404).json({ success: false, message: "Service not found" });
-
-    if (packageId && !pkg)
-      return res.status(404).json({ success: false, message: "Package not found" });
-
+    const serviceIdArray = serviceIds.split(",");
     const selectedDate = new Date(date);
     selectedDate.setHours(0, 0, 0, 0);
 
-    /* ===== SERVICE / PACKAGE SPECIFIC FILTER ===== */
-    let filter = {
-      appointmentDate: selectedDate,
-      status: { $nin: ["cancelled"] }
-    };
-
-    if (serviceId) filter.service = serviceId;
-    if (packageId) filter.package = packageId;
-
-    const appointments = await Appointment.find(filter);
-
-    /* ===== GENERATE SLOTS ===== */
-    const workingHours = { start: 9, end: 21 };
+    // Generate all time slots
     const allSlots = [];
-
-    for (let hour = workingHours.start; hour < workingHours.end; hour++) {
+    for (let hour = 9; hour < 21; hour++) {
       for (let minute of [0, 30]) {
-        allSlots.push(
-          `${hour.toString().padStart(2, "0")}:${minute
-            .toString()
-            .padStart(2, "0")}`
-        );
+        allSlots.push(`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`);
       }
     }
 
-    const bookedSlots = appointments.map(a => a.appointmentTime);
-    const availableSlots = allSlots.filter(
-      slot => !bookedSlots.includes(slot)
-    );
+    let combinedSlots = new Set();
 
-    res.json({
-      success: true,
-      date,
-      availableSlots,
-      bookedSlots
-    });
+    for (let serviceId of serviceIdArray) {
+      const appointments = await Appointment.find({
+        services: serviceId,
+        appointmentDate: selectedDate,
+        status: { $nin: ["cancelled"] },
+      });
 
+      const bookedSlots = appointments.map(a => a.appointmentTime);
+      allSlots.filter(slot => !bookedSlots.includes(slot)).forEach(slot => combinedSlots.add(slot));
+    }
+
+    res.json({ success: true, date, availableSlots: Array.from(combinedSlots).sort() });
   } catch (error) {
     next(error);
   }
 };
 
-
 /* ===============================
-   CREATE APPOINTMENT
+   CREATE APPOINTMENT FOR MULTI-SERVICES
 =============================== */
 exports.createAppointment = async (req, res, next) => {
   try {
-    const {
-      serviceId,
-      packageId,
-      appointmentDate,
-      appointmentTime,
-      customerName,
-      customerEmail,
-      customerPhone,
-      notes
-    } = req.body;
-
+    const { serviceIds, appointmentDate, appointmentTime, customerName, customerEmail, customerPhone, notes } = req.body;
     const isAuth = req.user && req.user._id;
-
-    /* ===== VALIDATION ===== */
     const errors = {};
 
-    if (!serviceId && !packageId)
-      errors.serviceOrPackage = "Service or Package is required";
-
-    if (!appointmentDate)
-      errors.appointmentDate = "Date is required";
-
-    if (!appointmentTime)
-      errors.appointmentTime = "Time is required";
+    if (!serviceIds || serviceIds.length === 0) errors.services = "At least one service is required";
+    if (!appointmentDate) errors.appointmentDate = "Date is required";
+    if (!appointmentTime) errors.appointmentTime = "Time is required";
 
     if (!isAuth) {
-      if (!customerName?.trim())
-        errors.customerName = "Name required";
-
-      if (!customerEmail?.trim())
-        errors.customerEmail = "Email required";
-
-      if (!customerPhone?.trim())
-        errors.customerPhone = "Phone required";
+      if (!customerName?.trim()) errors.customerName = "Name required";
+      if (!customerEmail?.trim()) errors.customerEmail = "Email required";
+      if (!customerPhone?.trim()) errors.customerPhone = "Phone required";
     }
 
-    if (Object.keys(errors).length)
-      return res.status(400).json({ success: false, errors });
+    if (Object.keys(errors).length) return res.status(400).json({ success: false, errors });
 
-    /* ===== FETCH SERVICE / PACKAGE ===== */
-    const service = serviceId ? await Service.findById(serviceId) : null;
-    const pkg = packageId ? await Package.findById(packageId) : null;
+    const services = await Service.find({ _id: { $in: serviceIds } });
+    if (services.length !== serviceIds.length)
+      return res.status(400).json({ success: false, message: "Some services not found" });
 
-    if (serviceId && !service)
-      return res.status(400).json({
-        success: false,
-        message: "Service not available"
-      });
-
-    if (packageId && !pkg)
-      return res.status(400).json({
-        success: false,
-        message: "Package not available"
-      });
-
-    /* ===== DATE CHECK ===== */
     const selectedDate = new Date(appointmentDate);
     selectedDate.setHours(0, 0, 0, 0);
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (selectedDate < today)
-      return res.status(400).json({
-        success: false,
-        message: "Cannot book past date"
-      });
+      return res.status(400).json({ success: false, message: "Cannot book past date" });
 
-    /* ===== SLOT CHECK (SERVICE SPECIFIC) ===== */
-    let slotFilter = {
+    const existing = await Appointment.findOne({
       appointmentDate: selectedDate,
       appointmentTime,
-      status: { $nin: ["cancelled"] }
-    };
-
-    if (serviceId) slotFilter.service = serviceId;
-    if (packageId) slotFilter.package = packageId;
-
-    const existing = await Appointment.findOne(slotFilter);
+      status: { $nin: ["cancelled"] },
+      services: { $in: serviceIds },
+    });
 
     if (existing)
-      return res.status(400).json({
-        success: false,
-        message: "Slot already booked"
-      });
+      return res.status(400).json({ success: false, message: "One of the selected services is already booked at this time" });
 
-    /* ===== CREATE DATA ===== */
+    const totalDuration = services.reduce((sum, s) => sum + Number(s.duration), 0);
+    const totalPrice = services.reduce((sum, s) => sum + Number(s.pricing), 0);
+
     const data = {
-      service: serviceId || null,
-      package: packageId || null,
+      services: serviceIds,
       appointmentDate: selectedDate,
       appointmentTime,
-      duration: service?.duration || pkg?.totalDuration || 60,
+      duration: totalDuration,
+      price: totalPrice,
       notes: notes?.trim() || "",
-      price: service?.pricing || pkg?.price || 0,
-      status: "pending"
+      status: "pending",
     };
 
     if (isAuth) {
@@ -208,40 +126,23 @@ exports.createAppointment = async (req, res, next) => {
     }
 
     const appointment = await Appointment.create(data);
-    await appointment.populate("service package");
+    await appointment.populate("services");
 
-    /* ===== SEND EMAIL ===== */
     try {
-      const html = `
-        <h2>Appointment Confirmation</h2>
+      const serviceNames = services.map(s => s.name).join(", ");
+      const html = `<h2>Appointment Confirmation</h2>
         <p>Hi ${data.customerName},</p>
-        <p>Your appointment for 
-        <b>${pkg ? pkg.name : service.name}</b>
-        on <b>${selectedDate.toDateString()}</b> 
-        at <b>${appointmentTime}</b> is confirmed.</p>
-      `;
-
-      await sendEmail({
-        to: data.customerEmail,
-        subject: "Appointment Confirmation",
-        html
-      });
-
+        <p>Your appointment for <b>${serviceNames}</b> on <b>${selectedDate.toDateString()}</b> at <b>${appointmentTime}</b> is confirmed.</p>`;
+      await sendEmail({ to: data.customerEmail, subject: "Appointment Confirmation", html });
     } catch (e) {
       console.error("Email failed:", e);
     }
 
-    res.status(201).json({
-      success: true,
-      message: "Appointment booked successfully",
-      appointment
-    });
-
+    res.status(201).json({ success: true, message: "Appointment booked successfully", appointment });
   } catch (error) {
     next(error);
   }
 };
-
 
 /* ===============================
    GET MY APPOINTMENTS
@@ -250,47 +151,30 @@ exports.getMyAppointments = async (req, res, next) => {
   try {
     const { status, page = 1, limit = 10 } = req.query;
 
-    const query = {
-      $or: [
-        { customer: req.user._id },
-        { customerEmail: req.user.email }
-      ]
-    };
-
+    const query = { $or: [{ customer: req.user._id }, { customerEmail: req.user.email }] };
     if (status) query.status = status;
 
     const appointments = await Appointment.find(query)
-      .populate("service", "name pricing duration")
-      .populate("package", "name price totalDuration")
+      .populate("services", "name pricing duration")
       .populate("staff", "name email phone")
       .sort({ appointmentDate: -1, appointmentTime: -1 })
-      .limit(limit * 1)
+      .limit(limit)
       .skip((page - 1) * limit);
-      const appointmentsWithBills = await Promise.all(
-  appointments.map(async (appt) => {
-    const bill = await Bill.findOne({ appointmentId: appt._id });
-    return {
-      ...appt.toObject(),
-      bill
-    };
-  })
-);
+
+    const appointmentsWithBills = await Promise.all(
+      appointments.map(async appt => {
+        const bill = await Bill.findOne({ appointmentId: appt._id });
+        return { ...appt.toObject(), bill };
+      })
+    );
 
     const count = await Appointment.countDocuments(query);
 
-    res.json({
-      success: true,
-     appointments: appointmentsWithBills,
-      totalPages: Math.ceil(count / limit),
-      currentPage: Number(page),
-      total: count
-    });
-
+    res.json({ success: true, appointments: appointmentsWithBills, totalPages: Math.ceil(count / limit), currentPage: Number(page), total: count });
   } catch (error) {
     next(error);
   }
 };
-
 
 /* ===============================
    CANCEL APPOINTMENT
@@ -299,59 +183,58 @@ exports.cancelAppointment = async (req, res, next) => {
   try {
     const { cancellationReason } = req.body;
 
-    const appointment = await Appointment.findById(req.params.id)
-      .populate("service package");
-
-    if (!appointment)
-      return res.status(404).json({ success: false, message: "Not found" });
-
-    if (appointment.status === "cancelled")
-      return res.status(400).json({
-        success: false,
-        message: "Already cancelled"
-      });
+    const appointment = await Appointment.findById(req.params.id).populate("services");
+    if (!appointment) return res.status(404).json({ success: false, message: "Not found" });
+    if (appointment.status === "cancelled") return res.status(400).json({ success: false, message: "Already cancelled" });
 
     appointment.status = "cancelled";
-    appointment.cancellationReason =
-      cancellationReason || "Cancelled by customer";
+    appointment.cancellationReason = cancellationReason || "Cancelled by customer";
     appointment.cancelledAt = Date.now();
-
     await appointment.save();
 
     try {
-      const html = `
-        <p>Your appointment for 
-        ${appointment.package
-          ? appointment.package.name
-          : appointment.service.name}
-        on ${appointment.appointmentDate.toDateString()} 
-        at ${appointment.appointmentTime}
-        has been cancelled.</p>
-      `;
-
-      await sendEmail({
-        to: appointment.customerEmail,
-        subject: "Appointment Cancelled",
-        html
-      });
-
+      const serviceNames = appointment.services.map(s => s.name).join(", ");
+      const html = `<p>Your appointment for <b>${serviceNames}</b> on ${appointment.appointmentDate.toDateString()} at ${appointment.appointmentTime} has been cancelled.</p>`;
+      await sendEmail({ to: appointment.customerEmail, subject: "Appointment Cancelled", html });
     } catch (e) {
       console.error(e);
     }
 
-    res.json({
-      success: true,
-      message: "Appointment cancelled",
-      appointment
-    });
-
+    res.json({ success: true, message: "Appointment cancelled", appointment });
   } catch (error) {
     next(error);
   }
 };
 
-
 /* ===============================
    RESCHEDULE APPOINTMENT
 =============================== */
+exports.rescheduleAppointment = async (req, res, next) => {
+  try {
+    const { appointmentDate, appointmentTime } = req.body;
+    const appointment = await Appointment.findById(req.params.id).populate("services");
+    if (!appointment) return res.status(404).json({ success: false, message: "Not found" });
 
+    const selectedDate = new Date(appointmentDate);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const existing = await Appointment.findOne({
+      appointmentDate: selectedDate,
+      appointmentTime,
+      status: { $nin: ["cancelled"] },
+      services: { $in: appointment.services.map(s => s._id) },
+      _id: { $ne: appointment._id },
+    });
+
+    if (existing) return res.status(400).json({ success: false, message: "One of the services is already booked at this time" });
+
+    appointment.appointmentDate = selectedDate;
+    appointment.appointmentTime = appointmentTime;
+    appointment.status = "pending";
+    await appointment.save();
+
+    res.json({ success: true, message: "Appointment rescheduled successfully", appointment });
+  } catch (error) {
+    next(error);
+  }
+};

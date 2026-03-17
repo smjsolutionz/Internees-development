@@ -34,7 +34,7 @@ exports.getAllAppointmentsReceptionist = async (req, res, next) => {
     }
 
     const appointments = await Appointment.find(query)
-      .populate("service", "name duration pricing")
+      .populate("services", "name duration pricing")
       .populate("package", "name price totalDuration")
       .populate("staff", "_id name role email specialty profileImage") // populated from TeamMember
       .sort({ appointmentDate: -1, appointmentTime: -1 })
@@ -90,7 +90,7 @@ exports.updateAppointmentStatus = async (req, res, next) => {
     if (appointment.customerEmail) {
       try {
         const serviceName =
-          appointment.package?.name || appointment.service?.name || "Service";
+          appointment.package?.name || appointment.services?.name || "Service";
 
         const html = `
           <h2>Appointment Status Updated</h2>
@@ -135,7 +135,7 @@ exports.cancelAppointment = async (req, res, next) => {
       { status: "cancelled" },
       { new: true }
     )
-      .populate("service", "name")
+      .populate("services", "name")
       .populate("package", "name");
 
     if (!appointment) {
@@ -148,7 +148,7 @@ exports.cancelAppointment = async (req, res, next) => {
     if (appointment.customerEmail) {
       try {
         const serviceName =
-          appointment.package?.name || appointment.service?.name || "Service";
+          appointment.package?.name || appointment.services?.name || "Service";
 
         const html = `
           <h2>Appointment Cancelled</h2>
