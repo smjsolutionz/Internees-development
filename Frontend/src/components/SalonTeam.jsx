@@ -7,17 +7,18 @@ export default function TeamSection() {
   const [teamMembers, setTeamMembers] = useState([]);
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/customer/team`);
-        setTeamMembers(data || []);
-      } catch (err) {
-        console.error("Error fetching team members:", err);
-      }
-    };
-    fetchTeam();
-  }, []);
+ useEffect(() => {
+  const fetchTeam = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/customer/team`);
+      console.log("Team API Response:", data); // <-- check what you get
+      setTeamMembers(data || []);
+    } catch (err) {
+      console.error("Error fetching team members:", err);
+    }
+  };
+  fetchTeam();
+}, []);
 
   const scrollByCard = (dir = 1) => {
     if (!scrollRef.current) return;
