@@ -52,8 +52,8 @@ export default function ReceptionistBills() {
           <p><strong>Bill Number:</strong> ${bill.billNumber}</p>
           <p><strong>Customer:</strong> ${bill.customerName}</p>
           <p><strong>Service:</strong> ${bill.serviceName}</p>
-          <p><strong>Total Amount:</strong> $${bill.totalAmount}</p>
-          <p><strong>Paid Amount:</strong> $${bill.paidAmount || 0}</p>
+          <p><strong>Total Amount:</strong> RS${bill.totalAmount}</p>
+          <p><strong>Paid Amount:</strong> RS${bill.paidAmount || 0}</p>
           <p><strong>Status:</strong> ${bill.paymentStatus === "Paid" ? '<span class="paid">Paid</span>' : '<span class="unpaid">Unpaid</span>'}</p>
           <p><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</p>
           <br/>

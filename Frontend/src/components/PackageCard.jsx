@@ -22,7 +22,17 @@ const PackageCard = ({ pkg }) => {
 
       <Link
         to={`/packages/${pkg._id}`}
-        className="mt-auto bg-[#c0954d] text-white py-3 rounded-md text-center font-semibold"
+        className="  mt-4 md:mt-auto
+    w-full
+    md:w-auto
+    bg-[#c0954d] 
+    text-white 
+    py-2 md:py-3 
+    rounded-md 
+    text-center 
+    font-semibold
+    hover:bg-[#a07c44]
+    transition"
       >
         View Details
       </Link>

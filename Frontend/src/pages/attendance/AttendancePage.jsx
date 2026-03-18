@@ -257,6 +257,7 @@ export default function AttendancePage() {
                               <button
                                 onClick={() => openEditModal(r)}
                                 className="text-[#BB8C4B] hover:text-[#a67c42]"
+                               
                                 aria-label="Edit attendance"
                               >
                                 <FiEdit2 size={18} />

@@ -11,84 +11,51 @@ const Profile = () => {
   const token = localStorage.getItem("accessToken");
   const storedUser = localStorage.getItem("user");
 
-useEffect(() => {
-  console.log("Stored token:", token);
-  console.log("Stored user:", storedUser);
+  useEffect(() => {
+    if (!token || !storedUser) {
+      navigate("/login");
+      return;
+    }
 
-  if (!token || !storedUser) {
-    console.warn("No token or user found. Redirecting to login.");
-    navigate("/login", { replace: true });
-    return;
-  }
+    const user = JSON.parse(storedUser);
 
-  const user = JSON.parse(storedUser);
-  const role = user.role?.toUpperCase();
-  console.log("Parsed user:", user);
-  console.log("User role (normalized):", role);
+    // ✅ CUSTOMER / USER
+    if (user.role === "customer" || user.role === "user") {
+      axios
+        .get("http://localhost:5000/api/customer/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          setProfile(res.data);
+          setLoading(false);
+        })
+        .catch(() => navigate("/login"));
+    }
 
-  const fetchProfile = async () => {
-    try {
-      const url =
-        role === "CUSTOMER"
-          ? "http://localhost:5000/api/customer/profile"
-          : "http://localhost:5000/api/admin/profile";
-
-      console.log("Fetching profile from URL:", url);
-
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      console.log("Profile response:", res.data);
-
-      setProfile(res.data);
-      localStorage.setItem("user", JSON.stringify(res.data));
-    } catch (err) {
-      console.error("Profile fetch error:", err.response?.data || err);
-
-      if (err.response?.status === 401) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("user");
-        navigate("/login", { replace: true });
-      } else {
-        setProfile(user); // fallback
-      }
-    } finally {
+    // ✅ ADMIN / STAFF / RECEPTIONIST
+    else {
+      setProfile(user); // coming from localStorage
       setLoading(false);
     }
-  };
-
-  fetchProfile();
-}, [navigate, token, storedUser]);
+  }, []);
 
   const handleChange = (e) => {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
- const handleUpdate = async () => {
-  const role = profile.role?.toUpperCase();
-  const profileRoute =
-    role === "CUSTOMER"
-      ? "http://localhost:5000/api/customer/profile"
-      : "http://localhost:5000/api/admin/profile";
-
-  try {
-    const res = await axios.put(profileRoute, {
-      name: profile.name,
-      username: profile.username,
-      phone: profile.phone,
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    alert(res.data.message || "Profile updated successfully");
-    localStorage.setItem("user", JSON.stringify(res.data.user || res.data));
-  } catch (err) {
-    console.error(err.response?.data || err);
-    alert("Failed to update profile");
-  }
-};
+  const handleUpdate = () => {
+    // Only customers can update profile via this endpoint
+    if (profile.role === "customer" || profile.role === "user") {
+      axios
+        .put("http://localhost:5000/api/customer/profile", profile, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => alert(res.data.message))
+        .catch((err) => console.error(err));
+    } else {
+      alert("Profile update for admin will be added later");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -105,11 +72,13 @@ useEffect(() => {
 
         <div className="flex flex-col items-center mb-6">
           <img
-            src={profile.avatar || profile.profilePic || profile.profileImage || "https://i.pravatar.cc/150?img=3"}
+            src={profile.avatar || profile.profileImage || "https://i.pravatar.cc/150?img=3"}
             alt="Profile"
             className="w-24 h-24 rounded-full border-2 border-gray-300 object-cover"
           />
-          <p className="mt-2 text-sm text-gray-500 capitalize">{profile.role}</p>
+          <p className="mt-2 text-sm text-gray-500 capitalize">
+            {profile.role}
+          </p>
         </div>
 
         <div className="mb-3">
@@ -140,8 +109,9 @@ useEffect(() => {
             type="email"
             name="email"
             value={profile.email || ""}
-            disabled
+            onChange={handleChange}
             className="border p-2 w-full rounded-md"
+            disabled
           />
         </div>
 
@@ -157,10 +127,16 @@ useEffect(() => {
         </div>
 
         <div className="flex gap-4 justify-center">
-          <button onClick={handleUpdate} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
+          <button
+            onClick={handleUpdate}
+            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
+          >
             Save
           </button>
-          <button onClick={handleLogout} className="bg-[#BB8C4B] text-white px-4 py-2 rounded">
+          <button
+            onClick={handleLogout}
+            className="bg-[#BB8C4B] text-white px-4 py-2 rounded"
+          >
             Logout
           </button>
         </div>

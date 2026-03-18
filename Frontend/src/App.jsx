@@ -52,8 +52,6 @@ import AddTeam from "./pages/admin/Addteam";
 import EditTeam from "./pages/admin/EditTeam";
 import Reception from "./pages/receptionist/reception";
 import Inventory from "./pages/inventory/inventory";
-import InventoryProductsPage from "./pages/inventory/InventoryProductsPage";
-import InventoryStockHistoryPage from "./pages/inventory/InventoryStockHistoryPage";
 import Manager from "./pages/manager/manager";
 import Staff from "./pages/staff/staff";
 import ReceptionDashboard from "./components/receptionist/Dashboardreceptionist";
@@ -72,7 +70,6 @@ import ReceptionistBills from "./pages/receptionist/ReceptionistBills";
 import StaffShiftPage from "./pages/staff/StaffShiftPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import MyAttendancePage from "./pages/attendance/MyAttendancePage";
-import RevenueReport from "./pages/admin/RevenueReport";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -143,21 +140,12 @@ export default function App() {
         {/* Users */}
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/edit-user/:id" element={<UpdateUser />} />
-        <Route path="/admin/revenue" element={<RevenueReport />} />
 
 
         
         {/* Profiles */}
          <Route path="/reception" element={<Reception />} />
        <Route path="/inventory" element={<Inventory />} />
-       <Route
-         path="/inventory/products"
-         element={isAuth() ? <InventoryProductsPage /> : <Navigate to="/login" replace />}
-       />
-       <Route
-         path="/inventory/stock"
-         element={isAuth() ? <InventoryStockHistoryPage /> : <Navigate to="/login" replace />}
-       />
        <Route path="/manager" element={<Manager />} />
        <Route path="/staff" element={<Staff />} />
          <Route path="/receptionist/dashboard" element={<ReceptionDashboard />} />

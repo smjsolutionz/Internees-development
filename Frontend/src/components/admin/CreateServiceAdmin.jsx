@@ -107,7 +107,7 @@ export default function CreateServiceAdmin() {
                 name="name"
                 value={service.name}
                 onChange={handleChange}
-                className="w-full border p-2 rounded"
+                className="w-full border p-2 rounded "
                 required
               />
             </div>
@@ -168,7 +168,7 @@ export default function CreateServiceAdmin() {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700"
+              className="bg-[#BB8C4B] hover:bg-[#a3733f] text-white px-6 py-3 rounded "
             >
               {loading ? "Creating..." : "Create Service"}
             </button>
