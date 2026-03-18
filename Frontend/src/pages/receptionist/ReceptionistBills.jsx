@@ -31,7 +31,6 @@ export default function ReceptionistBills() {
     fetchBills();
   }, []);
 
-  // ✅ Print Receipt Function
   const handlePrint = (bill) => {
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
@@ -58,9 +57,7 @@ export default function ReceptionistBills() {
           <p><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</p>
           <br/>
           <p>Thank you for your payment!</p>
-          <script>
-            window.print();
-          </script>
+          <script>window.print();</script>
         </body>
       </html>
     `);
@@ -78,7 +75,9 @@ export default function ReceptionistBills() {
           ) : (
             <div className="max-w-7xl mx-auto">
               <h1 className="text-3xl font-bold text-[#BB8C4B] mb-6">Generated Bills</h1>
-              <div className="overflow-x-auto bg-white shadow rounded-xl">
+
+              {/* Table for md and above */}
+              <div className="hidden md:block overflow-x-auto bg-white shadow rounded-xl">
                 <table className="min-w-full text-sm text-left">
                   <thead className="bg-gray-100">
                     <tr>
@@ -89,7 +88,7 @@ export default function ReceptionistBills() {
                       <th className="p-3">Paid</th>
                       <th className="p-3">Status</th>
                       <th className="p-3">Date</th>
-                      <th className="p-3">Action</th> {/* New column */}
+                      <th className="p-3">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -120,6 +119,34 @@ export default function ReceptionistBills() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Card layout for small screens */}
+              <div className="md:hidden space-y-4">
+                {bills.map((bill) => (
+                  <div key={bill._id} className="bg-white shadow rounded-xl p-4 space-y-2">
+                    <p><strong>Bill Number:</strong> {bill.billNumber}</p>
+                    <p><strong>Customer:</strong> {bill.customerName}</p>
+                    <p><strong>Service:</strong> {bill.serviceName}</p>
+                    <p><strong>Total Amount:</strong> ${bill.totalAmount}</p>
+                    <p><strong>Paid Amount:</strong> ${bill.paidAmount || 0}</p>
+                    <p>
+                      <strong>Status:</strong>{" "}
+                      {bill.paymentStatus === "Paid" ? (
+                        <span className="text-green-600 font-semibold">Paid</span>
+                      ) : (
+                        <span className="text-red-600 font-semibold">Unpaid</span>
+                      )}
+                    </p>
+                    <p><strong>Date:</strong> {new Date(bill.createdAt).toLocaleDateString()}</p>
+                    <button
+                      onClick={() => handlePrint(bill)}
+                      className="w-full px-4 py-2 bg-[#BB8C4B] text-white rounded hover:bg-[#a77a3f]"
+                    >
+                      Print Receipt
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}

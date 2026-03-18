@@ -24,18 +24,24 @@ export default function AppointmentSection() {
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
  useEffect(() => {
   const token = localStorage.getItem("accessToken");
-  const user = JSON.parse(localStorage.getItem("user"));
+  let user = null;
+  try {
+    const storedUser = localStorage.getItem("user");
+    user = storedUser ? JSON.parse(storedUser) : null;
+  } catch (err) {
+    console.error("Invalid JSON in storage:", err);
+    localStorage.removeItem("user");
+  }
 
   if (token && user?.email) {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       email: user.email,
       name: user.name || "",
-      phone: user.phone || ""
+      phone: user.phone || "",
     }));
   }
 }, []);
-
 
 
   // Fetch services on mount

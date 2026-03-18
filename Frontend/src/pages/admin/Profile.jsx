@@ -41,42 +41,44 @@ export default function ProfilePage() {
   const navigate = useNavigate();
 
   /* FETCH PROFILE */
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+ useEffect(() => {
+  const token = localStorage.getItem("accessToken");
+  const storedUser = JSON.parse(localStorage.getItem("user"));
 
-    if (!token || !storedUser) {
+  if (!token || !storedUser) {
+    navigate("/login", { replace: true });
+    return;
+  }
+
+  const role = storedUser.role;
+  const endpoint = getProfileEndpoint(role);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      console.log("Profile API response:", res.data); // Debug
+
+      const profileData = res.data.user || res.data.admin || res.data; // ✅ safe fallback
+
+      setUser(profileData);
+      setForm(profileData);
+
+      localStorage.setItem("user", JSON.stringify(profileData));
+
+    } catch (err) {
+      console.error(err);
+      localStorage.clear();
       navigate("/login", { replace: true });
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const role = storedUser.role;
-    const endpoint = getProfileEndpoint(role);
-
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const profileData = res.data.user || res.data.admin;
-
-        setUser(profileData);
-        setForm(profileData);
-
-        localStorage.setItem("user", JSON.stringify(profileData));
-
-      } catch (err) {
-        console.error(err);
-        localStorage.clear();
-        navigate("/login", { replace: true });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProfile();
-  }, [navigate]);
+  fetchProfile();
+}, [navigate]);
 
   /* INPUT CHANGE */
   const handleChange = (e) => {

@@ -1,213 +1,101 @@
+// controllers/billController.js
 const Bill = require("../../models/Bill");
 const Appointment = require("../../models/Appointment");
-const Service = require("../../models/Service.model"); // ✅ added
+const Package = require("../../models/Package");
 const generateBillNumber = require("../../utils/generateBillNumber");
 
-// ================= GENERATE BILL =================
+// ---------------- GENERATE BILL ----------------
 exports.generateBill = async (req, res) => {
   try {
-    const { appointmentId } = req.body;
+    const { appointmentId, force } = req.body;
 
     const appointment = await Appointment.findById(appointmentId)
       .populate("service")
       .populate("package");
 
-    if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
-    }
+    if (!appointment)
+      return res.status(404).json({ success: false, message: "Appointment not found" });
 
-    const item = appointment.package || appointment.service;
+    if (!appointment.service && !appointment.package)
+      return res.status(400).json({ success: false, message: "No service or package found" });
 
-    if (!item) {
-      return res.status(400).json({
-        success: false,
-        message: "No service/package found",
-      });
-    }
+    // Check existing bill
+    let existingBill = await Bill.findOne({ appointmentId });
+    if (existingBill && !force && existingBill.paidAmount > 0)
+      return res.status(400).json({ success: false, message: "Bill already exists and is paid" });
 
-    // ✅ FIX: handle string pricing safely
-    const rawPrice = item.price ?? item.pricing ?? 0;
+    if (existingBill) await existingBill.deleteOne();
 
-    const price = Number(
-      String(rawPrice).replace(/[^0-9.]/g, "")
-    ) || 0;
+    // Combine service + package names
+    const serviceName = [
+      appointment.service ? appointment.service.name : null,
+      appointment.package ? appointment.package.name : null,
+    ].filter(Boolean).join(" + ");
 
-    // ❗ Delete unpaid existing bill
-    const existingBill = await Bill.findOne({ appointmentId });
-
-    if (existingBill) {
-      if (existingBill.paidAmount > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Bill already paid",
-        });
-      }
-      await existingBill.deleteOne();
-    }
+    // Total amount: sum service and package price if both exist
+    const totalAmount =
+      (appointment.service?.price || 0) + (appointment.package?.price || 0);
 
     const bill = await Bill.create({
       billNumber: generateBillNumber(),
       appointmentId,
       customerName: appointment.customerName,
-
-      items: [
-        {
-          name: item.name || "Service",
-          price,
-        },
-      ],
-
-      totalAmount: price,
+      serviceName, // combined name
+      packageName: appointment.package ? appointment.package._id : null,
+      totalAmount,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Bill generated",
-      bill,
-    });
+    appointment.bill = bill._id;
+    await appointment.save();
 
+    res.status(201).json({ success: true, message: "Bill generated successfully", bill });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-// ================= ADD SERVICE (UPDATED) =================
-exports.addServiceToBill = async (req, res) => {
-  try {
-    const { billId } = req.params;
-    const { serviceId, name, price } = req.body;
-
-    const bill = await Bill.findById(billId);
-
-    if (!bill) {
-      return res.status(404).json({
-        success: false,
-        message: "Bill not found",
-      });
-    }
-
-    let finalName = name;
-    let finalPrice = Number(price) || 0;
-
-    // ✅ If service selected from dropdown
-    if (serviceId) {
-      const service = await Service.findById(serviceId);
-
-      if (!service) {
-        return res.status(404).json({
-          success: false,
-          message: "Service not found",
-        });
-      }
-
-      finalName = service.name;
-
-      // ✅ Convert "Rs 2000" → 2000
-      finalPrice = Number(
-        String(service.pricing).replace(/[^0-9.]/g, "")
-      ) || 0;
-    }
-
-    // ❗ Validation
-    if (!finalName || finalPrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid service data",
-      });
-    }
-
-    // ✅ Add to bill
-    bill.items.push({
-      name: finalName,
-      price: finalPrice,
-    });
-
-    // ✅ Recalculate total
-    bill.totalAmount = bill.items.reduce(
-      (sum, item) => sum + item.price,
-      0
-    );
-
-    await bill.save();
-
-    res.json({
-      success: true,
-      bill,
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-
-// ================= CONFIRM PAYMENT =================
+// ---------------- CONFIRM PAYMENT ----------------
 exports.confirmPayment = async (req, res) => {
   try {
     const { billId } = req.params;
     const { paidAmount } = req.body;
 
     const bill = await Bill.findById(billId);
-
-    if (!bill) {
-      return res.status(404).json({
-        success: false,
-        message: "Bill not found",
-      });
-    }
-
-    if (paidAmount < bill.totalAmount) {
-      return res.status(400).json({
-        success: false,
-        message: "Amount must be full",
-      });
-    }
+    if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
 
     bill.paidAmount = paidAmount;
-    bill.paymentStatus = "Paid";
+    bill.paymentStatus = paidAmount >= bill.totalAmount ? "Paid" : "Unpaid";
     bill.paymentDate = new Date();
-
     await bill.save();
 
-    res.json({ success: true, bill });
-
+    res.json({ success: true, message: "Payment updated", bill });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-
-// ================= GET BILLS =================
+// ---------------- GET ALL BILLS ----------------
 exports.getBills = async (req, res) => {
-  const bills = await Bill.find().populate("appointmentId");
-  res.json({ success: true, bills });
-};
+  try {
+    const bills = await Bill.find()
+      .populate("appointmentId")
+      .sort({ createdAt: -1 });
 
-
-// ================= GET BILL =================
-exports.getBillById = async (req, res) => {
-  const bill = await Bill.findById(req.params.id).populate("appointmentId");
-
-  if (!bill) {
-    return res.status(404).json({
-      success: false,
-      message: "Not found",
-    });
+    res.json({ success: true, bills });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
   }
-
-  res.json({ success: true, bill });
 };
+
+// ---------------- GET BILL BY ID ----------------
+exports.getBillById = async (req, res) => {
+  try {
+    const bill = await Bill.findById(req.params.id).populate("appointmentId");
+    if (!bill) return res.status(404).json({ success: false, message: "Bill not found" });
+
+    res.json({ success: true, bill });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+

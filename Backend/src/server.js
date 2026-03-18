@@ -15,7 +15,7 @@ const authRoutes = require("./routes/authRoutes");
 const galleryRoutes = require("./routes/adminGalleryRoutes");
 const CustomerGalleryRoutes = require("./routes/customerGalleryRoutes");
 const packageRoutes = require("./routes/packageRoutes");
-const adminUsersRoutes = require("./routes/adminUsers.routes");
+const adminUsersProfileRoutes = require("./routes/adminUsers.routes");
 const adminAuthRoutes = require("./routes/adminAuth.routes");
 const adminProfileRoutes = require("./routes/adminProfile");
 const walkInRoutes = require("./routes/receptionist/walkInRoutes");
@@ -23,6 +23,7 @@ const walkInRoutes = require("./routes/receptionist/walkInRoutes");
 const adminTeamRoutes = require("./routes/adminTeamRoutes");
 const customerTeamRoutes = require("./routes/customerTeamRoutes");
 const customerProfileRoutes = require("./routes/customerProfile");
+const adminUsersRoutes = require("./routes/adminUserProfile");
 
 const reviewCustomerRoutes = require("./routes/reviewCustomerRoutes");
 
@@ -100,6 +101,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/gallery/Customer", CustomerGalleryRoutes);
 app.use("/api/customer", customerProfileRoutes);
+app.use("/api/admin", adminUsersProfileRoutes);
 
 app.use("/api/admin", adminProfileRoutes);
 app.use("/admin", adminTeamRoutes);
