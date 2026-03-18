@@ -7,7 +7,7 @@ export default function TeamSection() {
   const [teamMembers, setTeamMembers] = useState([]);
   const scrollRef = useRef(null);
 
-useEffect(() => {
+ useEffect(() => {
   const fetchTeam = async () => {
     try {
       const { data } = await axios.get(`${API_URL}/customer/team`);
