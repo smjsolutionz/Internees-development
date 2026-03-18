@@ -576,7 +576,7 @@ const ServiceDetails = () => {
 
               {/* Pagination */}
               {filteredReviews.length > reviewsPerPage && (
-                <div className="flex flex-col sm:flex-row justify-between items-center mt-8 pt-6 border-t">
+                <div className="flex flex-col sm:flex-row justify-between mb-6 items-center mt-8 pt-6 border-t">
                   <div className="text-sm text-gray-600 mb-4 sm:mb-0">
                     Page {currentPage} of {totalPages}
                   </div>

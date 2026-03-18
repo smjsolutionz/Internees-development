@@ -2,7 +2,6 @@ import { useState } from "react";
 import Sidebar from "../../components/admin/SidebarAdmin";
 import Topbar from "../../components/admin/TopbarAdmin";
 import AttendanceActions from "../../components/attendance/AttendanceActions";
-import StockAlertsOverview from "../../components/inventory/StockAlertsOverview";
 
 export default function Inventory() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,14 +17,8 @@ export default function Inventory() {
           <h1 className="text-2xl font-semibold mb-6">Inventory Dashboard</h1>
 
           {/* Mark Own Attendance */}
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-6">
             <AttendanceActions />
-          </div>
-
-          {/* Stock Alerts */}
-          <div>
-            <h2 className="text-lg font-medium mb-3">Stock Alerts</h2>
-            <StockAlertsOverview />
           </div>
         </section>
       </main>
