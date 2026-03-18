@@ -2,6 +2,7 @@ const Appointment = require("../models/Appointment");
 const Service = require("../models/Service.model");
 const Package = require("../models/Package");
 const sendEmail = require("../utils/sendEmail");
+const Bill = require("../models/Bill");
 
 /* ===============================
    GET ALL SERVICES
@@ -265,12 +266,21 @@ exports.getMyAppointments = async (req, res, next) => {
       .sort({ appointmentDate: -1, appointmentTime: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
+      const appointmentsWithBills = await Promise.all(
+  appointments.map(async (appt) => {
+    const bill = await Bill.findOne({ appointmentId: appt._id });
+    return {
+      ...appt.toObject(),
+      bill
+    };
+  })
+);
 
     const count = await Appointment.countDocuments(query);
 
     res.json({
       success: true,
-      appointments,
+     appointments: appointmentsWithBills,
       totalPages: Math.ceil(count / limit),
       currentPage: Number(page),
       total: count

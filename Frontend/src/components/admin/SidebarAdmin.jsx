@@ -14,38 +14,36 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
   const [user, setUser] = useState(null);
   const [dropdownState, setDropdownState] = useState({});
 
-  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+  // Safe parsing of localStorage
+  let storedUser = {};
+  try {
+    storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  } catch (err) {
+    storedUser = {};
+  }
+
   const role = (storedUser.role || "guest").toLowerCase();
 
-  /* ================= FETCH PROFILE ================= */
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
 
-        const storedUser = JSON.parse(localStorage.getItem("user"));
-        const role = storedUser?.role?.toLowerCase();
-
-        let endpoint = "";
-
-        if (role === "customer") {
-          endpoint = "/api/customer/profile";
-        } else {
-          endpoint = "/api/admin/profile";
-        }
-
+        const endpoint = role === "customer" ? "/api/customer/profile" : "/api/admin/profile";
         const res = await axios.get(`${API_BASE_URL}${endpoint}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        const profile = res.data.user || res.data.admin;
+        const profile = res.data.user || res.data.admin || res.data || null;
 
-        setUser(profile);
+        if (profile) {
+          setUser(profile);
 
-        /* update localStorage so sidebar stays updated */
-        localStorage.setItem("user", JSON.stringify(profile));
-
+          // Keep role intact in localStorage
+          const updatedUser = { role, ...profile };
+          localStorage.setItem("user", JSON.stringify(updatedUser));
+        }
       } catch (err) {
         console.error("Sidebar profile load failed", err);
         setUser(null);
@@ -53,17 +51,21 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
     };
 
     fetchProfile();
-  }, []);
+  }, [role]);
 
   const menu = roleMenus[role] || [];
 
   const toggleDropdown = (name) => {
-    setDropdownState((prev) => ({
-      ...prev,
-      [name]: !prev[name],
-    }));
+    setDropdownState((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
+  const profilePicUrl = user?.profilePic
+    ? user.profilePic.startsWith("http")
+      ? user.profilePic
+      : `${API_BASE_URL}${user.profilePic.startsWith("/") ? "" : "/"}${user.profilePic}`
+    : "/avatar.png";
+
+    
   return (
     <>
       {sidebarOpen && (
@@ -94,19 +96,12 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
             className="flex flex-col items-center py-6 border-b border-white/10 hover:bg-white/5 transition"
           >
             <img
-              src={
-                user.profilePic
-                  ? `${API_BASE_URL.replace("/api", "")}${user.profilePic}`
-                  : "/avatar.png"
-              }
+              src={profilePicUrl}
               alt={user.name || "User"}
               className="w-16 h-16 rounded-full object-cover border mb-2"
             />
-
             <h4 className="font-semibold">{user.name || "User"}</h4>
-
             <span className="text-xs text-gray-400">{role}</span>
-
             <span className="text-xs text-[#BB8C4B] mt-1">View Profile</span>
           </Link>
         )}
@@ -121,12 +116,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
                   className="w-full flex justify-between items-center px-4 py-2 rounded-md hover:bg-white/10 text-sm font-medium mt-2"
                 >
                   <span>{item.name}</span>
-
-                  {dropdownState[item.name] ? (
-                    <FaChevronUp />
-                  ) : (
-                    <FaChevronDown />
-                  )}
+                  {dropdownState[item.name] ? <FaChevronUp /> : <FaChevronDown />}
                 </button>
 
                 {dropdownState[item.name] &&
@@ -136,9 +126,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
                       to={sub.path}
                       onClick={() => setSidebarOpen(false)}
                       className={`block px-4 py-2 text-sm rounded-md ml-4 ${
-                        location.pathname === sub.path
-                          ? "bg-[#BB8C4B]"
-                          : "hover:bg-white/10"
+                        location.pathname === sub.path ? "bg-[#BB8C4B]" : "hover:bg-white/10"
                       }`}
                     >
                       {sub.name}
@@ -151,9 +139,7 @@ export default function SidebarAdmin({ sidebarOpen, setSidebarOpen }) {
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
                 className={`block px-4 py-2 rounded-md text-sm font-medium ${
-                  location.pathname === item.path
-                    ? "bg-[#BB8C4B]"
-                    : "hover:bg-white/10"
+                  location.pathname === item.path ? "bg-[#BB8C4B]" : "hover:bg-white/10"
                 }`}
               >
                 {item.name}

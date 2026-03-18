@@ -88,6 +88,7 @@ const adminCreateUser = async (req, res) => {
       message: "Admin user created successfully",
       admin: adminResponse,
     });
+
   } catch (error) {
     console.error("adminCreateUser error:", error);
     res.status(500).json({ success: false, message: "Server error" });
