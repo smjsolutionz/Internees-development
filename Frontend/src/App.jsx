@@ -52,6 +52,8 @@ import AddTeam from "./pages/admin/Addteam";
 import EditTeam from "./pages/admin/EditTeam";
 import Reception from "./pages/receptionist/reception";
 import Inventory from "./pages/inventory/inventory";
+import Products from "./pages/inventory/InventoryProductsPage";
+import Stock from "./pages/inventory/InventoryStockHistoryPage";
 import Manager from "./pages/manager/manager";
 import Staff from "./pages/staff/staff";
 import ReceptionDashboard from "./components/receptionist/Dashboardreceptionist";
@@ -146,6 +148,8 @@ export default function App() {
         {/* Profiles */}
          <Route path="/reception" element={<Reception />} />
        <Route path="/inventory" element={<Inventory />} />
+       <Route path="/inventory/products" element={<Products />} />
+       <Route path="/inventory/stock" element={<Stock />} />
        <Route path="/manager" element={<Manager />} />
        <Route path="/staff" element={<Staff />} />
          <Route path="/receptionist/dashboard" element={<ReceptionDashboard />} />
