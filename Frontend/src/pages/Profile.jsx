@@ -84,6 +84,7 @@ useEffect(() => {
 
     alert(res.data.message || "Profile updated successfully");
     localStorage.setItem("user", JSON.stringify(res.data.user || res.data));
+    navigate("/", { replace: true });
   } catch (err) {
     console.error(err.response?.data || err);
     alert("Failed to update profile");
