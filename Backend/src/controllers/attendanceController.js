@@ -1,8 +1,8 @@
 const Attendance = require("../models/Attendence.model");
 const AdminUser = require("../models/adminUser.model");
 
-// Shift end time for Late Checkout (5:00 PM)
-const SHIFT_END_HOUR = 17;
+// Shift end time for Late Checkout (10:00 PM)
+const SHIFT_END_HOUR = 22;
 const SHIFT_END_MINUTE = 0;
 
 /* =========================

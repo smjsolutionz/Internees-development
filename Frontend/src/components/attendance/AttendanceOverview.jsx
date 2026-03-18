@@ -39,7 +39,6 @@ export default function AttendanceOverview() {
       <StatCard title="Absent Today" value={overview.absent} color="bg-red-500" />
       <StatCard title="On Leave" value={overview.leave} color="bg-blue-500" />
       <StatCard title="Missed Checkout" value={overview.missedCheckout} color="bg-amber-500" />
-      <StatCard title="Late Checkout" value={overview.lateCheckout} color="bg-purple-500" />
     </div>
   );
 }

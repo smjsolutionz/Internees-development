@@ -106,7 +106,7 @@ export default function CreatePackageAdmin() {
                 onChange={(e) =>
                   setForm({ ...form, name: e.target.value })
                 }
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                 required
               />
             </div>
@@ -159,7 +159,7 @@ export default function CreatePackageAdmin() {
                 onChange={(e) =>
                   setForm({ ...form, totalDuration: e.target.value })
                 }
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
                 required
               />
             </div>
@@ -175,7 +175,7 @@ export default function CreatePackageAdmin() {
                 onChange={(e) =>
                   setForm({ ...form, price: e.target.value })
                 }
-                className="w-full sm:w-48 border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full sm:w-48 border border-gray-300 p-2 sm:p-3 rounded focus:outline-none focus:ring-2 focus:ring-2 focus:ring-[#a3733f]"
                 required
               />
             </div>
@@ -199,7 +199,7 @@ export default function CreatePackageAdmin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:w-auto bg-green-600 text-white px-6 py-3 rounded hover:bg-green-700 transition"
+                className="w-full sm:w-auto bg-[#BB8C4B] hover:bg-[#a3733f]  text-white px-6 py-3 rounded  transition"
               >
                 {loading ? "Creating..." : "Create Package"}
               </button>

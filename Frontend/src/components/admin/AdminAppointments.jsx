@@ -197,7 +197,7 @@ const AllAppointmentsAdmin = () => {
                               ? "bg-green-100 text-green-800"
                               : appt.status === "completed"
                               ? "bg-blue-100 text-blue-800"
-                              : "bg-red-100 text-red-800"
+                              : "bg-red-100 text-red-600"
                           }`}
                         >
                           {appt.status}
@@ -230,12 +230,12 @@ const AllAppointmentsAdmin = () => {
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold ${
                         appt.status === "pending"
-                          ? "bg-yellow-100 text-yellow-800"
+                          ? "bg-yellow-100 text-yellow-600"
                           : appt.status === "confirmed"
-                          ? "bg-green-100 text-green-800"
+                          ? "bg-green-100 text-green-600"
                           : appt.status === "completed"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-red-100 text-red-800"
+                          ? "bg-blue-100 text-blue-600"
+                          : "bg-red-100 text-red-600"
                       }`}
                     >
                       {appt.status}

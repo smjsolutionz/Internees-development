@@ -83,7 +83,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
         <h2 className="text-lg font-semibold">Users</h2>
         <button
           onClick={() => navigate("/create-user")}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-fit"
+          className="flex items-center gap-2 bg-[#BB8C4B] hover:bg-[#a3733f] text-white px-4 py-2 rounded w-fit"
         >
           <FiPlus size={16} />
           Create User
@@ -98,7 +98,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
             onClick={() => handleRoleClick(role)}
             className={`px-3 py-1.5 rounded text-sm border transition ${
               activeRole === role
-                ? "bg-blue-600 text-white border-blue-600"
+                ? "bg-[#BB8C4B] text-white border-[#BB8C4B]"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             }`}
           >
@@ -114,7 +114,7 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
           value={search}
           onChange={handleSearch}
           placeholder="Search by name or email"
-          className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#a3733f]"
         />
       </div>
 
@@ -155,11 +155,11 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
               <div className="flex flex-col md:block">
                 <span className="font-medium md:hidden">Verified:</span>
                 {user.isVerified ? (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-600">
                     ✓ Verified
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-700">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-600">
                     ⚠ Pending
                   </span>
                 )}

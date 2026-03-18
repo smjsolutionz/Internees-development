@@ -3,19 +3,11 @@ export const roleMenus = {
   admin: [
     { name: "Dashboard", path: "/dashboard" },
     { name: "Attendance", path: "/attendance" },
-    {
-      name: "Inventory",
-      dropdown: [
-        { name: "Products", path: "/inventory/products" },
-        { name: "Stock History", path: "/inventory/stock" },
-      ],
-    },
     { name: "Appointments", path: "/appointments" },
     { name: "Services", path: "/services-admin" },
     { name: "Packages", path: "/packages-admin" },
     { name: "Reviews", path: "/admin/reviews" },
-    { name: "Bills", path: "/receptionist/bills" },
-    { name: "Reports", path: "/admin/revenue" }, 
+    { name: "Bills", path: "/receptionist/bills" }, 
     {
       name: "Gallery",
       dropdown: [
@@ -36,21 +28,14 @@ export const roleMenus = {
     { name: "Dashboard", path: "/manager" },
     { name: "Attendance", path: "/attendance" },
     { name: "View My Attendance", path: "/attendance/my" },
-    {
-      name: "Inventory",
-      dropdown: [
-        { name: "Products", path: "/inventory/products" },
-        { name: "Stock History", path: "/inventory/stock" },
-      ],
-    },
     { name: "Reports", path: "/manager/reports" },
   ],
 
   inventory_manager: [
     { name: "Dashboard", path: "/inventory" },
     { name: "View My Attendance", path: "/attendance/my" },
+    { name: "Stock", path: "/inventory/stock" },
     { name: "Products", path: "/inventory/products" },
-    { name: "Stock History", path: "/inventory/stock" },
   ],
 
   receptionist: [
