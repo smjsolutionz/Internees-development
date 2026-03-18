@@ -1,5 +1,6 @@
 const Bill = require("../../models/Bill");
 const Appointment = require("../../models/Appointment");
+const Service = require("../../models/Service.model"); // ✅ added
 const generateBillNumber = require("../../utils/generateBillNumber");
 
 // ================= GENERATE BILL =================
@@ -23,47 +24,53 @@ exports.generateBill = async (req, res) => {
     if (!item) {
       return res.status(400).json({
         success: false,
-        message: "No service or package found",
+        message: "No service/package found",
       });
     }
 
-    // ✅ Check existing bill
-    let existingBill = await Bill.findOne({ appointmentId });
+    // ✅ FIX: handle string pricing safely
+    const rawPrice = item.price ?? item.pricing ?? 0;
+
+    const price = Number(
+      String(rawPrice).replace(/[^0-9.]/g, "")
+    ) || 0;
+
+    // ❗ Delete unpaid existing bill
+    const existingBill = await Bill.findOne({ appointmentId });
 
     if (existingBill) {
-      // Allow regeneration if unpaid
       if (existingBill.paidAmount > 0) {
         return res.status(400).json({
           success: false,
-          message: "Bill already exists and is paid",
+          message: "Bill already paid",
         });
-      } else {
-        // Delete unpaid bill to generate new one
-        await existingBill.deleteOne();
       }
+      await existingBill.deleteOne();
     }
-
-    // Remove everything except digits and dot, then convert to number
-    const rawPrice = item.price || item.pricing || 0;
-    const totalAmount = Number(String(rawPrice).replace(/[^0-9.]/g, ""));
 
     const bill = await Bill.create({
       billNumber: generateBillNumber(),
       appointmentId,
       customerName: appointment.customerName,
-      serviceName: item.name,
-      totalAmount,
-      paidAmount: 0,
-      paymentStatus: "Unpaid",
+
+      items: [
+        {
+          name: item.name || "Service",
+          price,
+        },
+      ],
+
+      totalAmount: price,
     });
 
     res.status(201).json({
       success: true,
-      message: "Bill generated successfully",
+      message: "Bill generated",
       bill,
     });
+
   } catch (error) {
-    console.error("Generate Bill Error:", error);
+    console.error(error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -71,110 +78,136 @@ exports.generateBill = async (req, res) => {
   }
 };
 
+
+// ================= ADD SERVICE (UPDATED) =================
+exports.addServiceToBill = async (req, res) => {
+  try {
+    const { billId } = req.params;
+    const { serviceId, name, price } = req.body;
+
+    const bill = await Bill.findById(billId);
+
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: "Bill not found",
+      });
+    }
+
+    let finalName = name;
+    let finalPrice = Number(price) || 0;
+
+    // ✅ If service selected from dropdown
+    if (serviceId) {
+      const service = await Service.findById(serviceId);
+
+      if (!service) {
+        return res.status(404).json({
+          success: false,
+          message: "Service not found",
+        });
+      }
+
+      finalName = service.name;
+
+      // ✅ Convert "Rs 2000" → 2000
+      finalPrice = Number(
+        String(service.pricing).replace(/[^0-9.]/g, "")
+      ) || 0;
+    }
+
+    // ❗ Validation
+    if (!finalName || finalPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid service data",
+      });
+    }
+
+    // ✅ Add to bill
+    bill.items.push({
+      name: finalName,
+      price: finalPrice,
+    });
+
+    // ✅ Recalculate total
+    bill.totalAmount = bill.items.reduce(
+      (sum, item) => sum + item.price,
+      0
+    );
+
+    await bill.save();
+
+    res.json({
+      success: true,
+      bill,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
 // ================= CONFIRM PAYMENT =================
-
 exports.confirmPayment = async (req, res) => {
+  try {
+    const { billId } = req.params;
+    const { paidAmount } = req.body;
 
-try {
+    const bill = await Bill.findById(billId);
 
-  const { billId } = req.params;
-  const { paidAmount } = req.body;
+    if (!bill) {
+      return res.status(404).json({
+        success: false,
+        message: "Bill not found",
+      });
+    }
 
-  const bill = await Bill.findById(billId);
+    if (paidAmount < bill.totalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount must be full",
+      });
+    }
 
-  if (!bill) {
-    return res.status(404).json({
+    bill.paidAmount = paidAmount;
+    bill.paymentStatus = "Paid";
+    bill.paymentDate = new Date();
+
+    await bill.save();
+
+    res.json({ success: true, bill });
+
+  } catch (error) {
+    res.status(500).json({
       success: false,
-      message: "Bill not found",
+      message: "Server error",
     });
   }
-
-  if (paidAmount < bill.totalAmount) {
-    return res.status(400).json({
-      success: false,
-      message: "Paid amount must be equal or greater than total",
-    });
-  }
-
-  bill.paidAmount = paidAmount;
-  bill.paymentStatus = "Paid";
-  bill.paymentDate = new Date();
-
-  await bill.save();
-
-  res.json({
-    success: true,
-    message: "Payment confirmed",
-    bill,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
 };
 
 
-// ================= GET ALL BILLS =================
-
+// ================= GET BILLS =================
 exports.getBills = async (req, res) => {
-
-try {
-
-  const bills = await Bill.find()
-    .populate("appointmentId")
-    .sort({ createdAt: -1 });
-
-  res.json({
-    success: true,
-    bills,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
+  const bills = await Bill.find().populate("appointmentId");
+  res.json({ success: true, bills });
 };
 
 
-// ================= GET BILL BY ID =================
-
+// ================= GET BILL =================
 exports.getBillById = async (req, res) => {
-
-try {
-
-  const bill = await Bill.findById(req.params.id)
-    .populate("appointmentId");
+  const bill = await Bill.findById(req.params.id).populate("appointmentId");
 
   if (!bill) {
     return res.status(404).json({
       success: false,
-      message: "Bill not found",
+      message: "Not found",
     });
   }
 
-  res.json({
-    success: true,
-    bill,
-  });
-
-} catch (error) {
-
-  res.status(500).json({
-    success: false,
-    message: "Server error",
-  });
-
-}
-
+  res.json({ success: true, bill });
 };

@@ -19,10 +19,13 @@ const billSchema = new mongoose.Schema(
     required: true,
   },
 
-  serviceName: {
-    type: String,
-    required: true,
-  },
+  // ✅ MULTIPLE SERVICES
+  items: [
+    {
+      name: String,
+      price: Number,
+    }
+  ],
 
   totalAmount: {
     type: Number,

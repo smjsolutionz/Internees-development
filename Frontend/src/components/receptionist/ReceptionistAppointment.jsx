@@ -20,6 +20,9 @@ export default function ReceptionistAppointments() {
   const [showBillModal, setShowBillModal] = useState(false);
   const [billData, setBillData] = useState(null);
   const [paidAmount, setPaidAmount] = useState("");
+  const [newService, setNewService] = useState({ name: "", price: "" });
+  const [servicesList, setServicesList] = useState([]);
+const [selectedServiceId, setSelectedServiceId] = useState("");
 
   /* ================= RESCHEDULE STATES ================= */
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
@@ -80,10 +83,24 @@ export default function ReceptionistAppointments() {
     }
   };
 
-  useEffect(() => {
-    fetchStaffList();
-    fetchAppointments(1);
-  }, []);
+  const fetchServices = async () => {
+  try {
+    const { data } = await axios.get(
+      `${API_BASE_URL}/api/services`,
+      getAuthConfig()
+    );
+
+    setServicesList(data.data || []);
+  } catch (err) {
+    console.error("Failed to fetch services", err);
+  }
+};
+
+useEffect(() => {
+  fetchStaffList();
+  fetchAppointments(1);
+  fetchServices(); // ✅ ADD THIS
+}, []);
 
   useEffect(() => {
     fetchAppointments(1);
@@ -214,6 +231,8 @@ export default function ReceptionistAppointments() {
     }
   };
 
+  
+
   /* ================= BILL ================= */
  const generateBill = async (appointment, force = false) => {
   try {
@@ -257,20 +276,149 @@ export default function ReceptionistAppointments() {
     }
   };
 
-  const printReceipt = () => {
-    const receiptWindow = window.open("", "_blank");
-    receiptWindow.document.write(`
-      <h2>Diamond Trim Beauty Studio</h2>
-      <p>Bill Number: ${billData.billNumber}</p>
-      <p>Customer: ${billData.customerName}</p>
-      <p>Service: ${billData.serviceName}</p>
-      <p>Total Amount: ${billData.totalAmount}</p>
-      <p>Paid Amount: ${billData.paidAmount}</p>
-      <p>Date: ${new Date().toLocaleString()}</p>
-      <h3>Thank you for visiting!</h3>
-    `);
-    receiptWindow.print();
-  };
+ const printReceipt = () => {
+  const receiptWindow = window.open("", "_blank");
+
+  const servicesHTML = billData.items
+    .map(
+      (item) => `
+        <div class="row">
+          <span>${item.name}</span>
+          <span>Rs ${item.price}</span>
+        </div>
+      `
+    )
+    .join("");
+
+  receiptWindow.document.write(`
+    <html>
+      <head>
+        <title>Receipt</title>
+        <style>
+          body {
+            font-family: monospace;
+            width: 260px; /* ✅ small receipt width */
+            margin: auto;
+            padding: 10px;
+          }
+
+          h2, h3, p {
+            text-align: center;
+            margin: 5px 0;
+          }
+
+          .divider {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+          }
+
+          .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin: 3px 0;
+          }
+
+          .total {
+            font-weight: bold;
+            font-size: 16px;
+          }
+
+          .center {
+            text-align: center;
+          }
+
+          @media print {
+            body {
+              width: 260px;
+            }
+          }
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+        
+        <h2>Diamond Trim</h2>
+        <p>Beauty Studio</p>
+
+        <div class="divider"></div>
+
+        <p><strong>Bill #:</strong> ${billData.billNumber}</p>
+        <p>${new Date().toLocaleString()}</p>
+
+        <div class="divider"></div>
+
+        ${servicesHTML}
+
+        <div class="divider"></div>
+
+        <div class="row total">
+          <span>Total</span>
+          <span>Rs ${billData.totalAmount}</span>
+        </div>
+
+        <div class="row">
+          <span>Paid</span>
+          <span>Rs ${billData.paidAmount || 0}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="center">Thank you!</p>
+        <p class="center">Visit Again 😊</p>
+
+      </body>
+    </html>
+  `);
+
+  receiptWindow.document.close();
+};
+
+const handleSelectService = (serviceId) => {
+  setSelectedServiceId(serviceId);
+
+  const selected = servicesList.find(s => s._id === serviceId);
+
+  if (selected) {
+    setNewService({
+      name: selected.name,
+      price: selected.price || selected.pricing || "",
+    });
+  }
+};
+
+ const addService = async () => {
+  try {
+    if (!selectedServiceId && (!newService.name || !newService.price)) {
+      setMessage({ type: "error", text: "Select or enter service" });
+      return;
+    }
+
+    const payload = selectedServiceId
+      ? { serviceId: selectedServiceId } // ✅ dropdown
+      : {
+          name: newService.name,         // ✅ manual fallback
+          price: Number(newService.price),
+        };
+
+    const { data } = await axios.post(
+      `${API_BASE_URL}/api/bill/add-service/${billData._id}`,
+      payload,
+      getAuthConfig()
+    );
+
+    setBillData(data.bill);
+
+    // reset
+    setSelectedServiceId("");
+    setNewService({ name: "", price: "" });
+
+  } catch {
+    setMessage({ type: "error", text: "Failed to add service" });
+  }
+};
+
+
 
   /* ================= AUTO-HIDE MESSAGE ================= */
   useEffect(() => {
@@ -428,37 +576,122 @@ export default function ReceptionistAppointments() {
       )}
 
       {/* ================= BILL MODAL ================= */}
-      {showBillModal && billData && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl w-96">
-            <h2 className="text-xl font-bold mb-4">Bill Details</h2>
-            {message && (
-  <div className={`mb-3 p-2 rounded text-center ${
-    message.type === "success"
-      ? "bg-green-100 text-green-800"
-      : "bg-red-100 text-red-800"
-  }`}>
-    {message.text}
-  </div>
-)}
+     {/* ================= BILL MODAL ================= */}
+{showBillModal && billData && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-xl w-96">
+      <h2 className="text-xl font-bold mb-4">Bill Details</h2>
 
-            <p>Bill Number: {billData.billNumber}</p>
-            <p>Customer: {billData.customerName}</p>
-            <p>Service: {billData.serviceName}</p>
-            <p>Total Amount: {billData.totalAmount}</p>
-            <p>Paid Amount: {billData.paidAmount || 0}</p>
-
-            <label className="block mb-2 mt-3">Enter Paid Amount:</label>
-            <input type="number" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} className="border px-2 py-1 rounded w-full mb-4" />
-
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300" onClick={() => setShowBillModal(false)}>Close</button>
-              <button className="px-3 py-1 rounded bg-green-500 text-white" onClick={confirmPayment}>Confirm Payment</button>
-              <button className="px-3 py-1 rounded bg-blue-500 text-white" onClick={printReceipt}>Print</button>
-            </div>
-          </div>
+      {message && (
+        <div className={`mb-3 p-2 rounded text-center ${
+          message.type === "success"
+            ? "bg-green-100 text-green-800"
+            : "bg-red-100 text-red-800"
+        }`}>
+          {message.text}
         </div>
       )}
+
+      <p><strong>Bill #:</strong> {billData.billNumber}</p>
+      <p><strong>Customer:</strong> {billData.customerName}</p>
+
+      {/* ✅ SERVICES LIST */}
+      <div className="mt-3">
+        <h3 className="font-semibold mb-1">Services</h3>
+        {billData.items.map((item, index) => (
+          <div key={index} className="flex justify-between text-sm border-b py-1">
+            <span>{item.name}</span>
+            <span>Rs {item.price}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ✅ ADD NEW SERVICE */}
+     {/* ✅ SELECT SERVICE FROM DROPDOWN */}
+<div className="mt-4">
+  <select
+    value={selectedServiceId}
+    onChange={(e) => handleSelectService(e.target.value)}
+    className="border p-2 rounded w-full mb-2"
+  >
+    <option value="">Select Service</option>
+
+    {servicesList.map(service => (
+      <option key={service._id} value={service._id}>
+        {service.name} - Rs {
+          String(service.pricing).replace(/[^0-9.]/g, "")
+        }
+      </option>
+    ))}
+  </select>
+
+  {/* Auto-filled */}
+  <input
+    type="text"
+    value={newService.name}
+    placeholder="Service Name"
+    readOnly
+    className="border p-2 rounded w-full mb-2 bg-gray-100"
+  />
+
+  <input
+    type="text"
+    value={newService.price}
+    placeholder="Price"
+    readOnly
+    className="border p-2 rounded w-full mb-2 bg-gray-100"
+  />
+
+  <button
+    onClick={addService}
+    className="bg-blue-500 text-white w-full py-1 rounded"
+  >
+    Add Service
+  </button>
+</div>
+
+      {/* ✅ TOTAL */}
+      <p className="mt-3 font-bold text-lg">
+        Total: Rs {billData.totalAmount}
+      </p>
+
+      <p>Paid: Rs {billData.paidAmount || 0}</p>
+
+      {/* ✅ PAYMENT */}
+      <label className="block mt-3 mb-1">Enter Paid Amount:</label>
+      <input
+        type="number"
+        value={paidAmount}
+        onChange={(e) => setPaidAmount(e.target.value)}
+        className="border px-2 py-1 rounded w-full mb-3"
+      />
+
+      {/* ACTIONS */}
+      <div className="flex justify-end gap-2">
+        <button
+          className="px-3 py-1 rounded bg-gray-300"
+          onClick={() => setShowBillModal(false)}
+        >
+          Close
+        </button>
+
+        <button
+          className="px-3 py-1 rounded bg-green-500 text-white"
+          onClick={confirmPayment}
+        >
+          Confirm Payment
+        </button>
+
+        <button
+          className="px-3 py-1 rounded bg-blue-500 text-white"
+          onClick={printReceipt}
+        >
+          Print
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
     </div>
   );
