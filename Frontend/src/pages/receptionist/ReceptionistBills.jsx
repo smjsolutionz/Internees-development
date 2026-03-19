@@ -31,41 +31,114 @@ export default function ReceptionistBills() {
     fetchBills();
   }, []);
 
-  // ✅ Print Receipt Function
-  const handlePrint = (bill) => {
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Receipt - ${bill.billNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h2 { color: #BB8C4B; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            td, th { border: 1px solid #ccc; padding: 8px; text-align: left; }
-            .paid { color: green; font-weight: bold; }
-            .unpaid { color: red; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <h2>Receipt</h2>
-          <p><strong>Bill Number:</strong> ${bill.billNumber}</p>
-          <p><strong>Customer:</strong> ${bill.customerName}</p>
-          <p><strong>Service:</strong> ${bill.serviceName}</p>
-          <p><strong>Total Amount:</strong> RS${bill.totalAmount}</p>
-          <p><strong>Paid Amount:</strong> RS${bill.paidAmount || 0}</p>
-          <p><strong>Status:</strong> ${bill.paymentStatus === "Paid" ? '<span class="paid">Paid</span>' : '<span class="unpaid">Unpaid</span>'}</p>
-          <p><strong>Date:</strong> ${new Date(bill.createdAt).toLocaleDateString()}</p>
-          <br/>
-          <p>Thank you for your payment!</p>
-          <script>
-            window.print();
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
+ const handlePrint = (bill) => {
+  const receiptWindow = window.open("", "_blank");
+
+  // If you don’t have items, create fallback
+  const servicesHTML = bill.items
+    ? bill.items.map(
+        (item) => `
+          <div class="row">
+            <span>${item.name}</span>
+            <span>Rs ${item.price}</span>
+          </div>
+        `
+      ).join("")
+    : `
+      <div class="row">
+        <span>${bill.serviceName}</span>
+        <span>Rs ${bill.totalAmount}</span>
+      </div>
+    `;
+
+  receiptWindow.document.write(`
+    <html>
+      <head>
+        <title>Receipt</title>
+        <style>
+          body {
+            font-family: monospace;
+            width: 260px;
+            margin: auto;
+            padding: 10px;
+          }
+
+          h2, p {
+            text-align: center;
+            margin: 5px 0;
+          }
+
+          .divider {
+            border-top: 1px dashed #000;
+            margin: 8px 0;
+          }
+
+          .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin: 3px 0;
+          }
+
+          .total {
+            font-weight: bold;
+            font-size: 16px;
+          }
+
+          .center {
+            text-align: center;
+          }
+
+          @media print {
+            body {
+              width: 260px;
+            }
+          }
+        </style>
+      </head>
+
+      <body onload="window.print(); window.close();">
+
+        <h2>Diamond Trim</h2>
+        <p>Beauty Studio</p>
+
+        <div class="divider"></div>
+
+        <p><strong>Bill #:</strong> ${bill.billNumber}</p>
+        <p>${new Date(bill.createdAt).toLocaleString()}</p>
+
+        <div class="divider"></div>
+
+        ${servicesHTML}
+
+        <div class="divider"></div>
+
+        <div class="row total">
+          <span>Total</span>
+          <span>Rs ${bill.totalAmount}</span>
+        </div>
+
+        <div class="row">
+          <span>Paid</span>
+          <span>Rs ${bill.paidAmount || 0}</span>
+        </div>
+
+        <div class="row">
+          <span>Status</span>
+          <span>${bill.paymentStatus}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <p class="center">Thank you!</p>
+        <p class="center">Visit Again 😊</p>
+
+      </body>
+    </html>
+  `);
+
+  receiptWindow.document.close();
+};
 
   return (
     <div className="flex min-h-screen bg-gray-100">

@@ -23,41 +23,56 @@ const RevenueDashboard = () => {
   const [filter, setFilter] = useState("daily");
   const token = localStorage.getItem("accessToken");
 
-  const formatRevenueChart = (chartData, filterType) => {
-    if (!chartData) return [];
+ const formatRevenueChart = (chartData, filterType) => {
+  if (!chartData) return [];
 
-    return chartData.map((item) => {
-      let label = item._id || "Unknown";
-      const revenue = Number(item.revenue) || 0;
+  return chartData.map((item) => {
+    let label = "Unknown";
+    const revenue = Number(item.revenue) || 0;
 
-      if (filterType === "weekly") {
-        const weekNum = parseInt(item._id);
+    // ✅ FIX HERE
+    if (typeof item._id === "object" && item._id !== null) {
+      label = item._id.period || JSON.stringify(item._id);
+    } else {
+      label = item._id;
+    }
+
+    if (filterType === "weekly") {
+      const weekNum = parseInt(item._id);
+      if (!isNaN(weekNum)) {
         const startOfYear = new Date(new Date().getFullYear(), 0, 1);
         const daysOffset = (weekNum - 1) * 7;
 
         const startDate = new Date(
-          startOfYear.getTime() + daysOffset * 24 * 60 * 60 * 1000
+          startOfYear.getTime() + daysOffset * 86400000
         );
 
         const endDate = new Date(
-          startDate.getTime() + 6 * 24 * 60 * 60 * 1000
+          startDate.getTime() + 6 * 86400000
         );
 
         label = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
-      } else if (filterType === "monthly") {
-        const month = parseInt(item._id) - 1;
+      }
+    }
+
+    if (filterType === "monthly") {
+      const month = parseInt(item._id) - 1;
+      if (!isNaN(month)) {
         const date = new Date(new Date().getFullYear(), month, 1);
         label = date.toLocaleString("default", {
           month: "short",
           year: "numeric",
         });
-      } else if (filterType === "yearly") {
-        label = item._id.toString();
       }
+    }
 
-      return { _id: label, revenue };
-    });
-  };
+    if (filterType === "yearly") {
+      label = String(item._id);
+    }
+
+    return { _id: label, revenue };
+  });
+};
 
   const fetchRevenue = async (type) => {
     try {
@@ -240,7 +255,11 @@ const RevenueDashboard = () => {
                   <tbody>
                     {data.revenueByService.map((service, idx) => (
                       <tr key={idx} className="border-b">
-                        <td className="p-2">{service.name}</td>
+                        <td className="p-2">
+  {typeof service.name === "object"
+    ? JSON.stringify(service.name)
+    : service.name}
+</td>
                         <td className="p-2">Rs {service.revenue}</td>
                         <td className="p-2">{service.orders}</td>
                       </tr>
@@ -253,7 +272,11 @@ const RevenueDashboard = () => {
               <div className="md:hidden space-y-3">
                 {data.revenueByService.map((service, idx) => (
                   <div key={idx} className="border rounded-lg p-3">
-                    <p className="font-semibold">{service.name}</p>
+                    <p className="font-semibold">
+  {typeof service.name === "object"
+    ? service.name.period || JSON.stringify(service.name)
+    : service.name}
+</p>
                     <div className="flex justify-between mt-2">
                       <p>Rs {service.revenue}</p>
                       <p>{service.orders} orders</p>
