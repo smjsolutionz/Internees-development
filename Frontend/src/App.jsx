@@ -72,6 +72,7 @@ import ReceptionistBills from "./pages/receptionist/ReceptionistBills";
 import StaffShiftPage from "./pages/staff/StaffShiftPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import MyAttendancePage from "./pages/attendance/MyAttendancePage";
+import Revenue from "./pages/admin/RevenueReport";
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -142,6 +143,7 @@ export default function App() {
         {/* Users */}
         <Route path="/create-user" element={<CreateUser />} />
         <Route path="/edit-user/:id" element={<UpdateUser />} />
+        <Route path="/admin/revenue" element={<Revenue />} />
 
 
         
