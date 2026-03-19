@@ -38,6 +38,9 @@ const AttendanceRoutes = require("./routes/attendanceRoutes");
 // ✅ Missing imports FIXED
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const revenueRoutes = require("./routes/revenueRoutes");
+const ReviewRoutes = require("./routes/reviewCustomerRoutes");
+
+
 
 const app = express();
 
@@ -87,6 +90,10 @@ app.use("/api/admin", adminUsersRoutes);
 app.use("/api/appointment/admin", adminappointment);
 app.use("/api/attendance", AttendanceRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/customer/reviews/", ReviewRoutes);
+app.use("/api/appointments/", appointmentRoutes);
+
+
 
 /* =========================
    🔹 CUSTOMER ROUTES
