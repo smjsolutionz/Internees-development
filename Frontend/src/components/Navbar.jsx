@@ -20,7 +20,7 @@ const Navbar = () => {
   const storedUser = localStorage.getItem("user");
   const token = localStorage.getItem("accessToken");
 
-  if (!storedUser || !token) return;
+  if (!storedUser || !token) return;0
 
   const parsedUser = JSON.parse(storedUser);
 
