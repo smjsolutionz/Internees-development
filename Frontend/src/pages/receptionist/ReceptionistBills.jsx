@@ -170,7 +170,17 @@ export default function ReceptionistBills() {
                       <tr key={bill._id} className="border-t">
                         <td className="p-3">{bill.billNumber}</td>
                         <td className="p-3">{bill.customerName}</td>
-                        <td className="p-3">{bill.serviceName}</td>
+                        <td className="p-3">
+  {bill.items && bill.items.length > 0 ? (
+    bill.items.map((item, index) => (
+      <div key={index}>
+        {item.name} (Rs {item.price})
+      </div>
+    ))
+  ) : (
+    "N/A"
+  )}
+</td>
                         <td className="p-3">{bill.totalAmount}</td>
                         <td className="p-3">{bill.paidAmount || 0}</td>
                         <td className="p-3">
