@@ -134,7 +134,9 @@ export default function UsersTableAdmin({ users, refreshUsers }) {
         {users.length === 0 ? (
           <p className="p-6 text-center text-gray-500">No users found</p>
         ) : (
-          users.map((user) => (
+       users
+  .filter((user) => user.role !== "ADMIN")
+  .map((user) => (
             <div
               key={user._id}
               className="grid grid-cols-1 md:grid-cols-[2fr_2fr_1fr_1fr_1fr_90px] px-3 py-4 gap-3 items-center border-t text-sm hover:bg-gray-50"
