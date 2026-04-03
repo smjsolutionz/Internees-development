@@ -73,6 +73,7 @@ import StaffShiftPage from "./pages/staff/StaffShiftPage";
 import AttendancePage from "./pages/attendance/AttendancePage";
 import MyAttendancePage from "./pages/attendance/MyAttendancePage";
 import Revenue from "./pages/admin/RevenueReport";
+import ScrollToTop from "./components/ScrollToTop"
 const isAuth = () => !!localStorage.getItem("accessToken");
 
 export default function App() {
@@ -88,8 +89,9 @@ export default function App() {
           },
         }}
       />
-
+<ScrollToTop />
       <Routes>
+         
         {/* Public */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />

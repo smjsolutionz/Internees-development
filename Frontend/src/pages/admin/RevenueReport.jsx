@@ -55,16 +55,18 @@ const RevenueDashboard = () => {
       }
     }
 
-    if (filterType === "monthly") {
-      const month = parseInt(item._id) - 1;
-      if (!isNaN(month)) {
-        const date = new Date(new Date().getFullYear(), month, 1);
-        label = date.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-      }
-    }
+   if (filterType === "monthly") {
+  if (typeof item._id === "string" && item._id.includes("-")) {
+    const [year, month] = item._id.split("-");
+
+    const date = new Date(Number(year), Number(month) - 1, 1);
+
+    label = date.toLocaleString("default", {
+      month: "short",
+      year: "numeric",
+    });
+  }
+}
 
     if (filterType === "yearly") {
       label = String(item._id);
@@ -150,11 +152,11 @@ const RevenueDashboard = () => {
     });
 
     const ordersTable = data.bills.map((bill) => [
-      bill.customerName,
-      bill.serviceName,
-      `Rs ${bill.totalAmount}`,
-      new Date(bill.createdAt).toLocaleDateString(),
-    ]);
+  bill.customerName,
+  bill.items?.map((item) => item.name).join(", "),
+  `Rs ${bill.totalAmount}`,
+  new Date(bill.createdAt).toLocaleDateString(),
+]);
 
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 10,
@@ -343,7 +345,7 @@ const RevenueDashboard = () => {
                   {data.bills.map((bill) => (
                     <tr key={bill._id} className="border-b">
                       <td className="p-3">{bill.customerName}</td>
-                      <td className="p-3">{bill.serviceName}</td>
+                      <td className="p-3"> {bill.items?.map((item) => item.name).join(", ")}</td>
                       <td className="p-3">Rs {bill.totalAmount}</td>
                       <td className="p-3">
                         {new Date(bill.createdAt).toLocaleDateString()}
@@ -359,7 +361,7 @@ const RevenueDashboard = () => {
               {data.bills.map((bill) => (
                 <div key={bill._id} className="border rounded-lg p-3">
                   <p className="font-semibold">{bill.customerName}</p>
-                  <p className="text-sm text-gray-500">{bill.serviceName}</p>
+                  <p className="text-sm text-gray-500">{bill.items?.map((item) => item.name).join(", ")}</p>
                   <div className="flex justify-between mt-2">
                     <p>Rs {bill.totalAmount}</p>
                     <p className="text-sm text-gray-500">
