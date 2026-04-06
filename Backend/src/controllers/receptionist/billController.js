@@ -193,8 +193,27 @@ exports.confirmPayment = async (req, res) => {
 
 // ================= GET BILLS =================
 exports.getBills = async (req, res) => {
-  const bills = await Bill.find().populate("appointmentId");
-  res.json({ success: true, bills });
+  const page = parseInt(req.query.page) || 1; // default page 1
+  const limit = parseInt(req.query.limit) || 10; // default 10 bills per page
+  const skip = (page - 1) * limit;
+
+  try {
+    const totalBills = await Bill.countDocuments();
+    const bills = await Bill.find()
+      .populate("appointmentId")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      bills,
+      totalPages: Math.ceil(totalBills / limit),
+      currentPage: page,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
 };
 
 

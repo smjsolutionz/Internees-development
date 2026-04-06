@@ -10,26 +10,39 @@ export default function ReceptionistBills() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+const [limit] = useState(10);
+const [totalPages, setTotalPages] = useState(1);
 
   const getAuthConfig = () => {
     const token = localStorage.getItem("accessToken");
     return { headers: { Authorization: `Bearer ${token}` } };
   };
 
-  const fetchBills = async () => {
-    try {
-      const { data } = await axios.get(`${API_BASE_URL}/api/bill`, getAuthConfig());
-      setBills(data.bills || []);
-    } catch (error) {
-      console.error("Failed to fetch bills");
-    } finally {
-      setLoading(false);
-    }
-  };
+ const fetchBills = async (page = 1) => {
+  setLoading(true);
+  try {
+    const { data } = await axios.get(
+      `${API_BASE_URL}/api/bill?page=${page}&limit=${limit}`,
+      getAuthConfig()
+    );
+    setBills(data.bills || []);
+    setTotalPages(data.totalPages || 1);
+  } catch (error) {
+    console.error("Failed to fetch bills");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchBills();
-  }, []);
+ useEffect(() => {
+  fetchBills(page);
+}, [page]);
+
+const handlePageChange = (newPage) => {
+  if (newPage < 1 || newPage > totalPages) return;
+  setPage(newPage);
+};
 
  const handlePrint = (bill) => {
   const receiptWindow = window.open("", "_blank");
@@ -204,6 +217,28 @@ export default function ReceptionistBills() {
                   </tbody>
                 </table>
               </div>
+              {/* Pagination */}
+<div className="flex justify-center mt-4 space-x-2">
+  <button
+    onClick={() => handlePageChange(page - 1)}
+    disabled={page === 1}
+    className="px-3 py-1 border rounded disabled:opacity-50"
+  >
+    Prev
+  </button>
+
+  <span className="px-3 py-1">
+    Page {page} of {totalPages}
+  </span>
+
+  <button
+    onClick={() => handlePageChange(page + 1)}
+    disabled={page === totalPages}
+    className="px-3 py-1 border rounded disabled:opacity-50"
+  >
+    Next
+  </button>
+</div>
             </div>
           )}
         </div>
