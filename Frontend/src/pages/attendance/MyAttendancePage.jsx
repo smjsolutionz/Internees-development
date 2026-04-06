@@ -32,6 +32,8 @@ export default function MyAttendancePage() {
     return d.toISOString().slice(0, 10);
   });
   const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
   const fetchAttendance = async () => {
@@ -48,7 +50,10 @@ export default function MyAttendancePage() {
         params: { startDate, endDate },
       });
 
-      if (data.success) setAttendance(data.attendance || []);
+      if (data.success) {
+        setAttendance(data.attendance || []);
+        setCurrentPage(1);
+      }
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem("accessToken");
@@ -64,6 +69,11 @@ export default function MyAttendancePage() {
   useEffect(() => {
     fetchAttendance();
   }, [startDate, endDate]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(attendance.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedAttendance = attendance.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -108,7 +118,7 @@ export default function MyAttendancePage() {
               <>
                 {/* Mobile cards */}
                 <div className="p-4 space-y-3 md:hidden">
-                  {attendance.map((r) => {
+                  {paginatedAttendance.map((r) => {
                     const statusClass =
                       r.status === "Present"
                         ? "bg-green-100 text-green-800"
@@ -153,7 +163,7 @@ export default function MyAttendancePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {attendance.map((r) => (
+                      {paginatedAttendance.map((r) => (
                         <tr key={r._id} className="hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm">{formatDate(r.date)}</td>
                           <td className="px-4 py-3 text-sm">{formatTime(r.checkInTime)}</td>
@@ -182,6 +192,29 @@ export default function MyAttendancePage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="px-4 py-4 border-t bg-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((p) => p - 1)}
+                      className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                      className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
               </>
             )}
